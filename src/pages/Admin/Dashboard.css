@@ -1,0 +1,461 @@
+/* =========================================
+   Dashboard.css (Admin Dashboard)
+   EduSync — Premium UI
+   ========================================= */
+
+/* Header Area */
+.ad-main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-shrink: 0; 
+  margin-bottom: 0px; 
+}
+
+.ad-greeting h2 {
+  font-size: 22px; 
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 2px;
+  letter-spacing: -0.5px;
+  margin-top: 0;
+}
+
+.ad-greeting p {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* =========================================
+   Admin Title Dropdown Styles
+   ========================================= */
+.ad-title-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.ad-title-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 6px;
+  padding: 4px 8px 4px 0;
+  transition: background-color 0.2s ease;
+  margin-left: -4px;
+}
+
+.ad-title-trigger:hover {
+  background-color: #f1f5f9;
+}
+
+.ad-chevron {
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.ad-chevron.open {
+  transform: rotate(180deg);
+}
+
+.ad-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  min-width: 220px;
+  z-index: 50; 
+  padding: 8px 0;
+}
+
+.ad-dropdown-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ad-dropdown-item:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+  padding-left: 20px; 
+}
+
+/* =========================================
+   Header Right (Search, Bell, Avatar)
+   ========================================= */
+.ad-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px; 
+}
+
+/* Search Box */
+.ad-search-box {
+  position: relative;
+  width: 240px; 
+}
+
+.ad-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  width: 16px;
+  height: 16px;
+}
+
+.ad-search-input {
+  width: 100%;
+  padding: 8px 16px 8px 36px; 
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.ad-search-input:focus {
+  outline: none;
+  border-color: #2d6cdf;
+  box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.1);
+}
+
+/* Notifications */
+.ad-notification-group {
+  position: relative;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  transition: background-color 0.2s;
+}
+
+.ad-notification-group:hover {
+  background-color: #f8fafc;
+}
+
+.ad-notification-bell {
+  color: #64748b;
+  width: 18px;
+  height: 18px;
+}
+
+.ad-notification-badge-num {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 12px;
+  border: 2px solid #f8fafc;
+}
+
+/* Header Avatar */
+.ad-avatar--hdr {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #dbeafe;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* =========================================
+   Summary Cards
+   ========================================= */
+.ad-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem; 
+  flex-shrink: 0;
+}
+
+.ad-stat-card {
+  background-color: #ffffff;
+  padding: 10px 14px; 
+  border-radius: 12px; 
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  gap: 12px; 
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
+}
+
+.ad-stat-card:hover {
+  transform: translateY(-3px); 
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.ad-stat-icon-group {
+  width: 40px;
+  height: 40px; 
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ad-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.ad-stat-card h4 {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.ad-stat-status {
+  font-size: 16px; 
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Card Colors */
+.ad-stat-card--blue h4, .ad-stat-card--blue svg { color: #2563eb; }
+.ad-stat-card--blue .ad-stat-icon-group { background-color: #eff6ff; }
+.ad-stat-card--blue .ad-stat-status { color: #1e40af; }
+
+.ad-stat-card--purple h4, .ad-stat-card--purple svg { color: #9333ea; }
+.ad-stat-card--purple .ad-stat-icon-group { background-color: #f3e8ff; }
+.ad-stat-card--purple .ad-stat-status { color: #7e22ce; }
+
+.ad-stat-card--red h4, .ad-stat-card--red svg { color: #dc2626; }
+.ad-stat-card--red .ad-stat-icon-group { background-color: #fef2f2; }
+.ad-stat-card--red .ad-stat-status { color: #991b1b; }
+
+.ad-stat-card--green h4, .ad-stat-card--green svg { color: #16a34a; }
+.ad-stat-card--green .ad-stat-icon-group { background-color: #f0fdf4; }
+.ad-stat-card--green .ad-stat-status { color: #15803d; }
+
+/* =========================================
+   Middle Grid (Chart & Events)
+   ========================================= */
+.ad-middle-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px; 
+  gap: 0.85rem; 
+  flex-shrink: 0;
+}
+
+.ad-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 12px;
+  padding: 1rem 1.25rem; 
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.ad-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px; 
+  margin-top: 0;
+}
+
+/* Bar Chart */
+.ad-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; 
+}
+
+.ad-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ad-bar-label {
+  width: 55px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  flex-shrink: 0;
+}
+
+.ad-bar-track {
+  flex: 1;
+  height: 6px; 
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ad-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.8s ease;
+}
+.ad-bar-fill.blue { background-color: #2563eb; }
+.ad-bar-fill.red { background-color: #dc2626; }
+
+.ad-bar-percent {
+  width: 35px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+/* Events List */
+.ad-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; 
+}
+
+.ad-event-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 0; 
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ad-event-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.ad-event-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.ad-event-dot.blue { background-color: #3b82f6; box-shadow: 0 0 0 3px #eff6ff;}
+.ad-event-dot.green { background-color: #10b981; box-shadow: 0 0 0 3px #ecfdf5;}
+.ad-event-dot.yellow { background-color: #f59e0b; box-shadow: 0 0 0 3px #fffbeb;}
+.ad-event-dot.pink { background-color: #ec4899; box-shadow: 0 0 0 3px #fdf2f8;}
+
+.ad-event-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0px; 
+}
+
+.ad-event-details h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ad-event-details p {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* =========================================
+   Bottom Table Card (Flex Magic)
+   ========================================= */
+.ad-card.full {
+  grid-column: 1 / -1;
+  margin-bottom: 0; 
+  flex-grow: 1; 
+  min-height: 0; 
+  display: flex;
+  flex-direction: column;
+}
+
+.ad-table-responsive {
+  width: 100%;
+  flex-grow: 1;
+  overflow-y: auto; 
+  scrollbar-width: none; 
+}
+.ad-table-responsive::-webkit-scrollbar { display: none; }
+
+.ad-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  min-width: 600px;
+}
+
+.ad-data-table th {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  padding-bottom: 6px; 
+  border-bottom: 2px solid #f1f5f9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: sticky;
+  top: 0; 
+  background: #ffffff;
+}
+
+.ad-data-table td {
+  padding: 6px 0; 
+  font-size: 12px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  font-weight: 500;
+}
+
+.ad-data-table tr:last-child td {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Pills */
+.ad-status-pill {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ad-status-pill.paid { background-color: #dcfce7; color: #16a34a; }
+.ad-status-pill.pending { background-color: #fef3c7; color: #d97706; }
+.ad-status-pill.overdue { background-color: #fee2e2; color: #dc2626; }
+
+/* Responsive Overrides */
+@media (max-width: 1024px) {
+  .ad-summary-row { grid-template-columns: repeat(2, 1fr); }
+  .ad-middle-grid { grid-template-columns: 1fr; }
+}

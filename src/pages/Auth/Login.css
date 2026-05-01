@@ -1,0 +1,136 @@
+/* Login.css */
+/* Perfectly Centered Container */
+.page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f4f6f9;
+  z-index: 999;
+}
+
+/* The Card */
+.card {
+  width: 90%;
+  max-width: 380px;
+  background: #ffffff;
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+  text-align: center;
+}
+
+/* Brand Elements */
+.icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.card h2 {
+  font-size: 24px;
+  color: #1e293b;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.welcome {
+  color: #475569;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.subtitle {
+  color: #94a3b8;
+  font-size: 13px;
+  display: block;
+  margin-top: 4px;
+  margin-bottom: 25px;
+}
+
+/* Tabs - Modern Segmented Control */
+.tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.tab.active {
+  background: #2d6cdf;
+  color: white;
+  box-shadow: 0 4px 10px rgba(45, 108, 223, 0.2);
+}
+
+/* Input Styling */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #f8fafc;
+  transition: all 0.2s;
+}
+
+.form input:focus {
+  outline: none;
+  border-color: #2d6cdf;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(45, 108, 223, 0.08);
+}
+
+/* Action Button */
+.loginBtn {
+  width: 100%;
+  padding: 14px;
+  background: #2d6cdf;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.3s;
+}
+
+.loginBtn:hover {
+  background: #1e52b5;
+  transform: translateY(-1px);
+}
+
+.forgot {
+  margin-top: 24px;
+  font-size: 13px;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.forgot:hover {
+  color: #2d6cdf;
+}

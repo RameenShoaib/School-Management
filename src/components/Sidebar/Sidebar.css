@@ -1,0 +1,212 @@
+/* =========================================
+   Sidebar.css
+   EduSync — Universal Premium Sidebar
+   ========================================= */
+
+.app-sidebar {
+  background: #ffffff;
+  padding: 1.25rem 0 0; 
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e2e8f0;
+  scrollbar-width: none; 
+  -ms-overflow-style: none;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.app-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Logo */
+.sidebar-logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.75rem;
+  padding: 0 24px; 
+}
+
+.sidebar-logo-icon {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+}
+
+.sidebar-logo-icon .logo-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #2d6cdf;
+  border-radius: 3px;
+  display: block;
+}
+
+.sidebar-logo-text {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+/* Nav Groups */
+.sidebar-nav-scroll {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar-nav-group {
+  margin-bottom: 16px; 
+}
+
+.sidebar-nav-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+  padding: 0 24px;
+}
+
+/* Perfect Nav Alignment */
+.sidebar-nav-item {
+  position: relative; 
+  display: flex;
+  align-items: center;
+  padding: 8px 24px; 
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  user-select: none;
+  gap: 16px; 
+}
+
+.sidebar-nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: color 0.2s ease;
+}
+
+.sidebar-nav-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.sidebar-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #2d6cdf;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.sidebar-nav-item:hover {
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+.sidebar-nav-item:hover .sidebar-nav-icon {
+  color: #64748b;
+}
+.sidebar-nav-item.active {
+  color: #2d6cdf;
+  font-weight: 600;
+  background-color: #eff6ff;
+}
+.sidebar-nav-item.active .sidebar-nav-icon {
+  color: #2d6cdf;
+}
+
+/* Sidebar Bottom (Profile & Logout) */
+.sidebar-bottom {
+  margin-top: auto; 
+  padding: 16px 0;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.sidebar-nav-item--logout {
+  color: #ef4444;
+  margin-bottom: 8px; 
+  gap: 12px; 
+}
+.sidebar-nav-item--logout .sidebar-nav-icon {
+  color: #ef4444;
+  width: 36px;
+  justify-content: center;
+}
+.sidebar-nav-item--logout:hover {
+  color: #dc2626;
+  background-color: #fef2f2;
+}
+.sidebar-nav-item--logout:hover .sidebar-nav-icon {
+  color: #dc2626;
+}
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 24px;
+  width: 100%;
+  user-select: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-profile:hover {
+  background-color: #f8fafc;
+}
+
+.sidebar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #dbeafe;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* Role specific avatar colors */
+.sidebar-avatar.admin { background-color: #dbeafe; color: #1e40af; }
+.sidebar-avatar.teacher { background-color: #dcfce7; color: #16a34a; }
+.sidebar-avatar.student { background-color: #ffe4e6; color: #e11d48; }
+
+.sidebar-profile-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
+}
+
+.sidebar-profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sidebar-profile-role {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: capitalize;
+}

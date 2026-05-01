@@ -1,0 +1,577 @@
+/* =========================================
+   Announcements.css
+   EduSync — Announcements Page
+   ========================================= */
+
+.ann-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  flex-shrink: 0;
+  margin-bottom: 0px; 
+}
+
+.ann-header-left h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 2px; 
+  letter-spacing: -0.5px;
+}
+
+.ann-header-left p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.ann-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ann-btn-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.ann-btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.ann-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #dbeafe;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  border: 2px solid #ffffff; 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Stats Row */
+.ann-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.ann-stat-card {
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ann-stat-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.ann-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ann-stat-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: #10b981; 
+}
+.ann-stat-sub.neutral { color: #64748b; }
+.ann-stat-sub.warning { color: #d97706; }
+
+/* Filters & Search Row */
+.ann-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  flex-shrink: 0;
+}
+
+.ann-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-grow: 1;
+  max-width: 400px;
+}
+
+.ann-search svg {
+  color: #94a3b8;
+  width: 18px;
+  height: 18px;
+}
+
+.ann-search input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 13px;
+  color: #334155;
+  background: transparent;
+}
+
+.ann-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.ann-filter-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #64748b;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ann-filter-btn.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+/* Announcements List */
+.ann-list-container {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; 
+  min-height: 0; 
+  overflow: hidden;
+}
+
+.ann-list-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  background-color: #ffffff;
+}
+
+.ann-list-scroll {
+  overflow-y: auto;
+  scrollbar-width: none; 
+}
+.ann-list-scroll::-webkit-scrollbar { display: none; }
+
+.ann-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ann-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 85%;
+}
+
+.ann-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ann-item-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.ann-item-desc {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.ann-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ann-tag {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.ann-tag.blue { background-color: #eff6ff; color: #2563eb; }
+.ann-tag.green { background-color: #f0fdf4; color: #16a34a; }
+.ann-tag.yellow { background-color: #fffbeb; color: #d97706; }
+.ann-tag.gray { background-color: #f1f5f9; color: #64748b; }
+
+.ann-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.ann-badge.urgent { background-color: #fef2f2; color: #dc2626; }
+.ann-badge.general { background-color: #eff6ff; color: #2563eb; }
+.ann-badge.event { background-color: #f0fdf4; color: #16a34a; }
+.ann-badge.fee { background-color: #fffbeb; color: #d97706; }
+
+/* =========================================
+   ✨ MODAL & BLUR BACKGROUND STYLES ✨
+   ========================================= */
+
+/* Blur Overlay */
+.ann-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(5px); 
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Modal Container */
+
+.ann-modal {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 680px; /* 👈 800px se 680px kar diya taake extra chaura na lagay */
+  max-height: 85vh; 
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* Modal Header */
+.ann-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+}
+
+.ann-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ann-modal-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #fce7f3;
+  color: #db2777;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ann-modal-title h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ann-modal-title p {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.ann-draft-pill {
+  background-color: #eff6ff;
+  color: #2563eb;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 👇 COMPACT MODAL BODY & THIN SCROLLER 👇 */
+.ann-modal-body {
+  padding: 16px 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* 👈 Form elements ke darmiyan gap kam kar diya */
+}
+
+/* 4px ka pyara sa scroller */
+.ann-modal-body::-webkit-scrollbar {
+  width: 4px;
+}
+.ann-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ann-modal-body::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+/* 👆 MODAL BODY UPDATE 👆 */
+
+/* Section Styling */
+.ann-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px; /* 👈 Compact */
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 4px; /* 👈 Compact */
+}
+
+/* Form Groups */
+.ann-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* 👈 Compact */
+}
+
+.ann-form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.ann-form-group label span {
+  color: #ef4444; 
+}
+
+.ann-input {
+  padding: 8px 12px; /* 👈 Compact */
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0f172a;
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ann-input:focus {
+  border-color: #2563eb;
+}
+
+.ann-textarea {
+  min-height: 60px; /* 👈 100px se 60px kar diya */
+  resize: vertical;
+}
+
+.ann-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ann-form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+/* Target Audience Pills */
+.ann-target-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ann-target-pill {
+  padding: 6px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.ann-target-pill.active {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Switches (Toggles) */
+.ann-switch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0; /* 👈 Compact */
+  border-bottom: 1px solid #f1f5f9;
+}
+.ann-switch-row:last-child { border-bottom: none; }
+
+.ann-switch-label h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.ann-switch-label p {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.ann-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background-color: #cbd5e1;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ann-toggle.on {
+  background-color: #2563eb;
+}
+
+.ann-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.ann-toggle.on::after {
+  transform: translateX(16px);
+}
+
+/* Drag & Drop Upload */
+.ann-upload-area {
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  padding: 16px; /* 👈 30px se 16px kar diya */
+  text-align: center;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ann-upload-area:hover {
+  background-color: #f1f5f9;
+}
+
+.ann-upload-area p {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.ann-upload-area span {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+/* Modal Footer */
+.ann-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8fafc;
+}
+
+.ann-req-text {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.ann-footer-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.ann-btn-discard {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ann-btn-draft {
+  padding: 8px 16px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ann-btn-publish {
+  padding: 8px 20px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ann-btn-publish:hover { background: #1d4ed8; }

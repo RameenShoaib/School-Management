@@ -1,0 +1,384 @@
+/* =========================================
+   exam.css
+   Admin - Exam Results View & Modal
+   ========================================= */
+
+.ex-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.ex-header-left h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  letter-spacing: -0.5px;
+}
+
+.ex-header-left p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.ex-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ex-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #dbeafe;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Data Table Card */
+.ex-table-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0; 
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
+  overflow: hidden;
+}
+
+/* Card Header (Title & Actions) */
+.ex-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  background-color: #ffffff;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ex-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ex-header-title-group h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Dropdowns (Grade & Subject Switcher) */
+.ex-selectors {
+  display: flex;
+  gap: 8px;
+}
+
+.ex-select {
+  padding: 6px 30px 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.ex-select:hover { border-color: #cbd5e1; background-color: #ffffff; }
+.ex-select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+.ex-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ex-btn-outline {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ex-btn-outline:hover { background-color: #f8fafc; border-color: #94a3b8; }
+
+.ex-btn-primary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ex-btn-primary:hover { background-color: #1d4ed8; }
+
+/* Search Box & Filters Area */
+.ex-search-area {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #fafbfc;
+  flex-shrink: 0;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.ex-search-box {
+  position: relative;
+  flex-grow: 1;
+}
+
+.ex-search-box svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+
+.ex-search-box input {
+  width: 100%;
+  padding: 8px 16px 8px 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  font-size: 12px;
+  color: #334155;
+  transition: all 0.2s ease;
+}
+
+.ex-search-box input:focus { outline: none; border-color: #2d6cdf; box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.1); }
+
+.ex-status-filters { display: flex; gap: 6px; }
+
+.ex-status-filter {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ex-status-filter.active { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+
+/* Scrollable Table Area */
+.ex-table-scroll {
+  overflow-y: auto;
+  flex-grow: 1;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.ex-table-scroll::-webkit-scrollbar { width: 6px; }
+.ex-table-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+.ex-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 900px; }
+.ex-table th {
+  position: sticky; top: 0; background-color: #ffffff; padding: 12px 20px; font-size: 10px;
+  font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; z-index: 10;
+}
+.ex-table td { padding: 12px 20px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; font-weight: 500; vertical-align: middle; }
+.ex-table tr:hover td { background-color: #f8fafc; }
+
+.ex-percent { font-weight: 700; }
+.ex-percent.fail { color: #dc2626; } 
+
+/* Custom Pills */
+.ex-pill { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 12px; text-transform: uppercase; display: inline-block; }
+.ex-pill.pass { background-color: #dcfce7; color: #16a34a; }
+.ex-pill.fail { background-color: #fee2e2; color: #dc2626; }
+
+.ex-grade-a { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.ex-grade-b { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.ex-grade-c { background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.ex-grade-f { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.ex-rank { font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+
+/* Pagination Footer */
+.ex-pagination-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+.ex-page-info { font-size: 11px; color: #64748b; font-weight: 500; }
+.ex-page-buttons { display: flex; gap: 6px; }
+.ex-page-btn {
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid #e2e8f0; border-radius: 6px; background-color: #ffffff; color: #64748b;
+  font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+}
+.ex-page-btn:hover { border-color: #cbd5e1; color: #0f172a; }
+.ex-page-btn.active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+
+
+/* =========================================
+   ✨ SCHEDULE EXAM MODAL & BLUR STYLES ✨
+   ========================================= */
+
+/* Blur Overlay */
+.ex-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(5px); 
+  z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+
+/* Modal Container */
+.ex-modal {
+  background-color: #ffffff; width: 100%; max-width: 900px; max-height: 90vh; 
+  border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* Modal Header */
+.ex-modal-header {
+  padding: 20px 24px; border-bottom: 1px solid #e2e8f0;
+  display: flex; justify-content: space-between; align-items: center;
+  background-color: #ffffff; flex-shrink: 0;
+}
+
+.ex-modal-title-group { display: flex; align-items: center; gap: 12px; }
+.ex-modal-icon {
+  width: 32px; height: 32px; background-color: #f3e8ff; color: #9333ea;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+}
+.ex-modal-title h2 { margin: 0; font-size: 16px; font-weight: 700; color: #0f172a; }
+.ex-modal-title p { margin: 2px 0 0 0; font-size: 11px; color: #64748b; }
+.ex-badge-pill {
+  background-color: #f3e8ff; color: #9333ea; padding: 4px 10px;
+  border-radius: 12px; font-size: 11px; font-weight: 600;
+}
+
+/* Modal Body */
+.ex-modal-body {
+  padding: 24px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column;
+  gap: 24px; scrollbar-width: none; 
+}
+.ex-modal-body::-webkit-scrollbar { display: none; }
+
+/* Section Title */
+.ex-section-title {
+  font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+  letter-spacing: 0.05em; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 6px; display: flex; align-items: center; gap: 6px;
+}
+
+/* Form Layouts */
+.ex-form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.ex-form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.ex-form-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+
+.ex-form-group { display: flex; flex-direction: column; gap: 6px; }
+.ex-form-group label { font-size: 12px; font-weight: 600; color: #334155; }
+.ex-form-group label span { color: #ef4444; }
+
+.ex-input {
+  padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px;
+  font-size: 13px; color: #0f172a; background-color: #ffffff; outline: none; transition: border-color 0.2s;
+}
+.ex-input:focus { border-color: #2563eb; }
+
+/* Inline Checkbox Pills (Sections A, B, C) */
+.ex-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.ex-check-pill {
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+  border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-weight: 500;
+  color: #475569; cursor: pointer; background-color: #ffffff; transition: all 0.2s;
+}
+.ex-check-pill input { display: none; }
+.ex-check-pill:has(input:checked) {
+  border-color: #2563eb; color: #1d4ed8; background-color: #eff6ff; font-weight: 600;
+}
+.ex-check-square {
+  width: 14px; height: 14px; border: 1.5px solid #cbd5e1; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center; background-color: #fff;
+}
+.ex-check-pill input:checked + .ex-check-square { background-color: #2563eb; border-color: #2563eb; }
+.ex-check-pill input:checked + .ex-check-square::after {
+  content: '✓'; color: white; font-size: 10px; font-weight: bold;
+}
+
+/* Switches / Toggles */
+.ex-switch-list {
+  background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 16px;
+}
+.ex-switch-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 0; border-bottom: 1px solid #e2e8f0;
+}
+.ex-switch-row:last-child { border-bottom: none; }
+.ex-switch-label h4 { margin: 0; font-size: 13px; font-weight: 600; color: #0f172a; }
+.ex-switch-label p { margin: 2px 0 0 0; font-size: 11px; color: #64748b; }
+
+.ex-toggle {
+  position: relative; width: 36px; height: 20px; background-color: #cbd5e1;
+  border-radius: 20px; cursor: pointer; transition: background-color 0.2s;
+}
+.ex-toggle.on { background-color: #2563eb; }
+.ex-toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  background-color: white; border-radius: 50%; transition: transform 0.2s;
+}
+.ex-toggle.on::after { transform: translateX(16px); }
+
+/* Document Upload Dropzone */
+.ex-upload-area {
+  border: 1px dashed #cbd5e1; border-radius: 8px; padding: 24px; text-align: center;
+  background-color: #f8fafc; cursor: pointer; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; transition: background-color 0.2s;
+}
+.ex-upload-area:hover { background-color: #f1f5f9; }
+.ex-upload-area p { margin: 8px 0 0 0; font-size: 12px; color: #475569; }
+.ex-upload-area span { color: #2563eb; font-weight: 600; }
+
+/* Modal Footer */
+.ex-modal-footer {
+  padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex;
+  justify-content: space-between; align-items: center; background-color: #f8fafc; flex-shrink: 0;
+}
+.ex-req-text { font-size: 11px; color: #64748b; }
+.ex-footer-actions { display: flex; gap: 12px; }
+.ex-btn-discard { padding: 8px 16px; border: 1px solid #cbd5e1; background: #ffffff; color: #64748b; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.ex-btn-draft { padding: 8px 16px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.ex-btn-publish { padding: 8px 20px; border: none; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.ex-btn-publish:hover { background: #1d4ed8; }

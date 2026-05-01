@@ -1,0 +1,286 @@
+/* =========================================
+   FeeManagement.css
+   Admin - Fee Management & Modal
+   ========================================= */
+
+.fm-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.fm-header-left h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  letter-spacing: -0.5px;
+}
+
+.fm-header-left p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.fm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fm-btn-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.fm-btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.fm-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #dbeafe;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Data Table Card */
+.fm-table-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0; 
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
+  overflow: hidden;
+}
+
+/* Card Header */
+.fm-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  background-color: #ffffff;
+}
+
+.fm-card-header h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.fm-filter-pills { display: flex; gap: 8px; }
+
+.fm-filter-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fm-filter-pill:hover { border-color: #cbd5e1; color: #334155; }
+.fm-filter-pill.active { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+
+/* Search Area */
+.fm-search-area {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #fafbfc;
+  flex-shrink: 0;
+}
+
+.fm-search-box { position: relative; width: 100%; max-width: 400px;}
+.fm-search-box input {
+  width: 100%;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  font-size: 12px;
+  color: #334155;
+  transition: all 0.2s ease;
+}
+.fm-search-box input:focus { outline: none; border-color: #2d6cdf; box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.1); }
+
+/* Table Area */
+.fm-table-scroll { overflow-y: auto; flex-grow: 1; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+.fm-table-scroll::-webkit-scrollbar { width: 6px; }
+.fm-table-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+.fm-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 900px; }
+.fm-table th { position: sticky; top: 0; background-color: #ffffff; padding: 12px 20px; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; z-index: 10; }
+.fm-table td { padding: 12px 20px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; font-weight: 500; vertical-align: middle; }
+.fm-table tr:hover td { background-color: #f8fafc; }
+
+/* Status Pills & Buttons */
+.fm-pill { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 12px; text-transform: uppercase; display: inline-block; }
+.fm-pill.paid { background-color: #dcfce7; color: #16a34a; }
+.fm-pill.pending { background-color: #fef3c7; color: #d97706; }
+.fm-pill.overdue { background-color: #fee2e2; color: #dc2626; }
+
+.fm-action-btn {
+  padding: 6px 14px; border: 1px solid #e2e8f0; background-color: #ffffff;
+  border-radius: 16px; font-size: 11px; font-weight: 700; color: #475569;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.fm-action-btn:hover { border-color: #94a3b8; color: #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.fm-action-btn.escalate { color: #dc2626; border-color: #fecaca; background-color: #fef2f2; }
+.fm-action-btn.escalate:hover { background-color: #fee2e2; }
+
+/* Pagination Footer */
+.fm-pagination-footer { padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; flex-shrink: 0; }
+.fm-page-info { font-size: 11px; color: #64748b; font-weight: 500; }
+.fm-page-buttons { display: flex; gap: 6px; }
+.fm-page-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; border-radius: 6px; background-color: #ffffff; color: #64748b; font-size: 11px; font-weight: 600; cursor: pointer; }
+.fm-page-btn.active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+
+
+/* =========================================
+   ✨ RECORD FEE PAYMENT MODAL ✨
+   ========================================= */
+
+/* Blur Overlay */
+.fm-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(5px); 
+  z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+
+/* Modal Container */
+.fm-modal {
+  background-color: #ffffff; width: 100%; max-width: 1000px; max-height: 90vh; 
+  border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* Header */
+.fm-modal-header {
+  padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex;
+  justify-content: space-between; align-items: center; background-color: #ffffff; flex-shrink: 0;
+}
+.fm-modal-title-group { display: flex; align-items: center; gap: 12px; }
+.fm-modal-icon { width: 32px; height: 32px; background-color: #fef3c7; color: #d97706; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.fm-modal-title h2 { margin: 0; font-size: 16px; font-weight: 700; color: #0f172a; }
+.fm-modal-title p { margin: 2px 0 0 0; font-size: 11px; color: #64748b; }
+.fm-badge-pill { background-color: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+
+/* Body */
+.fm-modal-body {
+  padding: 24px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column;
+  gap: 24px; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
+}
+.fm-modal-body::-webkit-scrollbar { width: 6px; }
+.fm-modal-body::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+/* Section Title */
+.fm-section-title {
+  font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+  letter-spacing: 0.05em; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 6px; display: flex; align-items: center; gap: 6px;
+}
+
+/* Forms */
+.fm-form-row-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 16px; }
+.fm-form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.fm-form-group { display: flex; flex-direction: column; gap: 6px; }
+.fm-form-group label { font-size: 12px; font-weight: 600; color: #334155; }
+.fm-form-group label span { color: #ef4444; }
+
+.fm-input { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #ffffff; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+.fm-input:focus { border-color: #2563eb; }
+.fm-input:disabled { background-color: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+.fm-textarea { min-height: 80px; resize: vertical; }
+
+/* 👇 INPUT ICON WRAPPER FIX 👇 */
+.fm-input-icon-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
+.fm-input-icon { position: absolute; left: 12px; color: #94a3b8; width: 14px; height: 14px; pointer-events: none; }
+.fm-input-icon-wrapper .fm-input { padding-left: 36px; width: 100%; }
+/* 👆 FIX COMPLETE 👆 */
+
+/* Student Selected Card */
+.fm-student-card {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #f8fafc;
+}
+.fm-stu-info { display: flex; align-items: center; gap: 12px; }
+.fm-stu-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #fce7f3; color: #db2777; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.fm-stu-details h4 { margin: 0 0 2px 0; font-size: 14px; font-weight: 700; color: #0f172a; }
+.fm-stu-details p { margin: 0; font-size: 11px; color: #64748b; }
+.fm-stu-fee-info { text-align: right; }
+.fm-stu-fee-info h4 { margin: 0 0 2px 0; font-size: 13px; font-weight: 700; color: #2563eb; }
+.fm-stu-fee-info p { margin: 0; font-size: 11px; color: #16a34a; font-weight: 500; }
+
+/* Fee Breakdown Area */
+.fm-breakdown-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+.fm-breakdown-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.fm-breakdown-row:last-child { margin-bottom: 0; }
+.fm-bd-label h4 { margin: 0 0 2px 0; font-size: 12px; font-weight: 600; color: #334155; }
+.fm-bd-label p { margin: 0; font-size: 11px; color: #94a3b8; }
+.fm-bd-val { font-size: 12px; font-weight: 600; color: #0f172a; }
+
+.fm-breakdown-total {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 16px; padding-top: 16px; border-top: 1px solid #cbd5e1;
+}
+.fm-bd-total-label { font-size: 14px; font-weight: 800; color: #0f172a; }
+.fm-bd-total-val { font-size: 16px; font-weight: 800; color: #2563eb; }
+
+/* Custom Radio Group */
+.fm-radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.fm-radio-label {
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+  border: 1px solid #cbd5e1; border-radius: 20px; font-size: 12px; font-weight: 500;
+  color: #475569; cursor: pointer; transition: all 0.2s;
+}
+.fm-radio-label input { display: none; }
+.fm-radio-label:has(input:checked) { border-color: #2563eb; color: #2563eb; background-color: #eff6ff; font-weight: 600; }
+.fm-radio-circle { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #cbd5e1; display: inline-block; position: relative; }
+.fm-radio-label input:checked + .fm-radio-circle { border-color: #2563eb; }
+.fm-radio-label input:checked + .fm-radio-circle::after { content: ''; width: 8px; height: 8px; background-color: #2563eb; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+/* Receipt Toggles */
+.fm-receipt-toggles { display: flex; flex-direction: column; gap: 12px; }
+.fm-switch-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+.fm-switch-label h4 { margin: 0; font-size: 12px; font-weight: 600; color: #334155; }
+
+.fm-toggle { position: relative; width: 36px; height: 20px; background-color: #cbd5e1; border-radius: 20px; cursor: pointer; transition: background-color 0.2s; }
+.fm-toggle.on { background-color: #2563eb; }
+.fm-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background-color: white; border-radius: 50%; transition: transform 0.2s; }
+.fm-toggle.on::after { transform: translateX(16px); }
+
+/* Footer */
+.fm-modal-footer { padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc; flex-shrink: 0; }
+.fm-req-text { font-size: 11px; color: #64748b; }
+.fm-footer-actions { display: flex; gap: 12px; }
+.fm-btn-discard { padding: 8px 16px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.fm-btn-publish { padding: 8px 20px; border: none; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.fm-btn-publish:hover { background: #1d4ed8; }
