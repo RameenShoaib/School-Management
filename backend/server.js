@@ -155,3 +155,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Backend Server is running on http://localhost:${PORT}`);
 });
+
+// Today we make the student and teacher view dynamic with our database
