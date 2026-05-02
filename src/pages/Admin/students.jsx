@@ -14,64 +14,127 @@ export default function Students() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // 👇 Nayi States Database Data ke liye 👇
+  // Database States
   const [studentsData, setStudentsData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  
+  // Form & Stepper States
+  const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 7; 
 
-  // Component load hotay hi Data fetch karna
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/students");
-        const result = await response.json();
+  const initialFormState = {
+    firstName: '', middleName: '', lastName: '', 
+    dob: '', gender: '', bloodGroup: '', cnic: '', religion: '',
+    email: '', phone: '', address: '', city: '', province: '', postalCode: '',
+    grade: '', section: '', rollNo: '', admissionDate: '', prevSchool: '',
+    guardianName: '', guardianRelation: '', guardianOccupation: '', guardianContact: '', guardianEmail: '',
+    monthlyFee: '', feeDiscount: '', notes: ''
+  };
+  const [formData, setFormData] = useState(initialFormState);
 
-        if (result.success) {
-          // Data ko frontend format mein map kar rahe hain
-          const formattedData = result.data.map(student => ({
-            id: student.student_id,
-            name: `${student.first_name} ${student.last_name}`,
-            rollNo: student.roll_no,
-            grade: student.grade,
-            section: student.section,
-            guardian: student.guardian_name,
-            feeStatus: student.fee_status ? student.fee_status.toUpperCase() : "PENDING",
-            feeClass: student.fee_status ? student.fee_status.toLowerCase() : "pending",
-            status: student.status ? student.status.toUpperCase() : "ACTIVE",
-            statusClass: student.status && student.status.toLowerCase() === 'on leave' ? 'leave' : 'active'
-          }));
-          
-          setStudentsData(formattedData);
-        } else {
-          setError(result.message);
-        }
-      } catch (err) {
-        console.error("Failed to fetch students:", err);
-        setError("Could not connect to database.");
-      } finally {
-        setIsLoading(false);
+  const fetchStudents = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("http://localhost:5000/api/students");
+      const result = await response.json();
+      if (result.success) {
+        const formattedData = result.data.map(student => ({
+          id: student.student_id,
+          name: `${student.first_name} ${student.last_name}`,
+          rollNo: student.roll_no,
+          grade: student.grade,
+          section: student.section,
+          guardian: student.guardian_name,
+          feeStatus: student.fee_status ? student.fee_status.toUpperCase() : "PENDING",
+          feeClass: student.fee_status ? student.fee_status.toLowerCase() : "pending",
+          status: student.status ? student.status.toUpperCase() : "ACTIVE",
+          statusClass: student.status && student.status.toLowerCase() === 'on leave' ? 'leave' : 'active'
+        }));
+        setStudentsData(formattedData);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch students:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchStudents();
-  }, []); // Empty array ka matlab hai sirf page load par chalega
+  }, []);
 
-  // Filtering Logic
-  const filteredRecords = studentsData.filter(record => {
-    return (
-      record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.rollNo.includes(searchTerm) ||
-      record.grade.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const nextStep = () => {
+    if (step === 1 && (!formData.firstName || !formData.lastName || !formData.dob || !formData.gender || !formData.address)) {
+      alert("Please fill all required (*) fields in Personal Info & Address.");
+      return;
+    }
+    if (step === 2 && (!formData.grade || !formData.section || !formData.admissionDate)) {
+      alert("Please fill all required (*) fields in Academic Details.");
+      return;
+    }
+    if (step === 3 && (!formData.guardianName || !formData.guardianContact)) {
+      alert("Please fill all required (*) fields in Guardian Info.");
+      return;
+    }
+    setStep(prev => Math.min(prev + 1, 4));
+  };
+
+  const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+  const handleAddStudent = async () => {
+    if (!formData.monthlyFee) {
+      alert("Please enter the Monthly Fee.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("http://localhost:5000/api/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsModalOpen(false); 
+        setStep(1); 
+        setFormData(initialFormState); 
+        fetchStudents(); 
+      } else {
+        alert("Error: " + data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to server.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredRecords = studentsData.filter(record => 
+    record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (record.rollNo && record.rollNo.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const lastRecordIndex = currentPage * recordsPerPage;
+  const firstRecordIndex = lastRecordIndex - recordsPerPage;
+  const currentRecords = filteredRecords.slice(firstRecordIndex, lastRecordIndex);
+  const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
 
   return (
-    <DashboardLayout 
-      userRole="admin" 
-      currentPath="/students" 
-      userName="System Admin" 
-      userInitials="SA"
-    >
+    <DashboardLayout userRole="admin" currentPath="/students" userName="System Admin" userInitials="SA">
       <div className="st-page-header">
         <div className="st-header-left">
           <h2>Students Directory</h2>
@@ -90,12 +153,7 @@ export default function Students() {
         <div className="st-search-area">
           <div className="st-search-box">
             <SvgSearch />
-            <input 
-              type="text" 
-              placeholder="Search by name, roll no, class..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <input type="text" placeholder="Search by name, roll no..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </div>
         
@@ -103,75 +161,66 @@ export default function Students() {
           <table className="st-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Roll No</th>
-                <th>Grade</th>
-                <th>Section</th>
-                <th>Guardian</th>
-                <th>Fee Status</th>
-                <th>Status</th>
-                <th></th> 
+                <th>Name</th><th>Roll No</th><th>Grade</th><th>Section</th><th>Guardian</th><th>Fee Status</th><th>Status</th><th></th> 
               </tr>
             </thead>
             <tbody>
-              {/* 👇 Loading & Error Handling 👇 */}
-              {isLoading ? (
-                <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                    Loading students from database...
-                  </td>
+              {isLoading ? <tr><td colSpan="8" style={{ textAlign: 'center', padding: '3rem' }}>Loading data...</td></tr> : 
+               currentRecords.length > 0 ? currentRecords.map((record) => (
+                <tr key={record.id}>
+                  <td style={{ fontWeight: 600 }}>{record.name}</td>
+                  <td>{record.rollNo}</td><td>{record.grade}</td><td>{record.section}</td>
+                  <td>{record.guardian}</td>
+                  <td><span className={`st-pill ${record.feeClass}`}>{record.feeStatus}</span></td>
+                  <td><span className={`st-pill ${record.statusClass}`}>{record.status}</span></td>
+                  <td style={{ textAlign: 'right' }}><button className="st-view-btn">View</button></td>
                 </tr>
-              ) : error ? (
-                <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#ef4444' }}>
-                    {error}
-                  </td>
-                </tr>
-              ) : filteredRecords.length > 0 ? (
-                filteredRecords.map((record) => (
-                  <tr key={record.id}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.rollNo}</td>
-                    <td>{record.grade}</td>
-                    <td>{record.section}</td>
-                    <td>{record.guardian}</td>
-                    <td><span className={`st-pill ${record.feeClass}`}>{record.feeStatus}</span></td>
-                    <td><span className={`st-pill ${record.statusClass}`}>{record.status}</span></td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button className="st-view-btn">View</button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                    No students found matching your search.
-                  </td>
-                </tr>
-              )}
+              )) : <tr><td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No records found.</td></tr>}
             </tbody>
           </table>
         </div>
 
+        {/* 👇 YAHAN TEXT FORMAT THEEK KIYA HAI 👇 */}
         <div className="st-pagination-footer">
-          <span className="st-page-info">Showing {filteredRecords.length} records</span>
+          <span className="st-page-info">
+            Showing {filteredRecords.length > 0 ? firstRecordIndex + 1 : 0} to {Math.min(lastRecordIndex, filteredRecords.length)} of {filteredRecords.length}
+          </span>
           <div className="st-page-buttons">
-            <button className="st-page-btn active">1</button>
-            <button className="st-page-btn">2</button>
-            <button className="st-page-btn">3</button>
-            <button className="st-page-btn">&gt;</button>
+            <button 
+              className="st-page-btn" 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              style={{ cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+            >
+              &lt;
+            </button>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <button 
+                key={index + 1} 
+                className={`st-page-btn ${currentPage === index + 1 ? 'active' : ''}`}
+                onClick={() => setCurrentPage(index + 1)}
+              >
+                {index + 1}
+              </button>
+            ))}
+
+            <button 
+              className="st-page-btn" 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              style={{ cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer' }}
+            >
+              &gt;
+            </button>
           </div>
         </div>
       </div>
 
-      {/* =========================================
-          ✨ ADD STUDENT MODAL ✨ (Untouched)
-          ========================================= */}
       {isModalOpen && (
         <div className="st-modal-overlay">
           <div className="st-modal">
             
-            {/* Modal Header */}
             <div className="st-modal-header">
               <div className="st-modal-title-group">
                 <div className="st-modal-icon"><IconStudent /></div>
@@ -183,256 +232,255 @@ export default function Students() {
               <div className="st-badge-pill">New enrollment</div>
             </div>
 
-            {/* Stepper tracker */}
             <div className="st-stepper">
-              <div className="st-step active"><span className="st-step-icon">✓</span> Personal info</div>
+              <div className={`st-step ${step >= 1 ? 'active current' : ''}`}><span className="st-step-circle">{step > 1 ? '✓' : '1'}</span> Personal info</div>
               <div className="st-step-line"></div>
-              <div className="st-step current"><span className="st-step-circle">2</span> Academic details</div>
+              <div className={`st-step ${step >= 2 ? 'active current' : ''}`}><span className="st-step-circle">{step > 2 ? '✓' : '2'}</span> Academic details</div>
               <div className="st-step-line"></div>
-              <div className="st-step"><span className="st-step-circle">3</span> Guardian info</div>
+              <div className={`st-step ${step >= 3 ? 'active current' : ''}`}><span className="st-step-circle">{step > 3 ? '✓' : '3'}</span> Guardian info</div>
               <div className="st-step-line"></div>
-              <div className="st-step"><span className="st-step-circle">4</span> Fee & documents</div>
+              <div className={`st-step ${step >= 4 ? 'active current' : ''}`}><span className="st-step-circle">4</span> Fee & documents</div>
             </div>
 
-            {/* Modal Body */}
             <div className="st-modal-body">
-              
-              {/* SECTION 1: PERSONAL INFORMATION */}
-              <div>
-                <div className="st-section-title">Personal Information</div>
-                
-                <div className="st-photo-upload-row">
-                  <div className="st-photo-circle"><IconUser /></div>
+              {step === 1 && (
+                <>
                   <div>
-                    <button className="st-btn-upload">Upload photo</button>
-                    <div className="st-photo-text">JPG or PNG, max 2 MB</div>
-                  </div>
-                </div>
+                    <div className="st-section-title">Personal Information</div>
+                    <div className="st-photo-upload-row">
+                      <div className="st-photo-circle"><IconUser /></div>
+                      <div>
+                        <button className="st-btn-upload">Upload photo</button>
+                        <div className="st-photo-text">JPG or PNG, max 2 MB</div>
+                      </div>
+                    </div>
 
-                <div className="st-form-row-3">
-                  <div className="st-form-group">
-                    <label>First name <span>*</span></label>
-                    <input type="text" className="st-input" placeholder="e.g. Ayesha" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Middle name</label>
-                    <input type="text" className="st-input" placeholder="Optional" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Last name <span>*</span></label>
-                    <input type="text" className="st-input" placeholder="e.g. Khan" />
-                  </div>
-                </div>
+                    <div className="st-form-row-3">
+                      <div className="st-form-group">
+                        <label>First name <span>*</span></label>
+                        <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className="st-input" placeholder="e.g. Ayesha" />
+                      </div>
+                      <div className="st-form-group">
+                        <label>Middle name</label>
+                        <input type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} className="st-input" placeholder="Optional" />
+                      </div>
+                      <div className="st-form-group">
+                        <label>Last name <span>*</span></label>
+                        <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className="st-input" placeholder="e.g. Khan" />
+                      </div>
+                    </div>
 
-                <div className="st-form-row-3">
-                  <div className="st-form-group">
-                    <label>Date of birth <span>*</span></label>
-                    <input type="date" className="st-input" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Gender <span>*</span></label>
-                    <select className="st-input">
-                      <option>Select gender</option>
-                      <option>Female</option>
-                      <option>Male</option>
-                    </select>
-                  </div>
-                  <div className="st-form-group">
-                    <label>Blood group</label>
-                    <select className="st-input">
-                      <option>Select</option>
-                      <option>O+</option>
-                      <option>A+</option>
-                      <option>B+</option>
-                    </select>
-                  </div>
-                </div>
+                    <div className="st-form-row-3">
+                      <div className="st-form-group">
+                        <label>Date of birth <span>*</span></label>
+                        <input type="date" name="dob" value={formData.dob} onChange={handleInputChange} className="st-input" />
+                      </div>
+                      <div className="st-form-group">
+                        <label>Gender <span>*</span></label>
+                        <select name="gender" value={formData.gender} onChange={handleInputChange} className="st-input">
+                          <option value="">Select gender</option>
+                          <option value="Female">Female</option>
+                          <option value="Male">Male</option>
+                        </select>
+                      </div>
+                      <div className="st-form-group">
+                        <label>Blood group</label>
+                        <select name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange} className="st-input">
+                          <option value="">Select</option><option value="O+">O+</option><option value="A+">A+</option><option value="B+">B+</option>
+                        </select>
+                      </div>
+                    </div>
 
-                <div className="st-form-row-2">
-                  <div className="st-form-group">
-                    <label>CNIC / B-Form number</label>
-                    <input type="text" className="st-input" placeholder="XXXXX-XXXXXXX-X" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Religion</label>
-                    <select className="st-input">
-                      <option>Select</option>
-                      <option>Islam</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: CONTACT & ADDRESS */}
-              <div>
-                <div className="st-section-title">Contact & Address</div>
-                
-                <div className="st-form-row-2">
-                  <div className="st-form-group">
-                    <label>Student email</label>
-                    <input type="email" className="st-input" placeholder="✉️ student@school.edu" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Phone number</label>
-                    <input type="text" className="st-input" placeholder="📞 +92 xxx xxxxxxx" />
-                  </div>
-                </div>
-
-                <div className="st-form-group" style={{ marginBottom: '16px' }}>
-                  <label>Home address <span>*</span></label>
-                  <input type="text" className="st-input" placeholder="Street, area, city" />
-                </div>
-
-                <div className="st-form-row-3">
-                  <div className="st-form-group">
-                    <label>City</label>
-                    <input type="text" className="st-input" placeholder="e.g. Karachi" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Province</label>
-                    <select className="st-input">
-                      <option>Select</option>
-                      <option>Sindh</option>
-                      <option>Punjab</option>
-                    </select>
-                  </div>
-                  <div className="st-form-group">
-                    <label>Postal code</label>
-                    <input type="text" className="st-input" placeholder="75500" />
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: ACADEMIC DETAILS */}
-              <div>
-                <div className="st-section-title">Academic Details</div>
-                
-                <div className="st-form-row-3">
-                  <div className="st-form-group">
-                    <label>Grade <span>*</span></label>
-                    <select className="st-input">
-                      <option>Select grade</option>
-                      <option>Grade 7</option>
-                    </select>
-                  </div>
-                  <div className="st-form-group">
-                    <label>Section <span>*</span></label>
-                    <select className="st-input">
-                      <option>Select section</option>
-                      <option>A</option>
-                      <option>B</option>
-                    </select>
-                  </div>
-                  <div className="st-form-group">
-                    <label>Roll number</label>
-                    <input type="text" className="st-input" placeholder="Auto-generated" disabled />
-                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>Leave blank to auto-assign</span>
-                  </div>
-                </div>
-
-                <div className="st-form-row-2">
-                  <div className="st-form-group">
-                    <label>Admission date <span>*</span></label>
-                    <input type="date" className="st-input" defaultValue="2026-04-20" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Previous school (if any)</label>
-                    <input type="text" className="st-input" placeholder="Name of previous school" />
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 4: GUARDIAN INFORMATION */}
-              <div>
-                <div className="st-section-title">Guardian Information</div>
-                
-                <div className="st-form-row-3">
-                  <div className="st-form-group">
-                    <label>Guardian name <span>*</span></label>
-                    <input type="text" className="st-input" placeholder="Full name" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Relationship</label>
-                    <select className="st-input">
-                      <option>Father</option>
-                      <option>Mother</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-                  <div className="st-form-group">
-                    <label>Occupation</label>
-                    <input type="text" className="st-input" placeholder="e.g. Engineer" />
-                  </div>
-                </div>
-
-                <div className="st-form-row-2">
-                  <div className="st-form-group">
-                    <label>Guardian contact <span>*</span></label>
-                    <input type="text" className="st-input" placeholder="📞 +92 xxx xxxxxxx" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Guardian email</label>
-                    <input type="email" className="st-input" placeholder="✉️ guardian@email.com" />
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 5: FEE & DOCUMENTS */}
-              <div>
-                <div className="st-section-title">Fee & Documents</div>
-                
-                <div className="st-form-row-2">
-                  <div className="st-form-group">
-                    <label>Monthly fee (PKR) <span>*</span></label>
-                    <input type="text" className="st-input" placeholder="Rs e.g. 4500" />
-                  </div>
-                  <div className="st-form-group">
-                    <label>Fee waiver / discount</label>
-                    <select className="st-input">
-                      <option>No discount</option>
-                      <option>10% Sibling discount</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="st-alert-box">
-                  <IconInfo />
-                  <p>Upload at least the birth certificate and guardian CNIC to complete enrollment.</p>
-                </div>
-
-                <div className="st-form-row-2" style={{ alignItems: 'stretch' }}>
-                  <div className="st-form-group">
-                    <label>Documents to upload</label>
-                    <div className="st-upload-area">
-                      <IconFolder />
-                      <p><span>Click to upload</span> documents</p>
-                      <p style={{ fontSize: '10px', color: '#94a3b8' }}>Birth cert, CNIC, transfer cert - PDF, JPG</p>
+                    <div className="st-form-row-3">
+                      <div className="st-form-group">
+                        <label>CNIC / B-Form number</label>
+                        <input type="text" name="cnic" value={formData.cnic} onChange={handleInputChange} className="st-input" placeholder="XXXXX-XXXXXXX-X" />
+                      </div>
+                      <div className="st-form-group">
+                        <label>Religion</label>
+                        <select name="religion" value={formData.religion} onChange={handleInputChange} className="st-input">
+                          <option value="">Select</option><option value="Islam">Islam</option><option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div className="st-form-group"></div>
                     </div>
                   </div>
-                  <div className="st-form-group">
-                    <label>Additional notes</label>
-                    <textarea className="st-input st-textarea" placeholder="Any special requirements, medical conditions, or notes..."></textarea>
+
+                  <div style={{marginTop: '24px'}}>
+                    <div className="st-section-title">Contact & Address</div>
+                    <div className="st-form-row-3">
+                      <div className="st-form-group">
+                        <label>Student email</label>
+                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="st-input" placeholder="✉️ student@school.edu" />
+                      </div>
+                      <div className="st-form-group">
+                        <label>Phone number</label>
+                        <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} className="st-input" placeholder="📞 +92 xxx xxxxxxx" />
+                      </div>
+                      <div className="st-form-group"></div> 
+                    </div>
+
+                    <div className="st-form-group" style={{ marginBottom: '16px' }}>
+                      <label>Home address <span>*</span></label>
+                      <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="st-input" placeholder="Street, area, city" />
+                    </div>
+
+                    <div className="st-form-row-3">
+                      <div className="st-form-group">
+                        <label>City</label>
+                        <input type="text" name="city" value={formData.city} onChange={handleInputChange} className="st-input" placeholder="e.g. Karachi" />
+                      </div>
+                      <div className="st-form-group">
+                        <label>Province</label>
+                        <select name="province" value={formData.province} onChange={handleInputChange} className="st-input">
+                          <option value="">Select</option><option value="Sindh">Sindh</option><option value="Punjab">Punjab</option>
+                        </select>
+                      </div>
+                      <div className="st-form-group">
+                        <label>Postal code</label>
+                        <input type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange} className="st-input" placeholder="75500" />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {step === 2 && (
+                <div>
+                  <div className="st-section-title">Academic Details</div>
+                  <div className="st-form-row-3">
+                    <div className="st-form-group">
+                      <label>Grade <span>*</span></label>
+                      <select name="grade" value={formData.grade} onChange={handleInputChange} className="st-input">
+                        <option value="">Select grade</option>
+                        <option value="Grade 5">Grade 5</option>
+                        <option value="Grade 7">Grade 7</option>
+                        <option value="Grade 10">Grade 10</option>
+                      </select>
+                    </div>
+                    <div className="st-form-group">
+                      <label>Section <span>*</span></label>
+                      <select name="section" value={formData.section} onChange={handleInputChange} className="st-input">
+                        <option value="">Select section</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                      </select>
+                    </div>
+                    <div className="st-form-group">
+                      <label>Roll number</label>
+                      <input type="text" className="st-input" placeholder="Auto-generated" disabled />
+                    </div>
+                  </div>
+
+                  <div className="st-form-row-3">
+                    <div className="st-form-group">
+                      <label>Admission date <span>*</span></label>
+                      <input type="date" name="admissionDate" value={formData.admissionDate} onChange={handleInputChange} className="st-input" />
+                    </div>
+                    <div className="st-form-group">
+                      <label>Previous school (if any)</label>
+                      <input type="text" name="prevSchool" value={formData.prevSchool} onChange={handleInputChange} className="st-input" placeholder="Name of previous school" />
+                    </div>
+                    <div className="st-form-group"></div>
                   </div>
                 </div>
-              </div>
+              )}
 
+              {step === 3 && (
+                <div>
+                  <div className="st-section-title">Guardian Information</div>
+                  <div className="st-form-row-3">
+                    <div className="st-form-group">
+                      <label>Guardian name <span>*</span></label>
+                      <input type="text" name="guardianName" value={formData.guardianName} onChange={handleInputChange} className="st-input" placeholder="Full name" />
+                    </div>
+                    <div className="st-form-group">
+                      <label>Relationship</label>
+                      <select name="guardianRelation" value={formData.guardianRelation} onChange={handleInputChange} className="st-input">
+                        <option value="">Select</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                      </select>
+                    </div>
+                    <div className="st-form-group">
+                      <label>Occupation</label>
+                      <input type="text" name="guardianOccupation" value={formData.guardianOccupation} onChange={handleInputChange} className="st-input" placeholder="e.g. Engineer" />
+                    </div>
+                  </div>
+
+                  <div className="st-form-row-3">
+                    <div className="st-form-group">
+                      <label>Guardian contact <span>*</span></label>
+                      <input type="text" name="guardianContact" value={formData.guardianContact} onChange={handleInputChange} className="st-input" placeholder="📞 +92 xxx xxxxxxx" />
+                    </div>
+                    <div className="st-form-group">
+                      <label>Guardian email</label>
+                      <input type="email" name="guardianEmail" value={formData.guardianEmail} onChange={handleInputChange} className="st-input" placeholder="✉️ guardian@email.com" />
+                    </div>
+                    <div className="st-form-group"></div>
+                  </div>
+                </div>
+              )}
+
+              {step === 4 && (
+                <div>
+                  <div className="st-section-title">Fee & Documents</div>
+                  <div className="st-form-row-3">
+                    <div className="st-form-group">
+                      <label>Monthly fee (PKR) <span>*</span></label>
+                      <input type="number" name="monthlyFee" value={formData.monthlyFee} onChange={handleInputChange} className="st-input" placeholder="Rs e.g. 4500" />
+                    </div>
+                    <div className="st-form-group">
+                      <label>Fee waiver / discount</label>
+                      <select name="feeDiscount" value={formData.feeDiscount} onChange={handleInputChange} className="st-input">
+                        <option value="">No discount</option>
+                        <option value="10%">10% Sibling discount</option>
+                      </select>
+                    </div>
+                    <div className="st-form-group"></div>
+                  </div>
+
+                  <div className="st-alert-box" style={{marginTop: '15px'}}>
+                    <IconInfo />
+                    <p>Upload at least the birth certificate and guardian CNIC to complete enrollment.</p>
+                  </div>
+
+                  <div className="st-form-row-2" style={{ alignItems: 'stretch', marginTop: '15px' }}>
+                    <div className="st-form-group">
+                      <label>Documents to upload</label>
+                      <div className="st-upload-area">
+                        <IconFolder />
+                        <p><span>Click to upload</span> documents</p>
+                        <p style={{ fontSize: '10px', color: '#94a3b8' }}>Birth cert, CNIC, transfer cert - PDF, JPG</p>
+                      </div>
+                    </div>
+                    <div className="st-form-group">
+                      <label>Additional notes</label>
+                      <textarea name="notes" value={formData.notes} onChange={handleInputChange} className="st-input st-textarea" placeholder="Any special requirements, medical conditions..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Modal Footer */}
             <div className="st-modal-footer">
-              <div className="st-req-text">* Required fields - Step 2 of 4</div>
+              <div className="st-req-text">* Required fields - Step {step} of 4</div>
               <div className="st-footer-actions">
                 <button className="st-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button className="st-btn-draft">← Back</button>
-                <button className="st-btn-publish" onClick={() => setIsModalOpen(false)}>Save & continue →</button>
+                {step > 1 && <button className="st-btn-draft" onClick={prevStep}>← Back</button>}
+                {step < 4 ? (
+                  <button className="st-btn-publish" onClick={nextStep}>Save & continue →</button>
+                ) : (
+                  <button className="st-btn-publish" onClick={handleAddStudent} disabled={isSubmitting}>
+                    {isSubmitting ? "Submitting..." : "Submit Registration ✓"}
+                  </button>
+                )}
               </div>
             </div>
 
           </div>
         </div>
       )}
-
     </DashboardLayout>
   );
 }
