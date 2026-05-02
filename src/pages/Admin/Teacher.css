@@ -1,630 +1,124 @@
 /* =========================================
    Teacher.css
-   Admin - Teachers Directory View
+   EduSync - Teachers Directory & Modal Styles
    ========================================= */
 
-.tc-page-header {
+/* --- PAGE HEADER --- */
+.tc-page-header 
+ { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-shrink: 0; }
+.tc-header-left h2 { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; letter-spacing: -0.5px; }
+.tc-header-left p { font-size: 13px; color: #64748b; margin: 0; }
+.tc-header-right { display: flex; align-items: center; gap: 12px; }
+
+.tc-btn-primary { background-color: #2563eb; color: #ffffff; border: none; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease; }
+.tc-btn-primary:hover { background-color: #1d4ed8; }
+.tc-btn-secondary { background-color: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.tc-btn-secondary:hover { background-color: #f8fafc; border-color: #94a3b8; }
+.tc-avatar { width: 36px; height: 36px; border-radius: 50%; background-color: #dbeafe; color: #1e40af; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-left: 8px; }
+
+/* --- STATS ROW --- */
+.tc-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+.tc-stat-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.tc-stat-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
+.tc-stat-value { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+.tc-stat-sub { font-size: 11px; font-weight: 600; }
+.tc-stat-sub.neutral { color: #94a3b8; }
+.tc-stat-sub.red { color: #ef4444; }
+.tc-stat-sub.green { color: #10b981; }
+.tc-stat-sub.blue { color: #3b82f6; }
+
+/* --- TABLE CARD --- */
+.tc-table-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; margin-top: 4px; }
+
+/* 👇 YAHAN SEARCH AREA KO 100% STUDENT JAISA BANAYA HAI 👇 */
+.tc-controls-row {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #fafbfc; /* Student wala Grey background */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-
-.tc-header-left h2 {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 2px 0;
-  letter-spacing: -0.5px;
-}
-
-.tc-header-left p {
-  font-size: 13px;
-  color: #64748b;
-  margin: 0;
-}
-
-.tc-header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.tc-btn-primary {
-  background-color: #2563eb;
-  color: #ffffff;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.tc-btn-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.tc-btn-secondary {
-  background-color: #ffffff;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tc-btn-secondary:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.tc-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: #dbeafe;
-  color: #1e40af;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-/* Stats Row */
-.tc-stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-
-.tc-stat-card {
-  background-color: #f8fafc;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-}
-
-.tc-stat-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
-}
-
-.tc-stat-value {
-  font-size: 24px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 4px;
-}
-
-.tc-stat-sub {
-  font-size: 11px;
-  font-weight: 600;
-}
-.tc-stat-sub.neutral { color: #64748b; }
-.tc-stat-sub.red { color: #dc2626; }
-.tc-stat-sub.green { color: #16a34a; }
-.tc-stat-sub.blue { color: #2563eb; }
-
-/* Data Table Card */
-.tc-table-card {
-  background-color: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  min-height: 0; 
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
-  overflow: hidden;
-}
-
-/* Search Row */
-.tc-controls-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  flex-shrink: 0;
 }
 
 .tc-search-box {
-  flex-grow: 1;
-  position: relative;
-}
-
-.tc-search-box svg {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px; /* Student ki tarah chotay corners */
+  padding: 8px 12px;
+  width: 100%;
+  max-width: 400px; /* Width limit ki hai taake student page jaisa lage */
   color: #94a3b8;
 }
 
-.tc-search-box input {
-  width: 100%;
-  padding: 10px 16px 10px 38px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
-  font-size: 13px;
-  color: #334155;
-  transition: all 0.2s ease;
-}
+.tc-search-box svg { width: 16px; height: 16px; margin-right: 8px; flex-shrink: 0; }
+.tc-search-box input { border: none; outline: none; width: 100%; font-size: 13px; color: #0f172a; background: transparent; }
+.tc-search-box input::placeholder { color: #94a3b8; }
 
-.tc-search-box input:focus {
-  outline: none;
-  background-color: #ffffff;
-  border-color: #2d6cdf;
-  box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.1);
-}
+.tc-filter-pills { display: flex; gap: 8px; }
+.tc-filter-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.tc-filter-pill.active { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.tc-filter-pill:hover:not(.active) { background: #f8fafc; border-color: #94a3b8; }
 
-.tc-filter-pills {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
+/* --- TABLE STYLES --- */
+.tc-table-scroll { overflow-x: auto; width: 100%; }
+.tc-table { width: 100%; border-collapse: collapse; text-align: left; }
+.tc-table th { padding: 14px 20px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }
+.tc-table td { padding: 16px 20px; font-size: 13px; color: #334155; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+.tc-table tr:hover { background-color: #f8fafc; }
 
-.tc-filter-pill {
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+.tc-view-btn { background: transparent; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; }
+.tc-view-btn:hover { background: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
 
-.tc-filter-pill:hover {
-  border-color: #cbd5e1;
-  color: #334155;
-}
+.tc-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; display: inline-block; }
+.status-active { background-color: #dcfce7; color: #16a34a; }
+.status-leave { background-color: #fef3c7; color: #d97706; }
 
-.tc-filter-pill.active {
-  background-color: #eff6ff;
-  color: #2563eb;
-  border-color: #bfdbfe;
-}
-
-/* Scrollable Table Area */
-.tc-table-scroll {
-  overflow-y: auto;
-  flex-grow: 1;
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
-}
-
-.tc-table-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-.tc-table-scroll::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 10px;
-}
-
-.tc-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  min-width: 900px;
-}
-
-.tc-table th {
-  position: sticky;
-  top: 0;
-  background-color: #ffffff;
-  padding: 12px 20px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: capitalize;
-  border-bottom: 1px solid #e2e8f0;
-  z-index: 10;
-}
-
-.tc-table td {
-  padding: 14px 20px;
-  font-size: 13px;
-  color: #334155;
-  border-bottom: 1px solid #f1f5f9;
-  font-weight: 500;
-  vertical-align: middle;
-}
-
-.tc-table tr:hover td {
-  background-color: #f8fafc;
-}
-
-/* Pills & Buttons */
-.tc-pill {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
-  display: inline-block;
-}
-
-.tc-pill.status-active { background-color: #dcfce7; color: #16a34a; }
-.tc-pill.status-leave { background-color: #fef3c7; color: #d97706; }
-
-.tc-view-btn {
-  padding: 6px 14px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  border-radius: 16px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tc-view-btn:hover {
-  border-color: #94a3b8;
-  color: #0f172a;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-/* Pagination Footer */
-.tc-pagination-footer {
-  padding: 12px 20px;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #ffffff;
-  flex-shrink: 0;
-}
-
-.tc-page-info {
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.tc-page-buttons {
-  display: flex;
-  gap: 6px;
-}
-
-.tc-page-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tc-page-btn:hover { border-color: #cbd5e1; color: #0f172a; }
+/* --- PAGINATION FOOTER --- */
+.tc-pagination-footer { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid #e2e8f0; background-color: #ffffff; margin-top: auto; }
+.tc-page-info { font-size: 13px; color: #64748b; font-weight: 500; }
+.tc-page-buttons { display: flex; gap: 6px; }
+.tc-page-btn { min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.tc-page-btn:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
 .tc-page-btn.active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+.tc-page-btn:disabled { background-color: #f8fafc; color: #cbd5e1; border-color: #e2e8f0; cursor: not-allowed; }
 
+/* --- MODAL STYLES --- */
+.tc-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.tc-modal { background-color: #ffffff; width: 100%; max-width: 900px; max-height: 90vh; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column; overflow: hidden; }
 
-/* =========================================
-   ✨ ADD TEACHER MODAL & BLUR STYLES ✨
-   ========================================= */
+.tc-modal-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; flex-shrink: 0; }
+.tc-modal-title-group { display: flex; align-items: center; gap: 12px; }
+.tc-modal-icon { width: 40px; height: 40px; background-color: #fef3c7; color: #d97706; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.tc-modal-title h2 { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; }
+.tc-modal-title p { margin: 2px 0 0 0; font-size: 12px; color: #64748b; }
+.tc-badge-pill { background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; }
 
-/* Blur Overlay */
-.tc-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(5px); 
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
+.tc-modal-body { padding: 24px; overflow-y: auto; flex-grow: 1; }
+.tc-section-title { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; }
 
-/* Modal Container */
-.tc-modal {
-  background-color: #ffffff;
-  width: 100%;
-  max-width: 900px; /* Thora chaura taake 3 columns fit ayein */
-  max-height: 90vh; 
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Modal Header */
-.tc-modal-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #ffffff;
-}
-
-.tc-modal-title-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.tc-modal-icon {
-  width: 32px;
-  height: 32px;
-  background-color: #ecfdf5;
-  color: #10b981;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tc-modal-title h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.tc-modal-title p {
-  margin: 2px 0 0 0;
-  font-size: 11px;
-  color: #64748b;
-}
-
-.tc-badge-pill {
-  background-color: #f0fdf4;
-  color: #16a34a;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-/* Modal Body (No Scroller) */
-.tc-modal-body {
-  padding: 20px 24px;
-  overflow-y: auto;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  scrollbar-width: none; 
-}
-.tc-modal-body::-webkit-scrollbar {
-  display: none;
-}
-
-/* Section Title */
-.tc-section-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 6px;
-}
-
-/* Form Layouts */
-.tc-form-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.tc-form-row-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.tc-form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.tc-form-group label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #334155;
-}
+/* FORM GRIDS MATCHED TO STUDENT PAGE */
+.tc-form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+.tc-form-row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
+.tc-form-group { display: flex; flex-direction: column; gap: 6px; }
+.tc-form-group label { font-size: 12px; font-weight: 600; color: #334155; }
 .tc-form-group label span { color: #ef4444; }
-
-.tc-input {
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #0f172a;
-  background-color: #ffffff;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
+.tc-input { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; color: #0f172a; outline: none; width: 100%; box-sizing: border-box; background-color: #ffffff; transition: border-color 0.2s; }
 .tc-input:focus { border-color: #2563eb; }
+.tc-input:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
 
-.tc-input[disabled] {
-  background-color: #f1f5f9;
-  color: #94a3b8;
-  cursor: not-allowed;
-}
+.tc-photo-upload-row { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.tc-photo-circle { width: 60px; height: 60px; background-color: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
+.tc-btn-upload { background-color: #ffffff; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: #334155; margin-bottom: 4px; }
+.tc-btn-upload:hover { background-color: #f8fafc; }
+.tc-photo-text { font-size: 11px; color: #94a3b8; }
 
-.tc-textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-/* Photo Upload Layout */
-.tc-photo-upload-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.tc-photo-circle {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: #f1f5f9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-}
-
-.tc-btn-upload {
-  padding: 6px 14px;
-  border: 1px solid #cbd5e1;
-  background-color: #ffffff;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-}
-
-.tc-photo-text {
-  font-size: 11px;
-  color: #94a3b8;
-  margin-top: 4px;
-}
-
-/* Tag Input Mock (for additional subjects) */
-.tc-tag-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  background-color: #ffffff;
-}
-.tc-tag {
-  background-color: #eff6ff;
-  color: #2563eb;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.tc-tag-close { cursor: pointer; color: #94a3b8; }
-.tc-tag-input-wrapper input {
-  border: none;
-  outline: none;
-  font-size: 13px;
-  flex-grow: 1;
-}
-
-/* Document Upload Dropzone */
-.tc-upload-area {
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  padding: 24px;
-  text-align: center;
-  background-color: #f8fafc;
-  cursor: pointer;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.tc-upload-area p {
-  margin: 8px 0 0 0;
-  font-size: 12px;
-  color: #475569;
-}
-.tc-upload-area span {
-  color: #2563eb;
-  font-weight: 600;
-}
-
-/* Modal Footer */
-.tc-modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f8fafc;
-}
-
-.tc-req-text {
-  font-size: 11px;
-  color: #64748b;
-}
-
-.tc-footer-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.tc-btn-discard {
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tc-btn-draft {
-  padding: 8px 16px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tc-btn-publish {
-  padding: 8px 20px;
-  border: none;
-  background: #2563eb;
-  color: #ffffff;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
+.tc-modal-footer { padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; align-items: center; background-color: #f8fafc; flex-shrink: 0; }
+.tc-req-text { font-size: 11px; color: #64748b; margin-right: auto;}
+.tc-footer-actions { display: flex; gap: 12px; }
+.tc-btn-discard { padding: 8px 16px; border: 1px solid transparent; background: transparent; color: #64748b; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.tc-btn-discard:hover { color: #0f172a; background: #e2e8f0; }
+.tc-btn-publish { padding: 8px 20px; border: none; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
 .tc-btn-publish:hover { background: #1d4ed8; }
+.tc-btn-publish:disabled { background: #94a3b8; cursor: not-allowed; }
