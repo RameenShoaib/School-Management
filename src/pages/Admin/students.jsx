@@ -180,10 +180,10 @@ export default function Students() {
           </table>
         </div>
 
-        {/* 👇 YAHAN TEXT FORMAT THEEK KIYA HAI 👇 */}
+        {/* 👇 DYNAMIC PAGINATION FOOTER (Text matched with Teacher page) 👇 */}
         <div className="st-pagination-footer">
           <span className="st-page-info">
-            Showing {filteredRecords.length > 0 ? firstRecordIndex + 1 : 0} to {Math.min(lastRecordIndex, filteredRecords.length)} of {filteredRecords.length}
+            Showing {currentRecords.length} of {filteredRecords.length}
           </span>
           <div className="st-page-buttons">
             <button 
