@@ -30,9 +30,12 @@ export default function Students() {
   const [modalMode, setModalMode] = useState('add'); 
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   
+  // 👉 NEW: Checkbox Selection State
+  const [selectedRows, setSelectedRows] = useState([]);
+  
   const [studentsData, setStudentsData] = useState([]);
   
-  // 👉 Yahan hum DB Classes store karenge
+  // Yahan hum DB Classes store karenge
   const [availableClasses, setAvailableClasses] = useState([]); 
   
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +55,7 @@ export default function Students() {
   };
   const [formData, setFormData] = useState(initialFormState);
 
-  // 👉 Fetching Dynamic Classes from Backend
+  // Fetching Dynamic Classes from Backend
   const fetchClasses = async () => {
     try {
       const response = await fetch("http://localhost:5000/api/classes");
@@ -92,7 +95,7 @@ export default function Students() {
 
   useEffect(() => { 
     fetchStudents(); 
-    fetchClasses(); // 👉 Calling Classes Fetch on Load
+    fetchClasses(); 
   }, []);
 
   const openAddModal = () => {
@@ -183,7 +186,27 @@ export default function Students() {
   const currentRecords = filteredRecords.slice(firstRecordIndex, lastRecordIndex);
   const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
 
-  // 👉 Extracting Unique Grades & their respective Sections from DB
+  // 👉 NEW: Checkbox Handlers
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allVisibleIds = currentRecords.map(record => record.id);
+      setSelectedRows(allVisibleIds);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedRows(prev => 
+      prev.includes(id) 
+        ? prev.filter(rowId => rowId !== id) 
+        : [...prev, id] 
+    );
+  };
+
+  const isAllSelected = currentRecords.length > 0 && currentRecords.every(record => selectedRows.includes(record.id));
+
+  // Extracting Unique Grades & their respective Sections from DB
   const uniqueGrades = [...new Set(availableClasses.map(c => c.grade).filter(Boolean))];
   const dynamicSections = formData.grade 
     ? [...new Set(availableClasses.filter(c => c.grade === formData.grade).map(c => c.section).filter(Boolean))]
@@ -217,13 +240,29 @@ export default function Students() {
           <table className="st-table">
             <thead>
               <tr>
+                {/* 👉 Header Checkbox */}
+                <th style={{ width: '40px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={isAllSelected}
+                    onChange={handleSelectAll} 
+                  />
+                </th>
                 <th>Name</th><th>Roll No</th><th>Grade</th><th>Section</th><th>Guardian</th><th>Fee Status</th><th>Status</th><th></th> 
               </tr>
             </thead>
             <tbody>
-              {isLoading ? <tr><td colSpan="8" style={{ textAlign: 'center', padding: '3rem' }}>Loading data...</td></tr> : 
+              {isLoading ? <tr><td colSpan="9" style={{ textAlign: 'center', padding: '3rem' }}>Loading data...</td></tr> : 
                currentRecords.length > 0 ? currentRecords.map((record) => (
-                <tr key={record.id}>
+                <tr key={record.id} className={selectedRows.includes(record.id) ? 'selected-row' : ''}>
+                  {/* 👉 Row Checkbox */}
+                  <td>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedRows.includes(record.id)}
+                      onChange={() => handleSelectRow(record.id)} 
+                    />
+                  </td>
                   <td style={{ fontWeight: 600 }}>{record.name}</td>
                   <td>{record.rollNo}</td><td>{record.grade}</td><td>{record.section}</td>
                   <td>{record.guardian}</td>
@@ -233,7 +272,7 @@ export default function Students() {
                     <button className="st-view-btn" onClick={() => openEditModal(record)}>View / Edit</button>
                   </td>
                 </tr>
-              )) : <tr><td colSpan="8" style={{ textAlign: 'center', padding: '3rem' }}>No records found.</td></tr>}
+              )) : <tr><td colSpan="9" style={{ textAlign: 'center', padding: '3rem' }}>No records found.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -241,11 +280,11 @@ export default function Students() {
         <div className="st-pagination-footer">
           <span className="st-page-info">Showing {currentRecords.length} of {filteredRecords.length}</span>
           <div className="st-page-buttons">
-            <button className="st-page-btn" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>&lt;</button>
+            <button className="st-page-btn" onClick={() => { setCurrentPage(prev => Math.max(prev - 1, 1)); setSelectedRows([]); }} disabled={currentPage === 1}>&lt;</button>
             {[...Array(totalPages)].map((_, index) => (
-              <button key={index + 1} className={`st-page-btn ${currentPage === index + 1 ? 'active' : ''}`} onClick={() => setCurrentPage(index + 1)}>{index + 1}</button>
+              <button key={index + 1} className={`st-page-btn ${currentPage === index + 1 ? 'active' : ''}`} onClick={() => { setCurrentPage(index + 1); setSelectedRows([]); }}>{index + 1}</button>
             ))}
-            <button className="st-page-btn" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0}>&gt;</button>
+            <button className="st-page-btn" onClick={() => { setCurrentPage(prev => Math.min(prev + 1, totalPages)); setSelectedRows([]); }} disabled={currentPage === totalPages || totalPages === 0}>&gt;</button>
           </div>
         </div>
       </div>

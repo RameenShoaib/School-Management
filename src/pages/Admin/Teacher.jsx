@@ -24,11 +24,13 @@ export default function Teacher() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   
-  // 👉 Added modalMode and selectedTeacherId for Editing
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [selectedTeacherId, setSelectedTeacherId] = useState(null);
   
+  // 👉 NEW: Checkbox Selection State
+  const [selectedRows, setSelectedRows] = useState([]);
+
   // Database States
   const [teachersData, setTeachersData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,7 +69,7 @@ export default function Teacher() {
             joined: joinedDate,
             status: teacher.status || 'Active',
             statusClass: teacher.status && teacher.status.toLowerCase() === 'on leave' ? 'status-leave' : 'status-active',
-            rawData: teacher // 👉 Keep raw data for mapping into edit form
+            rawData: teacher 
           };
         });
         setTeachersData(formattedData);
@@ -90,14 +92,12 @@ export default function Teacher() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 👉 Open Add Modal
   const openAddModal = () => {
     setModalMode('add');
     setFormData(initialFormState);
     setIsModalOpen(true);
   };
 
-  // 👉 Open Edit Modal & Map Data
   const openEditModal = (record) => {
     const t = record.rawData;
     setModalMode('edit');
@@ -109,16 +109,15 @@ export default function Teacher() {
       gender: val(t.gender),
       dob: formatDateToPKT(t.date_of_birth),
       cnic: val(t.cnic),
-      phone: val(t.phone),
+      phone: val(t.phone_number), 
       designation: val(t.designation),
-      empType: val(t.employment_type), // assuming db column is employment_type
+      empType: val(t.employment_type), 
       email: val(t.email),
       joiningDate: formatDateToPKT(t.joining_date)
     });
     setIsModalOpen(true);
   };
 
-  // 👉 Handle Submit (Both POST and PUT)
   const handleFinalSubmit = async () => {
     if (!formData.firstName || !formData.lastName || !formData.designation || !formData.email) {
       alert("Please fill all required (*) fields (Name, Designation, and Email).");
@@ -166,12 +165,33 @@ export default function Teacher() {
 
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedRows([]); // Search ya filter change hone par selection reset
   }, [searchTerm, activeFilter]);
 
   const lastRecordIndex = currentPage * recordsPerPage;
   const firstRecordIndex = lastRecordIndex - recordsPerPage;
   const currentRecords = filteredTeachers.slice(firstRecordIndex, lastRecordIndex);
   const totalPages = Math.ceil(filteredTeachers.length / recordsPerPage);
+
+  // 👉 NEW: Checkbox Handlers
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allVisibleIds = currentRecords.map(record => record.id);
+      setSelectedRows(allVisibleIds);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedRows(prev => 
+      prev.includes(id) 
+        ? prev.filter(rowId => rowId !== id) 
+        : [...prev, id] 
+    );
+  };
+
+  const isAllSelected = currentRecords.length > 0 && currentRecords.every(record => selectedRows.includes(record.id));
 
   return (
     <DashboardLayout userRole="admin" currentPath="/teachers" userName="System Admin" userInitials="SA">
@@ -181,7 +201,6 @@ export default function Teacher() {
           <p>{teachersData.length} staff members</p>
         </div>
         <div className="tc-header-right">
-          {/* 👉 Changed onClick */}
           <button className="tc-btn-primary" onClick={openAddModal}>+ Add teacher</button>
           <button className="tc-btn-secondary">Export</button>
           <div className="tc-avatar">SA</div>
@@ -209,17 +228,33 @@ export default function Teacher() {
           <table className="tc-table">
             <thead>
               <tr>
+                {/* 👉 Header Checkbox */}
+                <th style={{ width: '40px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={isAllSelected}
+                    onChange={handleSelectAll} 
+                  />
+                </th>
                 <th>Name</th><th>Emp ID</th><th>Subject</th><th>Classes</th><th>Students</th><th>Joined</th><th>Status</th><th></th> 
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading teachers from database...</td></tr>
+                <tr><td colSpan="9" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading teachers from database...</td></tr>
               ) : error ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#ef4444' }}>{error}</td></tr>
+                <tr><td colSpan="9" style={{ textAlign: 'center', padding: '3rem', color: '#ef4444' }}>{error}</td></tr>
               ) : currentRecords.length > 0 ? (
                 currentRecords.map((teacher) => (
-                  <tr key={teacher.id}>
+                  <tr key={teacher.id} className={selectedRows.includes(teacher.id) ? 'selected-row' : ''}>
+                    {/* 👉 Row Checkbox */}
+                    <td>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedRows.includes(teacher.id)}
+                        onChange={() => handleSelectRow(teacher.id)} 
+                      />
+                    </td>
                     <td style={{ fontWeight: 600 }}>{teacher.name}</td>
                     <td>{teacher.empId}</td>
                     <td>{teacher.subject}</td>
@@ -228,13 +263,12 @@ export default function Teacher() {
                     <td>{teacher.joined}</td>
                     <td><span className={`tc-pill ${teacher.statusClass}`}>{teacher.status}</span></td>
                     <td style={{ textAlign: 'right' }}>
-                      {/* 👉 Added onClick to View/Edit */}
                       <button className="tc-view-btn" onClick={() => openEditModal(teacher)}>View / Edit</button>
                     </td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No teachers found.</td></tr>
+                <tr><td colSpan="9" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No teachers found.</td></tr>
               )}
             </tbody>
           </table>
@@ -245,11 +279,11 @@ export default function Teacher() {
             Showing {filteredTeachers.length > 0 ? firstRecordIndex + 1 : 0} to {Math.min(lastRecordIndex, filteredTeachers.length)} of {filteredTeachers.length} teachers
           </span>
           <div className="tc-page-buttons">
-            <button className="tc-page-btn" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} style={{ cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>&lt;</button>
+            <button className="tc-page-btn" onClick={() => { setCurrentPage(prev => Math.max(prev - 1, 1)); setSelectedRows([]); }} disabled={currentPage === 1} style={{ cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>&lt;</button>
             {[...Array(totalPages)].map((_, index) => (
-              <button key={index + 1} className={`tc-page-btn ${currentPage === index + 1 ? 'active' : ''}`} onClick={() => setCurrentPage(index + 1)}>{index + 1}</button>
+              <button key={index + 1} className={`tc-page-btn ${currentPage === index + 1 ? 'active' : ''}`} onClick={() => { setCurrentPage(index + 1); setSelectedRows([]); }}>{index + 1}</button>
             ))}
-            <button className="tc-page-btn" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0} style={{ cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer' }}>&gt;</button>
+            <button className="tc-page-btn" onClick={() => { setCurrentPage(prev => Math.min(prev + 1, totalPages)); setSelectedRows([]); }} disabled={currentPage === totalPages || totalPages === 0} style={{ cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer' }}>&gt;</button>
           </div>
         </div>
       </div>
@@ -262,7 +296,6 @@ export default function Teacher() {
               <div className="tc-modal-title-group">
                 <div className="tc-modal-icon"><IconTeacher /></div>
                 <div className="tc-modal-title">
-                  {/* 👉 Conditional Title */}
                   <h2>{modalMode === 'add' ? 'Add New Teacher' : 'Update Teacher Profile'}</h2>
                   <p>{modalMode === 'add' ? 'Register a new staff member into EduSync' : `Editing records for ${formData.firstName}`}</p>
                 </div>
@@ -310,7 +343,6 @@ export default function Teacher() {
               <div className="tc-req-text" style={{ fontSize: '11px', color: '#94a3b8' }}>* Required fields</div>
               <div className="tc-footer-actions">
                 <button className="tc-btn-discard" style={{ background:'white', border:'1px solid #cbd5e1', padding:'10px 20px', borderRadius:'8px', fontWeight:600, color:'#475569', cursor:'pointer' }} onClick={() => setIsModalOpen(false)}>Cancel</button>
-                {/* 👉 Conditional Submit Button Text */}
                 <button className="tc-btn-publish" style={{ background:'#2563eb', border:'none', padding:'10px 20px', borderRadius:'8px', fontWeight:600, color:'white', cursor:'pointer', marginLeft:'10px' }} onClick={handleFinalSubmit} disabled={isSubmitting}>
                   {isSubmitting ? "Processing..." : modalMode === 'add' ? "Add teacher ✓" : "Update Records ✓"}
                 </button>
