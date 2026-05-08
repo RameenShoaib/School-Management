@@ -9,6 +9,10 @@ const IconBook = () => <svg width="18" height="18" fill="currentColor" viewBox="
 export default function Subjects() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjectsData, setSubjectsData] = useState([]);
+  
+  // 👉 NEW: State for dynamic grades (Classes)
+  const [availableGrades, setAvailableGrades] = useState([]); 
+  
   const [isLoading, setIsLoading] = useState(true);
 
   // 👇 Form States matching your Modal UI
@@ -19,7 +23,7 @@ export default function Subjects() {
   };
   const [formData, setFormData] = useState(initialFormState);
 
-  // 1. Fetch data from backend[cite: 1]
+  // 1. Fetch subjects from backend
   const fetchSubjects = async () => {
     setIsLoading(true);
     try {
@@ -33,15 +37,33 @@ export default function Subjects() {
     }
   };
 
-  useEffect(() => { fetchSubjects(); }, []);
+  // 👉 2. NEW: Fetch dynamic classes/grades from backend
+  const fetchClasses = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/classes");
+      const result = await response.json();
+      if (result.success) {
+        // Sirf unique grades nikalne ke liye (taake Grade 5 A aur Grade 5 B ki wajah se 'Grade 5' do dafa na aaye)
+        const uniqueGrades = [...new Set(result.data.map(c => c.grade).filter(Boolean))];
+        setAvailableGrades(uniqueGrades);
+      }
+    } catch (err) {
+      console.error("Failed to fetch classes for grades:", err);
+    }
+  };
 
-  // 2. Handle Input Changes[cite: 1]
+  useEffect(() => { 
+    fetchSubjects(); 
+    fetchClasses(); // 👉 Call fetchClasses on component mount
+  }, []);
+
+  // 3. Handle Input Changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
 
-  // 3. Submit Form to Backend[cite: 1]
+  // 4. Submit Form to Backend
   const handleAddSubject = async () => {
     if (!formData.subjectName || !formData.gradeLevel) {
       alert("Please fill required fields (Subject Name & Grade Level)!");
@@ -58,7 +80,7 @@ export default function Subjects() {
       if (data.success) {
         setIsModalOpen(false);
         setFormData(initialFormState); // Reset form
-        fetchSubjects(); // Refresh table[cite: 1]
+        fetchSubjects(); // Refresh table
       } else {
         alert("Error: " + data.message);
       }
@@ -69,7 +91,7 @@ export default function Subjects() {
 
   return (
     <DashboardLayout userRole="admin" currentPath="/subjects" userName="System Admin" userInitials="SA">
-      {/* Header Section matched to Screenshot[cite: 1] */}
+      {/* Header Section */}
       <div className="sbj-page-header">
         <div className="sbj-header-left">
           <h2>Subjects</h2>
@@ -83,10 +105,8 @@ export default function Subjects() {
 
       <Header />
 
-      
-
       <div className="sbj-scroll-wrapper">
-        {/* Stats Row from CSS[cite: 1] */}
+        {/* Stats Row */}
         <div className="sbj-stats-row">
           <div className="sbj-stat-card">
             <span className="sbj-stat-title">Total subjects</span>
@@ -111,7 +131,7 @@ export default function Subjects() {
         </div>
 
         <div className="sbj-main-grid">
-          {/* Subjects Table[cite: 1] */}
+          {/* Subjects Table */}
           <div className="sbj-card">
             <h3 className="sbj-card-title">Subjects overview</h3><br />
             <table className="sbj-table">
@@ -146,7 +166,7 @@ export default function Subjects() {
             </table>
           </div>
 
-          {/* Sidebar Section from Screenshot[cite: 1] */}
+          {/* Sidebar Section */}
           <div className="sbj-right-col">
             <div className="sbj-card">
               <h3 className="sbj-card-title">Average score by subject</h3><br />
@@ -155,13 +175,12 @@ export default function Subjects() {
                 <div className="sbj-bar-track"><div className="sbj-bar-fill blue" style={{width: '76%'}}></div></div>
                 <span className="sbj-bar-val">76%</span>
               </div>
-              {/* Add more mock bars as per UI needs */}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal - UI strictly matched to your CSS[cite: 1] */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="sbj-modal-overlay">
           <div className="sbj-modal">
@@ -192,12 +211,21 @@ export default function Subjects() {
               <div className="sbj-form-row-2">
                 <div className="sbj-form-group">
                   <label>Grade Level <span>*</span></label>
+                  
+                  {/* 👉 DYNAMIC GRADES DROPDOWN */}
                   <select name="gradeLevel" value={formData.gradeLevel} onChange={handleInputChange} className="sbj-input">
                     <option value="">Select Grade</option>
-                    <option value="Grade 7">Grade 7</option>
-                    <option value="Grade 8">Grade 8</option>
-                    <option value="Grade 10">Grade 10</option>
+                    {availableGrades.length > 0 ? (
+                      availableGrades.map((g, index) => (
+                        <option key={index} value={g}>{g}</option>
+                      ))
+                    ) : (
+                      [...Array(10)].map((_, i) => (
+                        <option key={i} value={`Grade ${i + 1}`}>Grade {i + 1}</option>
+                      ))
+                    )}
                   </select>
+
                 </div>
                 <div className="sbj-form-group">
                   <label>Subject Category</label>

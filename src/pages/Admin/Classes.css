@@ -56,138 +56,151 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Stats Row */
-.cl-stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
+/* =========================================
+   Classes Table Card & Filters (100% Matched)
+   ========================================= */
 
-.cl-stat-card {
-  background-color: #f8fafc;
-  padding: 16px;
-  border-radius: 12px;
+.cl-table-card {
+  background-color: #ffffff;
   border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  flex-grow: 1;
+  margin-top: 4px;
 }
 
-.cl-stat-title {
+.cl-filters-row {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #fafbfc;
+  display: flex;
+  justify-content: space-between; /* 👈 Search left, Dropdowns right */
+  align-items: center;
+}
+
+.cl-search-input {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  max-width: 400px; /* 👈 Matched Teacher page search width */
+  color: #94a3b8;
+}
+.cl-search-input svg { width: 16px; height: 16px; margin-right: 8px; flex-shrink: 0; }
+.cl-search-input input { border: none; outline: none; width: 100%; font-size: 13px; color: #0f172a; background: transparent; }
+.cl-search-input input::placeholder { color: #94a3b8; }
+
+.cl-filter-group {
+  display: flex;
+  gap: 8px;
+}
+
+.cl-filter-select {
+  padding: 6px 30px 6px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  background: #ffffff;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
+  color: #475569;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  transition: all 0.2s;
 }
-
-.cl-stat-value {
-  font-size: 24px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 4px;
-}
-
-.cl-stat-sub {
-  font-size: 11px;
-  font-weight: 600;
-}
-.cl-stat-sub.neutral { color: #64748b; }
-.cl-stat-sub.green { color: #16a34a; }
-.cl-stat-sub.orange { color: #d97706; }
-
-/* Scrollable Wrapper for Cards */
-.cl-scroll-wrapper {
-  overflow-y: auto;
-  flex-grow: 1;
-  padding-right: 4px;
-  padding-bottom: 20px;
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
-}
-
-.cl-scroll-wrapper::-webkit-scrollbar { width: 6px; }
-.cl-scroll-wrapper::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-
-/* Cards Grid */
-.cl-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
-
-.cl-card {
-  background-color: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.cl-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-  border-color: #cbd5e1;
-}
-
-.cl-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.cl-card-title-group h3 {
-  font-size: 14px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 4px 0;
-}
-
-.cl-card-title-group p {
-  font-size: 11px;
-  color: #64748b;
-  margin: 0;
-  font-weight: 500;
-}
-
-.cl-pill {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
-  text-transform: capitalize;
-}
-
-.cl-pill.active { background-color: #eff6ff; color: #2563eb; }
-.cl-pill.sub { background-color: #fffbeb; color: #d97706; }
-
-/* Card Inner Stats Grid */
-.cl-inner-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: auto;
-}
-
-.cl-inner-box {
+.cl-filter-select:hover {
   background-color: #f8fafc;
-  border-radius: 8px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  border-color: #94a3b8;
 }
 
-.cl-inner-label { font-size: 10px; color: #64748b; font-weight: 600; }
-.cl-inner-val { font-size: 16px; font-weight: 800; color: #0f172a; }
+/* Table Styles - NO BORDERS TO PREVENT BOX-IN-BOX */
+.cl-table-container {
+  overflow-x: auto;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
 
+.cl-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.cl-list-table th {
+  padding: 14px 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cl-list-table td {
+  padding: 16px 20px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f8fafc;
+  vertical-align: middle;
+}
+
+.cl-list-table tr:hover td { background-color: #f8fafc; }
+
+/* Table Specific Elements */
+.cl-class-badge {
+  background: #f1f5f9; color: #475569; padding: 4px 8px; 
+  border-radius: 6px; font-weight: 700; font-size: 11px; margin-right: 10px;
+}
+
+.cl-progress-cell { display: flex; align-items: center; gap: 10px; }
+.cl-progress-bar { width: 60px; height: 6px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+.cl-progress-fill { height: 100%; border-radius: 4px; }
+.cl-progress-fill.blue { background: #2563eb; }
+.cl-progress-fill.green { background: #16a34a; }
+.cl-progress-fill.red { background: #dc2626; }
+
+.cl-status-pill {
+  padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+}
+.cl-status-active { background: #dcfce7; color: #16a34a; }
+.cl-status-sub { background: #fef3c7; color: #d97706; }
+
+.cl-btn-view {
+  background: transparent; border: 1px solid #cbd5e1; padding: 6px 14px;
+  border-radius: 20px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s;
+}
+.cl-btn-view:hover { border-color: #94a3b8; background: #f1f5f9; color: #0f172a; }
+
+/* Pagination Footer */
+.cl-pagination-footer {
+  display: flex; justify-content: space-between; align-items: center; 
+  padding: 16px 20px; border-top: 1px solid #e2e8f0; background-color: #ffffff; margin-top: auto; 
+}
+.cl-page-info { font-size: 13px; color: #64748b; font-weight: 500; }
+.cl-page-buttons { display: flex; gap: 6px; }
+.cl-page-btn { 
+  min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; 
+  border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; border-radius: 6px; 
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; 
+}
+.cl-page-btn:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
+.cl-page-btn.active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+.cl-page-btn:disabled { background-color: #f8fafc; color: #cbd5e1; border-color: #e2e8f0; cursor: not-allowed; }
 
 /* =========================================
-   ✨ ADD CLASS MODAL & BLUR STYLES ✨
+   ✨ ADD CLASS MODAL ✨
    ========================================= */
 
 /* Blur Overlay */
@@ -296,6 +309,7 @@
   background-color: #ffffff;
   outline: none;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .cl-input:focus { border-color: #2563eb; }
@@ -327,7 +341,6 @@
   background-color: #eff6ff;
   font-weight: 600;
 }
-/* Custom Radio Circle */
 .cl-radio-circle {
   width: 14px;
   height: 14px;
@@ -392,7 +405,6 @@
   font-weight: 600;
 }
 
-/* Checkbox Square */
 .cl-check-square {
   width: 14px;
   height: 14px;
@@ -472,5 +484,6 @@
 
 .cl-footer-actions { display: flex; gap: 12px; }
 .cl-btn-discard { padding: 8px 16px; border: none; background: transparent; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; }
-.cl-btn-publish { padding: 8px 20px; border: none; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.cl-btn-publish { padding: 8px 20px; border: none; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
 .cl-btn-publish:hover { background: #1d4ed8; }
+.cl-btn-publish:disabled { background: #94a3b8; cursor: not-allowed; }
