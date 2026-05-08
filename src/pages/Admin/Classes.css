@@ -3,13 +3,7 @@
    Admin - Classes Grid View & Modal
    ========================================= */
 
-.cl-page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
+.cl-page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-shrink: 0; }
 
 .cl-header-left h2 {
   font-size: 22px;

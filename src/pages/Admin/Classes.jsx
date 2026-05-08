@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
 import './Classes.css';
@@ -7,38 +7,185 @@ import './Classes.css';
 const IconSchool = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>;
 const IconInfo = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>;
 
-/* Mock Data */
-const classesData = [
-  { id: 1, grade: "Grade 7", section: "Section A", teacher: "Ms. Fatima", students: 32, attendance: "96%", subjects: 7, avgGrade: "B+", status: "Active", statusClass: "active" },
-  { id: 2, grade: "Grade 9", section: "Section A", teacher: "Mr. Ahmed", students: 30, attendance: "94%", subjects: 8, avgGrade: "A-", status: "Active", statusClass: "active" },
-  { id: 3, grade: "Grade 5", section: "Section B", teacher: "Ms. Hira", students: 35, attendance: "91%", subjects: 6, avgGrade: "B", status: "Active", statusClass: "active" },
-  { id: 4, grade: "Grade 10", section: "Section A", teacher: "Mr. Riaz", students: 28, attendance: "98%", subjects: 9, avgGrade: "A", status: "Active", statusClass: "active" },
-  { id: 5, grade: "Grade 3", section: "Section C", teacher: "Ms. Zainab", students: 38, attendance: "85%", subjects: 5, avgGrade: "B-", status: "Sub assigned", statusClass: "sub" },
-  { id: 6, grade: "Grade 1", section: "Section A", teacher: "Ms. Sana", students: 40, attendance: "97%", subjects: 4, avgGrade: "A", status: "Active", statusClass: "active" },
-];
+// Helper function to safely parse null/undefined
+const val = (v) => (v !== null && v !== undefined) ? v : '';
 
 export default function Classes() {
-  // 👇 Modal & Toggles States 👇
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // 👉 Edit Mode States
+  const [modalMode, setModalMode] = useState('add');
+  const [selectedClassId, setSelectedClassId] = useState(null);
+
+  // 🗄️ Database States
+  const [classesData, setClassesData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 📝 Form States
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const initialFormState = {
+    grade: '', section: 'A', maxCapacity: '', roomNumber: '', 
+    academicYear: '2025 - 2026', notes: '', teacher: '', 
+    coTeacher: 'None', startTime: '08:00', endTime: '14:00'
+  };
+  const [formData, setFormData] = useState(initialFormState);
+  
+  const [selectedSubjects, setSelectedSubjects] = useState(['Mathematics', 'English', 'Science', 'Urdu', 'Social Studies']);
+  
   const [attTracking, setAttTracking] = useState(true);
   const [gradebook, setGradebook] = useState(true);
   const [portalAccess, setPortalAccess] = useState(true);
 
+  // 1. Fetch Classes
+  const fetchClasses = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("http://localhost:5000/api/classes");
+      const result = await response.json();
+      
+      if (result.success) {
+        const formattedData = result.data.map(cls => {
+          let subCount = 0;
+          try {
+             // Safe parse JSON objects if they are strings
+             const parsedSubs = typeof cls.subjects === 'string' ? JSON.parse(cls.subjects) : cls.subjects;
+             subCount = Array.isArray(parsedSubs) ? parsedSubs.length : 0;
+          } catch(e) { subCount = 0; }
+
+          return {
+            id: cls.class_id,
+            grade: cls.grade,
+            section: cls.section,
+            teacher: cls.teacher_name,
+            students: cls.max_capacity, 
+            attendance: "95%", 
+            subjects: subCount,
+            avgGrade: "B+", 
+            status: "Active",
+            statusClass: "active",
+            rawData: cls // 👉 Keeping original DB data for edit mapping
+          };
+        });
+        setClassesData(formattedData);
+      }
+    } catch (err) {
+      console.error("Failed to fetch classes:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  // 2. Open Add Modal
+  const openAddModal = () => {
+    setModalMode('add');
+    setFormData(initialFormState);
+    setSelectedSubjects(['Mathematics', 'English', 'Science', 'Urdu', 'Social Studies']);
+    setAttTracking(true);
+    setGradebook(true);
+    setPortalAccess(true);
+    setIsModalOpen(true);
+  };
+
+  // 3. Open Edit Modal & Map Data
+  const openEditModal = (record) => {
+    const c = record.rawData;
+    setModalMode('edit');
+    setSelectedClassId(record.id);
+    
+    setFormData({
+      grade: val(c.grade),
+      section: val(c.section),
+      maxCapacity: val(c.max_capacity),
+      roomNumber: val(c.room_number),
+      academicYear: val(c.academic_year) || '2025 - 2026',
+      notes: val(c.notes),
+      teacher: val(c.teacher_name),
+      coTeacher: val(c.co_teacher) || 'None',
+      startTime: val(c.start_time) || '08:00',
+      endTime: val(c.end_time) || '14:00'
+    });
+
+    // Map Subjects
+    let dbSubjects = c.subjects || [];
+    if (typeof dbSubjects === 'string') {
+      try { dbSubjects = JSON.parse(dbSubjects); } catch(e) { dbSubjects = []; }
+    }
+    setSelectedSubjects(Array.isArray(dbSubjects) && dbSubjects.length > 0 ? dbSubjects : ['Mathematics', 'English', 'Science']);
+
+    // Map Settings
+    let settings = c.settings || {};
+    if (typeof settings === 'string') {
+      try { settings = JSON.parse(settings); } catch(e) { settings = {}; }
+    }
+    setAttTracking(settings.attTracking !== false);
+    setGradebook(settings.gradebook !== false);
+    setPortalAccess(settings.portalAccess !== false);
+
+    setIsModalOpen(true);
+  };
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubjectToggle = (subject) => {
+    setSelectedSubjects(prev => 
+      prev.includes(subject) ? prev.filter(s => s !== subject) : [...prev, subject]
+    );
+  };
+
+  // 4. Submit Form (POST & PUT combined)
+  const handleFinalSubmit = async () => {
+    if (!formData.grade || !formData.teacher || !formData.maxCapacity) {
+      alert("Please fill all required (*) fields.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const payload = {
+      ...formData,
+      subjects: selectedSubjects,
+      settings: { attTracking, gradebook, portalAccess }
+    };
+
+    const url = modalMode === 'add' ? "http://localhost:5000/api/classes" : `http://localhost:5000/api/classes/${selectedClassId}`;
+    const method = modalMode === 'add' ? "POST" : "PUT";
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsModalOpen(false);
+        fetchClasses(); 
+      } else {
+        alert("Error: " + data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to server.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <DashboardLayout 
-      userRole="admin" 
-      currentPath="/classes" 
-      userName="System Admin" 
-      userInitials="SA"
-    >
+    <DashboardLayout userRole="admin" currentPath="/classes" userName="System Admin" userInitials="SA">
       <div className="cl-page-header">
         <div className="cl-header-left">
           <h2>Classes</h2>
-          <p>32 active classes across 10 grades</p>
+          <p>{classesData.length} active classes across grades</p>
         </div>
         <div className="cl-header-right">
-          {/* 👇 Modal Open Button 👇 */}
-          <button className="cl-btn-primary" onClick={() => setIsModalOpen(true)}>+ Add class</button>
+          <button className="cl-btn-primary" onClick={openAddModal}>+ Add class</button>
           <div className="cl-avatar">SA</div>
         </div>
       </div>
@@ -46,82 +193,66 @@ export default function Classes() {
       <Header />
 
       <div className="cl-stats-row">
-        <div className="cl-stat-card">
-          <span className="cl-stat-title">Total classes</span>
-          <span className="cl-stat-value">32</span>
-          <span className="cl-stat-sub neutral">Grades 1 - 10</span>
-        </div>
-        <div className="cl-stat-card">
-          <span className="cl-stat-title">Avg class size</span>
-          <span className="cl-stat-value">39</span>
-          <span className="cl-stat-sub neutral">Students per class</span>
-        </div>
-        <div className="cl-stat-card">
-          <span className="cl-stat-title">Sections</span>
-          <span className="cl-stat-value">A, B, C</span>
-          <span className="cl-stat-sub green">3 per grade</span>
-        </div>
-        <div className="cl-stat-card">
-          <span className="cl-stat-title">Full capacity</span>
-          <span className="cl-stat-value">94%</span>
-          <span className="cl-stat-sub orange">Near max</span>
-        </div>
+        <div className="cl-stat-card"><span className="cl-stat-title">Total classes</span><span className="cl-stat-value">{classesData.length}</span><span className="cl-stat-sub neutral">Grades 1 - 10</span></div>
+        <div className="cl-stat-card"><span className="cl-stat-title">Avg class size</span><span className="cl-stat-value">39</span><span className="cl-stat-sub neutral">Students per class</span></div>
+        <div className="cl-stat-card"><span className="cl-stat-title">Sections</span><span className="cl-stat-value">A, B, C, D</span><span className="cl-stat-sub green">Configured</span></div>
+        <div className="cl-stat-card"><span className="cl-stat-title">Full capacity</span><span className="cl-stat-value">94%</span><span className="cl-stat-sub orange">Near max</span></div>
       </div>
 
       <div className="cl-scroll-wrapper">
         <div className="cl-cards-grid">
-          {classesData.map((cls) => (
-            <div className="cl-card" key={cls.id}>
-              <div className="cl-card-header">
-                <div className="cl-card-title-group">
-                  <h3>{cls.grade} — {cls.section}</h3>
-                  <p>Class teacher: {cls.teacher}</p>
+          {isLoading ? (
+            <div style={{ padding: '2rem', color: '#64748b' }}>Loading classes...</div>
+          ) : classesData.length === 0 ? (
+            <div style={{ padding: '2rem', color: '#64748b' }}>No classes found. Add your first class!</div>
+          ) : (
+            classesData.map((cls) => (
+              <div className="cl-card" key={cls.id}>
+                
+                {/* 👉 Added View/Edit button in the header beautifully */}
+                <div className="cl-card-header">
+                  <div className="cl-card-title-group">
+                    <h3>{cls.grade} — Section {cls.section}</h3>
+                    <p>Class teacher: {cls.teacher}</p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                    <span className={`cl-pill ${cls.statusClass}`}>{cls.status}</span>
+                    <button 
+                      onClick={() => openEditModal(cls)} 
+                      style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '11px', fontWeight: '700', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                    >
+                      View / Edit
+                    </button>
+                  </div>
                 </div>
-                <span className={`cl-pill ${cls.statusClass}`}>{cls.status}</span>
+
+                <div className="cl-inner-grid">
+                  <div className="cl-inner-box"><span className="cl-inner-label">Capacity</span><span className="cl-inner-val">{cls.students}</span></div>
+                  <div className="cl-inner-box"><span className="cl-inner-label">Attendance</span><span className="cl-inner-val">{cls.attendance}</span></div>
+                  <div className="cl-inner-box"><span className="cl-inner-label">Subjects</span><span className="cl-inner-val">{cls.subjects}</span></div>
+                  <div className="cl-inner-box"><span className="cl-inner-label">Avg grade</span><span className="cl-inner-val">{cls.avgGrade}</span></div>
+                </div>
               </div>
-              <div className="cl-inner-grid">
-                <div className="cl-inner-box">
-                  <span className="cl-inner-label">Students</span>
-                  <span className="cl-inner-val">{cls.students}</span>
-                </div>
-                <div className="cl-inner-box">
-                  <span className="cl-inner-label">Attendance</span>
-                  <span className="cl-inner-val">{cls.attendance}</span>
-                </div>
-                <div className="cl-inner-box">
-                  <span className="cl-inner-label">Subjects</span>
-                  <span className="cl-inner-val">{cls.subjects}</span>
-                </div>
-                <div className="cl-inner-box">
-                  <span className="cl-inner-label">Avg grade</span>
-                  <span className="cl-inner-val">{cls.avgGrade}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
-      {/* =========================================
-          ✨ ADD CLASS MODAL ✨
-          ========================================= */}
       {isModalOpen && (
         <div className="cl-modal-overlay">
           <div className="cl-modal">
             
-            {/* Modal Header */}
             <div className="cl-modal-header">
               <div className="cl-modal-title-group">
                 <div className="cl-modal-icon"><IconSchool /></div>
                 <div className="cl-modal-title">
-                  <h2>Add New Class</h2>
-                  <p>Create a new class and assign a teacher and subjects</p>
+                  <h2>{modalMode === 'add' ? 'Add New Class' : 'Update Class Settings'}</h2>
+                  <p>{modalMode === 'add' ? 'Create a new class and assign a teacher and subjects' : `Editing settings for ${formData.grade}`}</p>
                 </div>
               </div>
-              <div className="cl-badge-pill">Setup required</div>
+              <div className="cl-badge-pill">{modalMode === 'add' ? 'Setup required' : 'Update record'}</div>
             </div>
 
-            {/* Modal Body */}
             <div className="cl-modal-body">
               
               {/* SECTION 1: CLASS DETAILS */}
@@ -131,140 +262,112 @@ export default function Classes() {
                 <div className="cl-form-row-3">
                   <div className="cl-form-group">
                     <label>Grade <span>*</span></label>
-                    <select className="cl-input">
-                      <option>Select grade</option>
-                      <option>Grade 1</option>
-                      <option>Grade 2</option>
+                    <select name="grade" value={formData.grade} onChange={handleInputChange} className="cl-input">
+                      <option value="">Select grade</option>
+                      {[...Array(10)].map((_, i) => (
+                         <option key={i + 1} value={`Grade ${i + 1}`}>Grade {i + 1}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="cl-form-group">
                     <label>Section <span>*</span></label>
                     <div className="cl-radio-group">
-                      <label className="cl-radio-label">
-                        <input type="radio" name="section" defaultChecked />
-                        <span className="cl-radio-circle"></span> A
-                      </label>
-                      <label className="cl-radio-label">
-                        <input type="radio" name="section" />
-                        <span className="cl-radio-circle"></span> B
-                      </label>
-                      <label className="cl-radio-label">
-                        <input type="radio" name="section" />
-                        <span className="cl-radio-circle"></span> C
-                      </label>
-                      <label className="cl-radio-label">
-                        <input type="radio" name="section" />
-                        <span className="cl-radio-circle"></span> D
-                      </label>
+                      {['A', 'B', 'C', 'D'].map(sec => (
+                        <label className="cl-radio-label" key={sec}>
+                          <input type="radio" name="section" value={sec} checked={formData.section === sec} onChange={handleInputChange} />
+                          <span className="cl-radio-circle"></span> {sec}
+                        </label>
+                      ))}
                     </div>
                   </div>
                   <div className="cl-form-group">
                     <label>Max capacity <span>*</span></label>
-                    <input type="text" className="cl-input" placeholder="e.g. 40" />
+                    <input type="number" name="maxCapacity" value={formData.maxCapacity} onChange={handleInputChange} className="cl-input" placeholder="e.g. 40" />
                   </div>
                 </div>
 
                 <div className="cl-form-row-2">
                   <div className="cl-form-group">
                     <label>Class room number</label>
-                    <input type="text" className="cl-input" placeholder="🚪 e.g. R-12" />
+                    <input type="text" name="roomNumber" value={formData.roomNumber} onChange={handleInputChange} className="cl-input" placeholder="📍 e.g. R-12" />
                   </div>
                   <div className="cl-form-group">
                     <label>Academic year <span>*</span></label>
-                    <select className="cl-input">
-                      <option>2025 - 2026</option>
+                    <select name="academicYear" value={formData.academicYear} onChange={handleInputChange} className="cl-input">
+                      <option value="2025 - 2026">2025 - 2026</option>
+                      <option value="2026 - 2027">2026 - 2027</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="cl-form-group">
                   <label>Class description / notes</label>
-                  <textarea className="cl-input cl-textarea" placeholder="Any special notes about this class..."></textarea>
+                  <textarea name="notes" value={formData.notes} onChange={handleInputChange} className="cl-input cl-textarea" placeholder="Any special notes about this class..."></textarea>
                 </div>
               </div>
 
               {/* SECTION 2: TEACHER ASSIGNMENT */}
-              <div>
+              <div style={{ marginTop: '24px' }}>
                 <div className="cl-section-title">Teacher Assignment</div>
                 <div className="cl-form-row-2">
                   <div className="cl-form-group">
                     <label>Class / homeroom teacher <span>*</span></label>
-                    <select className="cl-input">
-                      <option>Select teacher</option>
-                      <option>Ms. Fatima Noor</option>
+                    <select name="teacher" value={formData.teacher} onChange={handleInputChange} className="cl-input">
+                      <option value="">Select teacher</option>
+                      <option value="Ms. Fatima Noor">Ms. Fatima Noor</option>
+                      <option value="Mr. Ahmed Raza">Mr. Ahmed Raza</option>
+                      <option value="Ms. Hira Khan">Ms. Hira Khan</option>
                     </select>
                   </div>
                   <div className="cl-form-group">
                     <label>Co-teacher (optional)</label>
-                    <select className="cl-input">
-                      <option>None</option>
+                    <select name="coTeacher" value={formData.coTeacher} onChange={handleInputChange} className="cl-input">
+                      <option value="None">None</option>
+                      <option value="Ms. Sana">Ms. Sana</option>
                     </select>
                   </div>
                 </div>
               </div>
 
-              {/* SECTION 3: SUBJECT & TIMETABLE ASSIGNMENT */}
-              <div>
+              {/* SECTION 3: SUBJECT ASSIGNMENT */}
+              <div style={{ marginTop: '24px' }}>
                 <div className="cl-section-title">Subject & Timetable Assignment</div>
                 
-                <div className="cl-alert-box">
+                <div className="cl-alert-box" style={{ marginBottom: '16px' }}>
                   <IconInfo />
-                  <p>Assign the subjects that will be taught in this class. You can configure detailed timetable slots later from the Timetable section.</p>
+                  <p>Assign the subjects that will be taught in this class.</p>
                 </div>
 
                 <div className="cl-form-group">
                   <label>Subjects for this class <span>*</span></label>
                   <div className="cl-checkbox-group">
-                    {/* Checkbox Pills */}
-                    <label className="cl-check-pill">
-                      <input type="checkbox" defaultChecked />
-                      <span className="cl-check-square"></span> Mathematics
-                    </label>
-                    <label className="cl-check-pill">
-                      <input type="checkbox" defaultChecked />
-                      <span className="cl-check-square"></span> English
-                    </label>
-                    <label className="cl-check-pill">
-                      <input type="checkbox" defaultChecked />
-                      <span className="cl-check-square"></span> Science
-                    </label>
-                    <label className="cl-check-pill">
-                      <input type="checkbox" defaultChecked />
-                      <span className="cl-check-square"></span> Urdu
-                    </label>
-                    <label className="cl-check-pill">
-                      <input type="checkbox" defaultChecked />
-                      <span className="cl-check-square"></span> Social Studies
-                    </label>
-                    <label className="cl-check-pill">
-                      <input type="checkbox" />
-                      <span className="cl-check-square"></span> Physics
-                    </label>
-                    <label className="cl-check-pill">
-                      <input type="checkbox" />
-                      <span className="cl-check-square"></span> Computer Science
-                    </label>
-                    <label className="cl-check-pill">
-                      <input type="checkbox" />
-                      <span className="cl-check-square"></span> Art & Design
-                    </label>
+                    {['Mathematics', 'English', 'Science', 'Urdu', 'Social Studies', 'Physics', 'Computer Science', 'Art & Design'].map(sub => (
+                      <label className="cl-check-pill" key={sub}>
+                        <input 
+                          type="checkbox" 
+                          checked={selectedSubjects.includes(sub)} 
+                          onChange={() => handleSubjectToggle(sub)} 
+                        />
+                        <span className="cl-check-square"></span> {sub}
+                      </label>
+                    ))}
                   </div>
                 </div>
 
-                <div className="cl-form-row-2">
+                <div className="cl-form-row-2" style={{ marginTop: '16px' }}>
                   <div className="cl-form-group">
                     <label>School start time</label>
-                    <input type="time" className="cl-input" defaultValue="08:00" />
+                    <input type="time" name="startTime" value={formData.startTime} onChange={handleInputChange} className="cl-input" />
                   </div>
                   <div className="cl-form-group">
                     <label>School end time</label>
-                    <input type="time" className="cl-input" defaultValue="14:00" />
+                    <input type="time" name="endTime" value={formData.endTime} onChange={handleInputChange} className="cl-input" />
                   </div>
                 </div>
               </div>
 
               {/* SECTION 4: CLASS SETTINGS */}
-              <div>
+              <div style={{ marginTop: '24px' }}>
                 <div className="cl-section-title">Class Settings</div>
                 
                 <div className="cl-switch-card">
@@ -296,12 +399,13 @@ export default function Classes() {
 
             </div>
 
-            {/* Modal Footer */}
             <div className="cl-modal-footer">
               <div className="cl-req-text">* Required fields</div>
               <div className="cl-footer-actions">
                 <button className="cl-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button className="cl-btn-publish" onClick={() => setIsModalOpen(false)}>Create class</button>
+                <button className="cl-btn-publish" onClick={handleFinalSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? 'Processing...' : modalMode === 'add' ? 'Create class' : 'Update class'}
+                </button>
               </div>
             </div>
 
