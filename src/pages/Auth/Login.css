@@ -94,6 +94,7 @@
   font-size: 14px;
   background: #f8fafc;
   transition: all 0.2s;
+  box-sizing: border-box; /* 👈 YAHAN FIX LAGAYA HAI */
 }
 
 .form input:focus {
@@ -116,6 +117,7 @@
   cursor: pointer;
   margin-top: 10px;
   transition: 0.3s;
+  box-sizing: border-box; /* 👈 Button ko bhi perfectly align rakhne ke liye */
 }
 
 .loginBtn:hover {

@@ -1,233 +1,157 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
 import './reports.css';
 
-/* SVG Icons */
+/* Purane Icons wapis */
 const IconReport = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>;
 const IconSearch = ({ className }) => <svg className={className} width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>;
-const IconFilter = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>;
-const IconFolder = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>;
-const IconRocket = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M13.13 22.19l-1.63-3.83c3.22-1.33 5.56-4.22 6.09-7.72l-3.32 1.42 1.34-3.14 4.54-1.94c-.69-3.9-3.7-7-7.66-7.85l-1.89 4.41-3.23-1.38 1.84-4.29C4.54 3.03 1 7.42 1 12.65c0 5.4 4.22 9.81 9.54 10.1l1.1-2.58 3.12 1.34-1.63 3.83c4.13-1.36 7.28-4.8 8.16-9.03l-4.52 1.93 1.35-3.15-3.3 1.41c-.53 3.51-2.88 6.42-6.11 7.76zM11 11c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm0 2c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3z"/></svg>;
-
-const modalReportTypes = [
-  { id: 'attendance', icon: '📋', title: 'Attendance summary', desc: 'Daily, weekly, or monthly attendance for a class' },
-  { id: 'academic', icon: '📊', title: 'Academic performance', desc: 'Grades and averages by student or class' },
-  { id: 'fees', icon: '💰', title: 'Fee collection', desc: 'Monthly fee status and pending payments' },
-  { id: 'full', icon: '🗃️', title: 'Full data export', desc: 'All school records as a structured CSV' }
-];
 
 export default function Reports() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [snapshot, setSnapshot] = useState([]);
   const [recentReports, setRecentReports] = useState([]);
-  
-  // Form State
-  const [selectedReportType, setSelectedReportType] = useState('attendance');
+  const [selectedType, setSelectedType] = useState('attendance');
   const [exportFormat, setExportFormat] = useState('PDF');
 
-  const fetchReportData = async () => {
+  const fetchData = async () => {
     try {
       const snapRes = await fetch('http://localhost:5000/api/reports/snapshot').then(r => r.json());
       const recentRes = await fetch('http://localhost:5000/api/reports/recent').then(r => r.json());
       if (snapRes.success) setSnapshot(snapRes.data);
       if (recentRes.success) setRecentReports(recentRes.data);
-    } catch (err) { console.error("Error fetching reports:", err); }
+    } catch (err) { console.error("Fetch error:", err); }
   };
 
-  useEffect(() => { fetchReportData(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  // 📝 Generate Report Submission
-  const handleGenerateReport = async () => {
+  const handleGenerate = async () => {
     setLoading(true);
-    const reportName = `${selectedReportType.toUpperCase()} Export - ${new Date().toLocaleDateString()}`;
-    
     try {
       const response = await fetch('http://localhost:5000/api/reports/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reportName,
-          reportType: selectedReportType,
+          reportName: `${selectedType.toUpperCase()} Export - ${new Date().toLocaleDateString()}`,
+          reportType: selectedType,
           format: exportFormat,
           generatedBy: 'System Admin'
         })
       });
-      const data = await response.json();
-      if (data.success) {
-        Swal.fire('Success', 'Report generated and added to history', 'success');
+      if (response.ok) {
         setIsModalOpen(false);
-        fetchReportData(); // Refresh history
+        fetchData();
+        Swal.fire({ icon: 'success', title: 'Generated', showConfirmButton: false, timer: 1500 });
       }
-    } catch (err) {
-      Swal.fire('Error', 'Failed to generate report', 'error');
-    } finally { setLoading(false); }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  // 🚀 CSV Download Logic
-  const downloadReportCSV = (report) => {
-    const filename = `${report.report_name.replace(/\s+/g, '_')}.csv`;
-    
-    // Yahan hum row data create kar rahe hain CSV ke liye
-    const csvRows = [
-      ["Report ID", "Report Name", "Type", "Format", "Generated By", "Status", "Date Created"],
-      [
-        report.report_id, 
-        report.report_name, 
-        report.report_type, 
-        report.format, 
-        report.generated_by, 
-        report.status, 
-        new Date(report.created_at).toLocaleString()
-      ]
-    ];
-
-    const csvContent = csvRows.map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute("href", url);
-    link.setAttribute("download", filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'success',
-      title: 'Downloading file...',
-      showConfirmButton: false,
-      timer: 1500
+  const generatePDF = (report) => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text("EduSync Official Report", 105, 20, { align: "center" });
+    autoTable(doc, {
+      startY: 30,
+      head: [["Field", "Value"]],
+      body: [
+        ["ID", report.report_id],
+        ["Name", report.report_name],
+        ["Type", report.report_type],
+        ["Date", new Date(report.created_at).toLocaleString()]
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [22, 163, 74] } 
     });
+    doc.save(`${report.report_name}.pdf`);
+  };
+
+  const downloadCSV = (report) => {
+    const filename = `${report.report_name.replace(/\s+/g, '_')}.csv`;
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      ["ID,Name,Type,Date", `${report.report_id},${report.report_name},${report.report_type},${report.created_at}`].join("\n");
+    window.open(encodeURI(csvContent));
   };
 
   return (
     <DashboardLayout userRole="admin" currentPath="/reports" userName="System Admin" userInitials="SA">
-      <div className="rep-page-header">
-        <div className="rep-header-left">
+      <div className="fm-page-header">
+        <div className="fm-header-left">
           <h2>Reports</h2>
-          <p>Generate, view and export comprehensive school data</p>
+          <p>Generate and view school data exports</p>
         </div>
-        <div className="rep-header-right">
-          <button className="rep-btn-primary" onClick={() => setIsModalOpen(true)}>Generate report</button>
-          <div className="rep-avatar">SA</div>
+        <div className="fm-header-right">
+          <button className="fm-btn-primary" onClick={() => setIsModalOpen(true)}>Generate report</button>
+          <div className="fm-avatar">SA</div>
         </div>
       </div>
 
       <Header />
 
-      <div className="rep-scroll-wrapper">
-        <div className="rep-grid-top">
-          <div className="rep-card">
-            <h3 className="rep-card-title">Snapshot Analytics</h3><br />
-            {snapshot.map((item, i) => (
-              <div className="rep-bar-row" key={i}>
-                <span className="rep-bar-label">{item.label}</span>
-                <div className="rep-bar-track">
-                  <div className={`rep-bar-fill ${item.color}`} style={{ width: '80%' }}></div>
-                </div>
-                <span className="rep-bar-val">{item.val}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="rep-card">
-            <h3 className="rep-card-title">Recent Generated Reports</h3>
-            <div className="rep-recent-list">
-              {recentReports.length > 0 ? recentReports.map((rep, i) => (
-                <div className="rep-recent-item" key={i}>
-                  <div className="rep-recent-left">
-                    <div className="rep-quick-icon green">📄</div>
-                    <div className="rep-recent-info">
-                      <h4>{rep.report_name}</h4>
-                      <p>Format: {rep.format} • By: {rep.generated_by}</p>
-                    </div>
+      <div className="fm-table-card">
+        <div className="rep-grid-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', padding: '20px' }}>
+          {/* Snapshot Section */}
+          <div className="rep-card-box" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '15px' }}>
+             <h3 style={{ fontSize: '16px', marginBottom: '15px' }}>School Snapshot</h3>
+             {snapshot.map((s, i) => (
+               <div key={i} style={{ marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span>{s.label}</span>
+                    <b>{s.val}</b>
                   </div>
-                  {/* Download Trigger */}
-                  <button 
-                    className="rep-btn-dl" 
-                    onClick={() => downloadReportCSV(rep)}
-                  >
-                    Download
-                  </button>
-                </div>
-              )) : <p style={{padding: '20px', color: '#64748b'}}>No report history available.</p>}
-            </div>
+                  <div style={{ height: '6px', background: '#f1f5f9', borderRadius: '3px', marginTop: '4px' }}>
+                    <div style={{ width: '70%', height: '100%', background: '#3b82f6', borderRadius: '3px' }}></div>
+                  </div>
+               </div>
+             ))}
           </div>
-        </div>
 
-        <div className="rep-grid-mid">
-           <div className="rep-card">
-              <h3 className="rep-card-title">Academic & Enrollment Trends</h3>
-              <p style={{color: '#64748b', fontSize: '13px', marginTop: '10px'}}>
-                Data visualization is currently processing for the current academic session.
-              </p>
-           </div>
+          {/* History Section */}
+          <div className="rep-card-box" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '15px' }}>
+             <h3 style={{ fontSize: '16px', marginBottom: '15px' }}>Recent Reports</h3>
+             <div className="rep-list">
+                {recentReports.map(r => (
+                  <div key={r.report_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <div style={{ fontSize: '13px' }}>
+                      <b>{r.report_name}</b><br/>
+                      <small style={{ color: '#64748b' }}>{r.format} • {new Date(r.created_at).toLocaleDateString()}</small>
+                    </div>
+                    <button 
+                      onClick={() => r.format === 'PDF' ? generatePDF(r) : downloadCSV(r)}
+                      style={{ padding: '4px 8px', fontSize: '11px', cursor: 'pointer' }}
+                    >Download</button>
+                  </div>
+                ))}
+             </div>
+          </div>
         </div>
       </div>
 
-      {/* GENERATE REPORT MODAL */}
       {isModalOpen && (
-        <div className="rep-modal-overlay">
-          <div className="rep-modal">
-            <div className="rep-modal-header">
-              <div className="rep-modal-title-group">
-                <div className="rep-modal-icon"><IconReport /></div>
-                <div className="rep-modal-title">
-                  <h2>Generate School Report</h2>
-                  <p>Select type and format for export</p>
-                </div>
-              </div>
+        <div className="fm-modal-overlay">
+          <div className="fm-modal">
+            <div className="fm-modal-header"><h2>Generate Report</h2></div>
+            <div className="fm-modal-body">
+              <label style={{ fontSize: '12px', display: 'block', marginBottom: '5px' }}>Select Type</label>
+              <select className="fm-input" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
+                <option value="attendance">Attendance</option>
+                <option value="fees">Fees</option>
+                <option value="academic">Academic</option>
+              </select>
+
+              <label style={{ fontSize: '12px', display: 'block', margin: '15px 0 5px' }}>Export Format</label>
+              <select className="fm-input" value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}>
+                <option value="PDF">PDF Document</option>
+                <option value="Excel">Excel Sheet</option>
+              </select>
             </div>
-
-            <div className="rep-modal-body">
-              <div className="rep-section-title"><IconFolder /> 1. SELECT REPORT TYPE</div>
-              <div className="rep-type-grid">
-                {modalReportTypes.map(type => (
-                  <div 
-                    key={type.id} 
-                    className={`rep-type-card ${selectedReportType === type.id ? 'active' : ''}`}
-                    onClick={() => setSelectedReportType(type.id)}
-                  >
-                    <div className="rep-type-card-icon">{type.icon}</div>
-                    <div className="rep-type-card-info">
-                      <h4>{type.title}</h4>
-                      <p>{type.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="rep-section-title" style={{marginTop: '20px'}}><IconFilter /> 2. OUTPUT CONFIGURATION</div>
-              <div className="rep-form-row-2">
-                <div className="rep-form-group">
-                  <label>Export Format</label>
-                  <select className="rep-input" value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}>
-                    <option value="PDF">PDF Document</option>
-                    <option value="Excel">Excel Spreadsheet</option>
-                    <option value="CSV">CSV Flat File</option>
-                  </select>
-                </div>
-                <div className="rep-form-group">
-                  <label>Language</label>
-                  <select className="rep-input">
-                    <option>English</option>
-                    <option>Urdu</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="rep-modal-footer">
-              <button className="rep-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
-              <button className="rep-btn-publish" onClick={handleGenerateReport} disabled={loading}>
-                <IconRocket /> {loading ? 'Generating...' : 'Generate Report'}
-              </button>
+            <div className="fm-modal-footer">
+              <button className="fm-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button className="fm-btn-publish" onClick={handleGenerate} disabled={loading}>{loading ? 'Wait...' : 'Generate'}</button>
             </div>
           </div>
         </div>

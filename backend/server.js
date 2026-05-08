@@ -135,28 +135,166 @@ app.post('/api/login', async (req, res) => {
 // ==========================================
 // 🎓 STUDENTS ROUTES
 // ==========================================
+// Backend (server.js) mein ye route dhund kar update karein
 app.get('/api/students', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM students ORDER BY student_id DESC');
+    // SELECT * lagana zaroori hai taake naye add kiye gaye columns bhi fetch hon
+    const query = "SELECT * FROM students ORDER BY student_id DESC";
+    const result = await pool.query(query);
     res.json({ success: true, data: result.rows });
-  } catch (err) { res.status(500).json({ success: false, message: 'Error fetching students' }); }
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 app.post('/api/students', async (req, res) => {
-  const { firstName, lastName, email, dob, gender, grade, section, admissionDate, guardianName, guardianContact } = req.body;
+  const client = await pool.connect();
+
   try {
-    const studentEmail = email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}${Math.floor(Math.random() * 1000)}@student.com`;
-    const rollNo = 'STU-' + Math.floor(Math.random() * 10000);
-    const query = `
-      WITH new_user AS (
-          INSERT INTO users (email, password_hash, role) VALUES ($1, 'password123', 'Student') RETURNING user_id
-      )
-      INSERT INTO students (user_id, roll_no, first_name, last_name, date_of_birth, gender, grade, section, enrollment_date, guardian_name, guardian_contact, fee_status, status)
-      SELECT user_id, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Pending', 'Active' FROM new_user RETURNING *;
+    const {
+      firstName, middleName, lastName, dob, gender, bloodGroup, cnic, religion,
+      email, phone, address, city, province, postalCode,
+      grade, section, admissionDate, prevSchool,
+      guardianName, guardianRelation, guardianOccupation, guardianContact, guardianEmail,
+      monthlyFee, feeDiscount, notes
+    } = req.body;
+
+    const validDate = (dateStr) => (dateStr && dateStr.trim() !== '') ? dateStr : null;
+    const validString = (str) => (str && String(str).trim() !== '') ? String(str) : null;
+    const validNum = (num) => (num && !isNaN(num)) ? parseFloat(num) : 0;
+
+    const autoRollNo = `STU-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    await client.query('BEGIN');
+
+    // -------------------------------------------------------------
+    // STEP 1: CREATE USER ACCOUNT (Fixed: password_hash column use kiya hai)
+    // -------------------------------------------------------------
+    const defaultPassword = 'Student@123'; // Note: Real system mein isko bcrypt se hash kar lena
+    const userEmail = validString(email) || `${autoRollNo.toLowerCase()}@edusync.com`;
+
+    const userQuery = `
+      INSERT INTO users (email, password_hash, role) 
+      VALUES ($1, $2, 'Student') 
+      RETURNING user_id;
     `;
-    await pool.query(query, [studentEmail, rollNo, firstName, lastName, dob || '2010-01-01', gender, grade, section, admissionDate || new Date(), guardianName, guardianContact]);
-    res.json({ success: true, message: 'Student added successfully!' });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+    const userResult = await client.query(userQuery, [userEmail, defaultPassword]);
+    const newUserId = userResult.rows[0].user_id;
+
+    // -------------------------------------------------------------
+    // STEP 2: CREATE STUDENT RECORD 
+    // -------------------------------------------------------------
+    const studentQuery = `
+      INSERT INTO students (
+        first_name, middle_name, last_name, date_of_birth, gender, 
+        blood_group, cnic, religion, email, phone, 
+        residential_address, city, province, postal_code,
+        grade, section, enrollment_date, previous_school,
+        guardian_name, guardian_relation, guardian_occupation, 
+        guardian_contact, guardian_email, monthly_fee, 
+        fee_discount, notes, status, fee_status, roll_no, user_id
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15, $16, $17, $18,
+        $19, $20, $21, $22, $23, $24, $25, $26,
+        'Active', 'Pending', $27, $28
+      ) RETURNING *;
+    `;
+
+    const studentValues = [
+      validString(firstName), validString(middleName), validString(lastName), 
+      validDate(dob), validString(gender), validString(bloodGroup), 
+      validString(cnic), validString(religion), validString(email), 
+      validString(phone), validString(address), validString(city), 
+      validString(province), validString(postalCode), validString(grade), 
+      validString(section), validDate(admissionDate), validString(prevSchool), 
+      validString(guardianName), validString(guardianRelation), 
+      validString(guardianOccupation), validString(guardianContact), 
+      validString(guardianEmail), validNum(monthlyFee), 
+      validString(feeDiscount), validString(notes),
+      autoRollNo, 
+      newUserId // Naya banne wala user_id seedha student ke sath link ho gaya!
+    ];
+
+    const result = await client.query(studentQuery, studentValues);
+
+    await client.query('COMMIT');
+
+    res.status(201).json({ 
+      success: true, 
+      message: "Student & User Account created successfully!", 
+      data: result.rows[0] 
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Insert Error:", error);
+    res.status(500).json({ success: false, message: "Server error during registration" });
+  } finally {
+    client.release();
+  }
+});
+
+// Example Backend Route for Updating Student
+app.put('/api/students/:id', async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    
+    const {
+      firstName, middleName, lastName, dob, gender, bloodGroup, cnic, religion,
+      email, phone, address, city, province, postalCode,
+      grade, section, admissionDate, prevSchool,
+      guardianName, guardianRelation, guardianOccupation, guardianContact, guardianEmail,
+      monthlyFee, feeDiscount, notes
+    } = req.body;
+
+    // Type Formatting: Khali (empty) dates ko strictly NULL kar rahe hain taake DB error na de
+    const validDate = (dateStr) => (dateStr && dateStr.trim() !== '') ? dateStr : null;
+    const validString = (str) => (str && String(str).trim() !== '') ? String(str) : null;
+    const validNum = (num) => (num && !isNaN(num)) ? parseFloat(num) : 0;
+
+    const query = `
+      UPDATE students 
+      SET 
+        first_name = $1, middle_name = $2, last_name = $3, date_of_birth = $4, gender = $5, 
+        blood_group = $6, cnic = $7, religion = $8, email = $9, phone = $10, 
+        residential_address = $11, city = $12, province = $13, postal_code = $14,
+        grade = $15, section = $16, enrollment_date = $17, previous_school = $18,
+        guardian_name = $19, guardian_relation = $20, guardian_occupation = $21, 
+        guardian_contact = $22, guardian_email = $23, monthly_fee = $24, 
+        fee_discount = $25, notes = $26
+      WHERE student_id = $27
+      RETURNING *;
+    `;
+
+    const values = [
+      validString(firstName), validString(middleName), validString(lastName), 
+      validDate(dob), // Perfectly handled Date
+      validString(gender), validString(bloodGroup), validString(cnic), validString(religion), 
+      validString(email), validString(phone), validString(address), validString(city), 
+      validString(province), validString(postalCode), validString(grade), validString(section), 
+      validDate(admissionDate), // Perfectly handled Date
+      validString(prevSchool), validString(guardianName), validString(guardianRelation), 
+      validString(guardianOccupation), 
+      validString(guardianContact), // Safely casted to String
+      validString(guardianEmail), 
+      validNum(monthlyFee), 
+      validString(feeDiscount), validString(notes), 
+      studentId
+    ];
+
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Student not found in database." });
+    }
+
+    res.json({ success: true, message: "Student record updated fully!" });
+  } catch (error) {
+    console.error("Update Error:", error);
+    res.status(500).json({ success: false, message: "Server error during update" });
+  }
 });
 
 // ==========================================
@@ -166,46 +304,245 @@ app.get('/api/teachers', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM teachers ORDER BY teacher_id DESC');
     res.json({ success: true, data: result.rows });
-  } catch (err) { res.status(500).json({ success: false, message: 'Error fetching teachers' }); }
+  } catch (err) { 
+    res.status(500).json({ success: false, message: 'Error fetching teachers' }); 
+  }
 });
 
-app.post('/api/teachers', async (req, res) => {
-  const { firstName, lastName, email, phone, gender, designation, joiningDate } = req.body;
+
+// ==========================================
+// UPDATE EXISTING TEACHER
+// ==========================================
+app.put('/api/teachers/:id', async (req, res) => {
   try {
-    const teacherEmail = email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@teacher.com`;
-    const empId = 'T-' + Math.floor(100 + Math.random() * 900);
+    const teacherId = req.params.id;
+    const { 
+      firstName, lastName, gender, dob, cnic, phone, 
+      designation, empType, email, joiningDate 
+    } = req.body;
+
+    const validDate = (dateStr) => (dateStr && dateStr.trim() !== '') ? dateStr : null;
+    const validString = (str) => (str && String(str).trim() !== '') ? String(str) : null;
+
+    // Database columns ke exact names (Fixed: phone -> phone_number)
     const query = `
-      WITH new_user AS (
-          INSERT INTO users (email, password_hash, role) VALUES ($1, 'password123', 'Teacher') RETURNING user_id
-      )
-      INSERT INTO teachers (user_id, emp_id, first_name, last_name, phone_number, gender, designation, joining_date, status)
-      SELECT user_id, $2, $3, $4, $5, $6, $7, $8, 'Active' FROM new_user RETURNING *;
+      UPDATE teachers 
+      SET 
+        first_name = $1, last_name = $2, gender = $3, date_of_birth = $4, 
+        cnic = $5, phone_number = $6, designation = $7, employment_type = $8, 
+        email = $9, joining_date = $10
+      WHERE teacher_id = $11
+      RETURNING *;
     `;
-    await pool.query(query, [teacherEmail, empId, firstName, lastName, phone, gender, designation, joiningDate || new Date()]);
-    res.json({ success: true, message: 'Teacher added successfully!' });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+
+    const values = [
+      validString(firstName), validString(lastName), validString(gender), 
+      validDate(dob), validString(cnic), validString(phone), 
+      validString(designation), validString(empType), validString(email), 
+      validDate(joiningDate), 
+      teacherId
+    ];
+
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Teacher not found in database." });
+    }
+
+    res.json({ success: true, message: "Teacher updated fully!" });
+  } catch (error) {
+    console.error("Update Error (Teacher):", error);
+    res.status(500).json({ success: false, message: "Server error during update" });
+  }
+});
+
+
+// ==========================================
+// ADD NEW TEACHER ROUTE (With User Account)
+// ==========================================
+// ==========================================
+// ADD NEW TEACHER ROUTE (With User Account)
+// ==========================================
+app.post('/api/teachers', async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const {
+      firstName, lastName, gender, dob, cnic, phone, 
+      designation, empType, email, joiningDate
+    } = req.body;
+
+    const validDate = (dateStr) => (dateStr && dateStr.trim() !== '') ? dateStr : null;
+    const validString = (str) => (str && String(str).trim() !== '') ? String(str) : null;
+
+    const autoEmpId = `T-${Math.floor(100 + Math.random() * 900)}`;
+
+    await client.query('BEGIN');
+
+    
+// -------------------------------------------------------------
+    // STEP 1: CREATE USER ACCOUNT (users table)
+    // -------------------------------------------------------------
+    const defaultPassword = 'Teacher@123'; 
+    const userEmail = validString(email) || `${autoEmpId.toLowerCase()}@edusync.com`;
+
+    const userQuery = `
+      INSERT INTO users (email, password_hash, role) 
+      VALUES ($1, $2, 'Teacher') 
+      RETURNING user_id;
+    `;
+    const userResult = await client.query(userQuery, [userEmail, defaultPassword]);
+    const newUserId = userResult.rows[0].user_id;
+
+    // -------------------------------------------------------------
+    // STEP 2: CREATE TEACHER RECORD (teachers table)
+    // -------------------------------------------------------------
+    // -------------------------------------------------------------
+    // STEP 2: CREATE TEACHER RECORD (teachers table)
+    // -------------------------------------------------------------
+    // (Fixed: phone_number)
+    const teacherQuery = `
+      INSERT INTO teachers (
+        first_name, last_name, gender, date_of_birth, cnic, 
+        phone_number, designation, employment_type, email, joining_date, 
+        emp_id, status, user_id
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Active', $12
+      ) RETURNING *;
+    `;
+    
+   const teacherValues = [
+      validString(firstName), validString(lastName), validString(gender), 
+      validDate(dob), validString(cnic), validString(phone), 
+      validString(designation), validString(empType), validString(email), 
+      validDate(joiningDate), 
+      autoEmpId,  
+      newUserId   
+    ];
+
+  const result = await client.query(teacherQuery, teacherValues);
+
+    await client.query('COMMIT');
+
+    res.status(201).json({ 
+      success: true, 
+      message: "Teacher & User Account created successfully!", 
+      data: result.rows[0] 
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Insert Error (Teacher):", error);
+    res.status(500).json({ success: false, message: "Server error during teacher registration" });
+  } finally {
+    client.release();
+  }
 });
 
 // ==========================================
 // 🏫 CLASSES & SUBJECTS ROUTES
 // ==========================================
+// --- GET ALL CLASSES ---
 app.get('/api/classes', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM classes ORDER BY class_id DESC');
     res.json({ success: true, data: result.rows });
-  } catch (err) { res.status(500).json({ success: false, message: 'Error fetching classes' }); }
+  } catch (err) {
+    console.error("Fetch Error (Classes):", err);
+    res.status(500).json({ success: false, message: 'Error fetching classes' });
+  }
 });
 
-app.post('/api/classes', async (req, res) => {
-  const { grade, section, maxCapacity, roomNumber, academicYear, notes, teacher, coTeacher, subjects, startTime, endTime, settings } = req.body;
+// --- UPDATE EXISTING CLASS (PUT) ---
+app.put('/api/classes/:id', async (req, res) => {
   try {
+    const classId = req.params.id;
+    const { 
+      grade, section, maxCapacity, roomNumber, academicYear, 
+      notes, teacher, coTeacher, startTime, endTime, 
+      subjects, settings 
+    } = req.body;
+
     const query = `
-      INSERT INTO classes (grade, section, max_capacity, room_number, academic_year, notes, teacher_name, co_teacher, subjects, start_time, end_time, att_tracking, gradebook, portal_access)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *;
+      UPDATE classes 
+      SET 
+        grade = $1, section = $2, max_capacity = $3, room_number = $4, 
+        academic_year = $5, notes = $6, teacher_name = $7, co_teacher = $8, 
+        start_time = $9, end_time = $10, subjects = $11, settings = $12
+      WHERE class_id = $13
+      RETURNING *;
     `;
-    await pool.query(query, [grade, section, maxCapacity, roomNumber, academicYear, notes, teacher, coTeacher, subjects, startTime, endTime, settings?.attTracking, settings?.gradebook, settings?.portalAccess]);
-    res.json({ success: true, message: 'Class created successfully!' });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+
+    const values = [
+      grade, 
+      section, 
+      maxCapacity ? parseInt(maxCapacity) : 0, 
+      roomNumber, 
+      academicYear, 
+      notes, 
+      teacher, 
+      coTeacher, 
+      startTime, 
+      endTime, 
+      subjects || [], // 👈 Yahan se bhi JSON.stringify HATA DIYA (Direct Array)
+      JSON.stringify(settings || {}), 
+      classId
+    ];
+
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Class not found in database." });
+    }
+
+    res.json({ success: true, message: "Class updated successfully!" });
+  } catch (error) {
+    console.error("Update Error (Classes):", error);
+    res.status(500).json({ success: false, message: "Server error during update" });
+  }
+});
+
+// --- ADD NEW CLASS (POST) ---
+app.post('/api/classes', async (req, res) => {
+  try {
+    const { 
+      grade, section, maxCapacity, roomNumber, academicYear, 
+      notes, teacher, coTeacher, startTime, endTime, 
+      subjects, settings 
+    } = req.body;
+
+    const query = `
+      INSERT INTO classes (
+        grade, section, max_capacity, room_number, academic_year, 
+        notes, teacher_name, co_teacher, start_time, end_time, 
+        subjects, settings, status
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'Active'
+      ) RETURNING *;
+    `;
+
+    const values = [
+      grade, 
+      section, 
+      maxCapacity ? parseInt(maxCapacity) : 0, 
+      roomNumber, 
+      academicYear, 
+      notes, 
+      teacher, 
+      coTeacher, 
+      startTime, 
+      endTime, 
+      subjects || [], // 👈 Yahan se JSON.stringify HATA DIYA (Direct Array)
+      JSON.stringify(settings || {}) 
+    ];
+
+    const result = await pool.query(query, values);
+    res.status(201).json({ success: true, message: "Class created successfully!", data: result.rows[0] });
+
+  } catch (error) {
+    console.error("Insert Error (Classes):", error);
+    res.status(500).json({ success: false, message: "Server error during class creation" });
+  }
 });
 
 app.get('/api/subjects', async (req, res) => {
@@ -427,6 +764,54 @@ app.get('/api/reports/recent', async (req, res) => {
     const result = await pool.query("SELECT * FROM generated_reports ORDER BY created_at DESC LIMIT 10");
     res.json({ success: true, data: result.rows });
   } catch (err) { res.status(500).send(err.message); }
+});
+
+const { jsPDF } = require("jspdf");
+require("jspdf-autotable");
+
+app.get('/api/reports/download-pdf/:id', async (req, res) => {
+    const reportId = req.params.id;
+    try {
+        // 1. Report ki details fetch karein
+        const reportInfo = await pool.query("SELECT * FROM generated_reports WHERE report_id = $1", [reportId]);
+        const report = reportInfo.rows[0];
+
+        // 2. Sample Data (Yahan aap students ya fees ka asli data fetch kar sakte hain)
+        const tableData = [
+            ["ID", "Name", "Status", "Date"],
+            ["101", "Ali Khan", "Paid", "2024-05-01"],
+            ["102", "Sara Ahmed", "Pending", "2024-05-02"],
+            ["103", "Zain Malik", "Paid", "2024-05-03"],
+        ];
+
+        const doc = new jsPDF();
+        
+        // 🏫 Header
+        doc.setFontSize(20);
+        doc.text("EDUSYNC LMS - OFFICIAL REPORT", 105, 15, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.text(`Report Name: ${report.report_name}`, 14, 25);
+        doc.text(`Generated By: ${report.generated_by}`, 14, 30);
+        doc.text(`Date: ${new Date(report.created_at).toLocaleString()}`, 14, 35);
+
+        // 📊 Table
+        doc.autoTable({
+            startY: 45,
+            head: [tableData[0]],
+            body: tableData.slice(1),
+            theme: 'grid',
+            headStyles: { fillColor: [22, 163, 74] } // School Green Color
+        });
+
+        const pdfBuffer = doc.output("arraybuffer");
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename=${report.report_name}.pdf`);
+        res.send(Buffer.from(pdfBuffer));
+
+    } catch (err) {
+        res.status(500).send("PDF Error: " + err.message);
+    }
 });
 
 // 3. Save Generated Report Entry
