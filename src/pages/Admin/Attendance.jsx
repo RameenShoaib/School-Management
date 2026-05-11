@@ -6,7 +6,7 @@ import './Attendance.css';
 
 /* Action Icons */
 const IconCalendar = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"/></svg>;
-const IconSettings = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>;
+const IconSettings = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47,0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>;
 const IconInfo = () => <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>;
 const IconKey = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>;
 const IconEdit = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>;
@@ -25,7 +25,14 @@ export default function Attendance() {
   const [dbStudents, setDbStudents] = useState([]);
   const [dbTeachers, setDbTeachers] = useState([]); 
   const [attendanceRecords, setAttendanceRecords] = useState([]); 
+
+  // Checkbox State
+  const [selectedRows, setSelectedRows] = useState([]);
   
+  // 👉 NEW: Pagination State Added
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 7; 
+
   const todayDateString = new Date().toISOString().split('T')[0];
 
   const [tableFilters, setTableFilters] = useState({
@@ -41,6 +48,7 @@ export default function Attendance() {
     session: 'Full day',
     markedBy: '' 
   });
+  
 
   const fetchData = async () => {
     try {
@@ -130,6 +138,17 @@ export default function Attendance() {
     return matchGrade && matchSection;
   });
 
+  // 👉 NEW: Pagination Calculation Logic Added
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = displayedStudents.slice(indexOfFirstRecord, indexOfLastRecord);
+  const totalPages = Math.ceil(displayedStudents.length / recordsPerPage);
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    setSelectedRows([]); 
+  };
+
   const displayDates = Array.from({length: 5}).map((_, i) => {
     const d = new Date(tableFilters.startDate);
     d.setDate(d.getDate() + i);
@@ -142,6 +161,64 @@ export default function Attendance() {
   const getStatusForSpecificDate = (studentId, dateStr) => {
     const record = attendanceRecords.find(a => a.student_id === studentId && a.attendance_date.startsWith(dateStr));
     return record ? record.status.charAt(0) : null;
+  };
+
+  // Checkbox Handlers
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedRows(currentRecords.map(s => s.student_id));
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+  };
+
+  const isAllSelected = currentRecords.length > 0 && selectedRows.length === currentRecords.length;
+
+  // Export Logic
+  const handleExport = () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({ 
+        icon: 'warning', 
+        title: 'No Selection', 
+        text: 'Please select students from the table to export.', 
+        confirmButtonColor: '#2563eb' 
+      });
+      return;
+    }
+
+    const selectedData = displayedStudents.filter(s => selectedRows.includes(s.student_id));
+    const dateHeaders = displayDates.map(d => d.displayStr.toUpperCase());
+    const headers = ["ID", "Name", "Roll No", "Grade", "Section", ...dateHeaders];
+
+    const csvRows = selectedData.map(s => {
+      const attendanceStatus = displayDates.map(dObj => {
+        const status = getStatusForSpecificDate(s.student_id, dObj.fullDateStr);
+        return status ? status : "-";
+      });
+
+      return [
+        s.student_id, 
+        `"${s.name}"`, 
+        `"${s.roll}"`, 
+        `"${s.grade}"`, 
+        `"${s.section}"`,
+        ...attendanceStatus
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Detailed_Attendance_Report_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const modalStudents = dbStudents.filter(s => s.grade === modalConfig.grade && s.section === modalConfig.section);
@@ -192,7 +269,6 @@ export default function Attendance() {
   return (
     <DashboardLayout userRole="admin" currentPath="/attendance" userName="System Admin" userInitials="SA">
       
-      {/* 🟢 CUSTOM PAGE TITLE SECTION */}
       <div className="att-page-header">
         <div className="att-header-left">
           <h2>Attendance</h2>
@@ -204,10 +280,8 @@ export default function Attendance() {
         </div>
       </div>
 
-      {/* 🟢 GLOBAL HEADER RESTORED */}
-      <Header />
+      <Header onExport={handleExport} onRefresh={fetchData} />
 
-      {/* 🟢 SCROLLABLE WRAPPER (Everything below header scrolls) */}
       <div className="att-page-wrapper">
 
         <div className="att-stats-row">
@@ -249,18 +323,21 @@ export default function Attendance() {
             <table className="att-table">
               <thead>
                 <tr>
-                  <th style={{ width: '25%' }}>
+                  <th style={{ width: '40px', verticalAlign: 'middle' }}>
+                    <input type="checkbox" checked={isAllSelected} onChange={handleSelectAll} />
+                  </th>
+                  <th style={{ width: '25%', verticalAlign: 'middle' }}>
                     STUDENT
                     <div style={{ marginTop: '8px', fontSize: '10px', fontWeight: '500', color: '#94a3b8', textTransform: 'none' }}>Filter to view specific classes 👇</div>
                   </th>
-                  <th style={{ width: '15%' }}>
+                  <th style={{ width: '15%', verticalAlign: 'middle' }}>
                     GRADE
                     <select className="att-col-filter" value={tableFilters.grade} onChange={(e) => setTableFilters({...tableFilters, grade: e.target.value})}>
                       <option value="">All Grades</option>
                       {uniqueGrades.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                   </th>
-                  <th style={{ width: '12%' }}>
+                  <th style={{ width: '12%', verticalAlign: 'middle' }}>
                     SECTION
                     <select className="att-col-filter" value={tableFilters.section} onChange={(e) => setTableFilters({...tableFilters, section: e.target.value})}>
                       <option value="">All</option>
@@ -270,40 +347,56 @@ export default function Attendance() {
                   </th>
                   
                   {displayDates.map((dObj, idx) => (
-                    <th key={idx} style={{ textAlign: 'center', width: '9%' }}>
+                    <th key={idx} style={{ textAlign: 'center', width: '9%', verticalAlign: 'middle' }}>
                       {idx === 0 ? (
                         <>
                           <span style={{ display: 'block', marginBottom: '4px' }}>START DATE</span>
                           <input type="date" className="att-col-filter" style={{ cursor: 'pointer', padding: '5px' }} value={tableFilters.startDate} onChange={(e) => setTableFilters({...tableFilters, startDate: e.target.value})} />
                         </>
                       ) : (
-                        <span style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', paddingTop: '18px' }}>
+                        <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', paddingTop: '18px' }}>
                           {dObj.displayStr.toUpperCase()}
-                        </span>
+                        </div>
                       )}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {displayedStudents.length > 0 ? displayedStudents.map((student) => (
+                {/* 👇 NEW: currentRecords map Added for Pagination */}
+                {currentRecords.length > 0 ? currentRecords.map((student) => (
                   <tr key={student.student_id}>
-                    <td style={{ fontWeight: 600 }}>{student.name}</td>
-                    <td style={{ color: '#64748b' }}>{student.grade}</td>
-                    <td style={{ color: '#64748b' }}>Sec {student.section}</td>
+                    <td style={{ verticalAlign: 'middle' }}>
+                      <input type="checkbox" checked={selectedRows.includes(student.student_id)} onChange={() => handleSelectRow(student.student_id)} />
+                    </td>
+                    <td style={{ fontWeight: 600, verticalAlign: 'middle' }}>{student.name}</td>
+                    <td style={{ color: '#64748b', verticalAlign: 'middle' }}>{student.grade}</td>
+                    <td style={{ color: '#64748b', verticalAlign: 'middle' }}>Sec {student.section}</td>
                     
                     {displayDates.map((dObj, idx) => {
                       const status = getStatusForSpecificDate(student.student_id, dObj.fullDateStr);
                       return (
-                        <td key={idx} style={{ textAlign: 'center' }}>
+                        <td key={idx} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                           {status ? <span className={`att-status-circle ${status}`}>{status}</span> : <span className="att-status-circle empty">-</span>}
                         </td>
                       );
                     })}
                   </tr>
-                )) : <tr><td colSpan="8" style={{textAlign: 'center', padding: '40px', color: '#94a3b8'}}>No students found matching these filters.</td></tr>}
+                )) : <tr><td colSpan="9" style={{textAlign: 'center', padding: '40px', color: '#94a3b8'}}>No students found matching these filters.</td></tr>}
               </tbody>
             </table>
+          </div>
+
+          {/* 👉 NEW: Pagination Footer Row Added */}
+          <div className="att-pagination-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', backgroundColor: '#ffffff', borderTop: '1px solid #f1f5f9' }}>
+            <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Showing {indexOfFirstRecord + 1} to {Math.min(indexOfLastRecord, displayedStudents.length)} of {displayedStudents.length} records</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="att-page-btn" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>&lt;</button>
+              {[...Array(totalPages)].map((_, index) => (
+                <button key={index + 1} onClick={() => paginate(index + 1)} className={`att-page-btn ${currentPage === index + 1 ? 'active' : ''}`}>{index + 1}</button>
+              ))}
+              <button className="att-page-btn" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages || totalPages === 0}>&gt;</button>
+            </div>
           </div>
 
           <div className="att-legend-row">

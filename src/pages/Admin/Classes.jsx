@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2'; // 👉 SweetAlert2 import kiya gaya hai
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
 import './Classes.css';
@@ -17,7 +18,6 @@ export default function Classes() {
   const [modalMode, setModalMode] = useState('add');
   const [selectedClassId, setSelectedClassId] = useState(null);
 
-  // 👉 NEW: Checkbox Selection State
   const [selectedRows, setSelectedRows] = useState([]);
 
   // Pagination State
@@ -27,6 +27,7 @@ export default function Classes() {
   // 🗄️ Database States
   const [classesData, setClassesData] = useState([]);
   const [availableSubjects, setAvailableSubjects] = useState([]); 
+  const [availableTeachers, setAvailableTeachers] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
 
   // 📝 Form States
@@ -88,9 +89,21 @@ export default function Classes() {
     } catch (err) { console.error("Failed to fetch available subjects:", err); }
   };
 
+  const fetchAvailableTeachers = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/teachers");
+      const result = await response.json();
+      if (result.success) {
+        const teacherNames = result.data.map(t => `${t.first_name} ${t.last_name}`.trim()).filter(Boolean);
+        setAvailableTeachers([...new Set(teacherNames)]);
+      }
+    } catch (err) { console.error("Failed to fetch available teachers:", err); }
+  };
+
   useEffect(() => {
     fetchClasses();
     fetchAvailableSubjects(); 
+    fetchAvailableTeachers(); 
   }, []);
 
   const openAddModal = () => {
@@ -172,14 +185,11 @@ export default function Classes() {
   const currentRecords = filteredRecords.slice(firstRecordIndex, lastRecordIndex);
   const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
 
-  // 👉 NEW: Checkbox Handlers
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      // Jab header wala check ho, toh is page par mojood sabhi records ki ID array mein daal do
       const allVisibleIds = currentRecords.map(cls => cls.id);
       setSelectedRows(allVisibleIds);
     } else {
-      // Uncheck karne par array khali kar do
       setSelectedRows([]);
     }
   };
@@ -187,13 +197,61 @@ export default function Classes() {
   const handleSelectRow = (id) => {
     setSelectedRows(prev => 
       prev.includes(id) 
-        ? prev.filter(rowId => rowId !== id) // Agar pehle se select tha, toh remove kar do
-        : [...prev, id] // Agar select nahi tha, toh array mein add kar do
+        ? prev.filter(rowId => rowId !== id)
+        : [...prev, id] 
     );
   };
 
-  // Pata lagane ke liye ke kya saare current records selected hain
   const isAllSelected = currentRecords.length > 0 && currentRecords.every(cls => selectedRows.includes(cls.id));
+
+  // 👉 EXPORT TO EXCEL/CSV LOGIC (WITH SWEET ALERT)
+  const handleExport = () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Selection',
+        text: 'Please select at least one class from the checkboxes to export.',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
+
+    // Filter only selected classes
+    const selectedData = classesData.filter(record => selectedRows.includes(record.id));
+
+    // Create CSV Headers
+    const headers = ["Class ID", "Grade", "Section", "Class Teacher", "Students Capacity", "Attendance %", "Avg Grade", "Subjects Count", "Status"];
+    
+    // Create CSV Rows Data
+    const csvRows = selectedData.map(record => {
+      return [
+        record.id,
+        `"${record.grade}"`,
+        `"${record.section}"`,
+        `"${record.teacher || 'Not Assigned'}"`,
+        `"${record.students}"`,
+        `"${record.attendance}%"`,
+        `"${record.avgGrade}"`,
+        `"${record.subjects}"`,
+        `"${record.status}"`
+      ].join(',');
+    });
+
+    // Combine Headers and Rows
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+
+    // Create a Blob and trigger Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Classes_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <DashboardLayout userRole="admin" currentPath="/classes" userName="System Admin" userInitials="SA">
@@ -208,7 +266,8 @@ export default function Classes() {
         </div>
       </div>
 
-      <Header />
+      {/* 👉 HEADER MEIN EXPORT AUR REFRESH CONNECT KAR DIYE HAIN */}
+      <Header onExport={handleExport} onRefresh={fetchClasses} />
 
       <div className="cl-table-card">
         
@@ -220,7 +279,10 @@ export default function Classes() {
               type="text" 
               placeholder="Search by class name, teacher..." 
               value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setSelectedRows([]); // Reset on search
+              }} 
             />
           </div>
           <div className="cl-filter-group">
@@ -235,8 +297,7 @@ export default function Classes() {
           <table className="cl-list-table">
             <thead>
               <tr>
-                {/* 👉 Header Checkbox */}
-                <th>
+                <th style={{ width: '40px' }}>
                   <input 
                     type="checkbox" 
                     checked={isAllSelected}
@@ -264,7 +325,6 @@ export default function Classes() {
                 currentRecords.map((cls) => {
                   return (
                     <tr key={cls.id} className={selectedRows.includes(cls.id) ? 'selected-row' : ''}>
-                      {/* 👉 Row Checkbox */}
                       <td>
                         <input 
                           type="checkbox" 
@@ -332,7 +392,7 @@ export default function Classes() {
       </div>
 
       {/* ======================================= */}
-      {/* MODAL (Untouched and exactly same as before) */}
+      {/* MODAL */}
       {/* ======================================= */}
       {isModalOpen && (
         <div className="cl-modal-overlay">
@@ -399,22 +459,33 @@ export default function Classes() {
               <div style={{ marginTop: '24px' }}>
                 <div className="cl-section-title">Teacher Assignment</div>
                 <div className="cl-form-row-2">
+                  
+                  {/* 👉 DYNAMIC CLASS TEACHER */}
                   <div className="cl-form-group">
                     <label>Class / homeroom teacher <span>*</span></label>
                     <select name="teacher" value={formData.teacher} onChange={handleInputChange} className="cl-input">
                       <option value="">Select teacher</option>
-                      <option value="Ms. Fatima Noor">Ms. Fatima Noor</option>
-                      <option value="Mr. Ahmed Raza">Mr. Ahmed Raza</option>
-                      <option value="Ms. Hira Khan">Ms. Hira Khan</option>
+                      {availableTeachers.length > 0 ? (
+                        availableTeachers.map((tName, i) => (
+                          <option key={i} value={tName}>{tName}</option>
+                        ))
+                      ) : (
+                        <option disabled>No teachers found in DB</option>
+                      )}
                     </select>
                   </div>
+
+                  {/* 👉 DYNAMIC CO-TEACHER */}
                   <div className="cl-form-group">
                     <label>Co-teacher (optional)</label>
                     <select name="coTeacher" value={formData.coTeacher} onChange={handleInputChange} className="cl-input">
                       <option value="None">None</option>
-                      <option value="Ms. Sana">Ms. Sana</option>
+                      {availableTeachers.map((tName, i) => (
+                        <option key={i} value={tName}>{tName}</option>
+                      ))}
                     </select>
                   </div>
+
                 </div>
               </div>
 

@@ -11,8 +11,9 @@ const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M1
 
 export default function Exams() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRows, setSelectedRows] = useState([]);
   
-  // 🚀 Dynamic Data States
+  // Dynamic Data States
   const [examsList, setExamsList] = useState([]);
   const [teachersList, setTeachersList] = useState([]);
   const [subjectsList, setSubjectsList] = useState([]);
@@ -21,6 +22,10 @@ export default function Exams() {
   // Modal & Form States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 👉 NEW: Pagination State Added
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 7; 
 
   // Form Initial State
   const [formData, setFormData] = useState({
@@ -42,7 +47,7 @@ export default function Exams() {
     autoPublish: false
   });
 
-  // 🌍 Fetch all data
+  // Fetch all data
   const fetchAllData = async () => {
     try {
       const [examsRes, teachersRes, subjectsRes, classesRes] = await Promise.all([
@@ -65,6 +70,59 @@ export default function Exams() {
     fetchAllData();
   }, []);
 
+  // Filter Logic
+  const filteredExams = examsList.filter(exam => 
+    exam.exam_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exam.subject_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // 👉 NEW: Pagination Calculation Logic Added
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentExams = filteredExams.slice(indexOfFirstRecord, indexOfLastRecord);
+  const totalPages = Math.ceil(filteredExams.length / recordsPerPage);
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    setSelectedRows([]); 
+  };
+
+  // Export Logic
+  const handleExport = () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Please select exams from the table to export.', confirmButtonColor: '#2563eb' });
+      return;
+    }
+
+    const selectedData = examsList.filter(exam => selectedRows.includes(exam.exam_id));
+    const headers = ["ID", "Exam Title", "Type", "Subject", "Class", "Date", "Invigilator", "Status"];
+    
+    const csvRows = selectedData.map(exam => {
+      const classInfo = `${exam.grade} ${exam.section ? `(${exam.section})` : ''}`;
+      const examDate = exam.exam_date ? new Date(exam.exam_date).toLocaleDateString() : '-';
+      return [
+        exam.exam_id,
+        `"${exam.exam_title}"`,
+        `"${exam.exam_type}"`,
+        `"${exam.subject_name || '-'}"`,
+        `"${classInfo}"`,
+        `"${examDate}"`,
+        `"${exam.invigilator_first_name || 'N/A'}"`,
+        `"${exam.status || 'Scheduled'}"`
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Exams_Report_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -74,17 +132,14 @@ export default function Exams() {
     setFormData((prev) => ({ ...prev, [toggleName]: !prev[toggleName] }));
   };
 
-  // 📝 Schedule Exam (STRICT FK FIX)
+  // Schedule Exam
   const handleScheduleExam = async () => {
-    // 1. Client-side Validation
     if (!formData.examTitle || !formData.subjectId || !formData.classId || !formData.examDate) {
       Swal.fire('Required', 'Please select a Subject, Class, and Date.', 'warning');
       return;
     }
 
     setIsLoading(true);
-
-    // 2. 🔥 Strict Data Conversion (Final Safety Net)
     const payload = {
       ...formData,
       subjectId: parseInt(formData.subjectId, 10),
@@ -101,9 +156,7 @@ export default function Exams() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       const data = await response.json();
-
       if (data.success) {
         Swal.fire('Success', 'Exam Scheduled!', 'success');
         setFormData({
@@ -115,33 +168,37 @@ export default function Exams() {
         setIsModalOpen(false);
         fetchAllData(); 
       } else {
-        // Detailed error show karega agar abhi bhi FK violation hui
         throw new Error(data.message || 'Database error occurred');
       }
     } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Scheduling Failed',
-        text: error.message,
-        footer: 'Check if Step 1 SQL query was run in Neon DB'
-      });
+      Swal.fire({ icon: 'error', title: 'Scheduling Failed', text: error.message });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredExams = examsList.filter(exam => 
-    exam.exam_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exam.subject_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Checkbox Handlers
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allIds = currentExams.map(exam => exam.exam_id);
+      setSelectedRows(allIds);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedRows(prev => 
+      prev.includes(id) 
+        ? prev.filter(rowId => rowId !== id) 
+        : [...prev, id] 
+    );
+  };
+
+  const isAllSelected = currentExams.length > 0 && currentExams.every(exam => selectedRows.includes(exam.exam_id));
 
   return (
-    <DashboardLayout 
-      userRole="admin" 
-      currentPath="/exams" 
-      userName="System Admin" 
-      userInitials="SA"
-    >
+    <DashboardLayout userRole="admin" currentPath="/exams" userName="System Admin" userInitials="SA">
       <div className="ex-page-header">
         <div className="ex-header-left">
           <h2>Exams Dashboard</h2>
@@ -155,13 +212,9 @@ export default function Exams() {
         </div>
       </div>
 
-      <Header />
+      <Header onExport={handleExport} />
 
       <div className="ex-table-card">
-        <div className="ex-card-header">
-            <h3>Scheduled Exams List</h3>
-        </div>
-
         <div className="ex-search-area">
           <div className="ex-search-box">
             <SvgSearch />
@@ -169,7 +222,11 @@ export default function Exams() {
               type="text" 
               placeholder="Search by title or subject..." 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to page 1 on search
+                setSelectedRows([]); 
+              }}
             />
           </div>
         </div>
@@ -178,6 +235,9 @@ export default function Exams() {
           <table className="ex-table">
             <thead>
               <tr>
+                <th style={{ width: '40px' }}>
+                  <input type="checkbox" checked={isAllSelected} onChange={handleSelectAll} />
+                </th>
                 <th>ID</th>
                 <th>Exam Title</th>
                 <th>Type</th>
@@ -189,9 +249,12 @@ export default function Exams() {
               </tr>
             </thead>
             <tbody>
-              {filteredExams.length > 0 ? (
-                filteredExams.map((exam) => (
-                  <tr key={exam.exam_id}>
+              {currentExams.length > 0 ? (
+                currentExams.map((exam) => (
+                  <tr key={exam.exam_id} className={selectedRows.includes(exam.exam_id) ? 'selected-row' : ''}>
+                    <td>
+                      <input type="checkbox" checked={selectedRows.includes(exam.exam_id)} onChange={() => handleSelectRow(exam.exam_id)} />
+                    </td>
                     <td>{exam.exam_id}</td>
                     <td style={{ fontWeight: 600 }}>{exam.exam_title}</td>
                     <td>{exam.exam_type}</td>
@@ -204,7 +267,7 @@ export default function Exams() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                  <td colSpan="9" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
                     No examinations found in the database.
                   </td>
                 </tr>
@@ -212,12 +275,25 @@ export default function Exams() {
             </tbody>
           </table>
         </div>
+
+        {/* 👉 NEW: Pagination Footer Row Added */}
+        <div className="att-pagination-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', backgroundColor: '#ffffff', borderTop: '1px solid #f1f5f9' }}>
+          <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
+            Showing {indexOfFirstRecord + 1} to {Math.min(indexOfLastRecord, filteredExams.length)} of {filteredExams.length} records
+          </span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="att-page-btn" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>&lt;</button>
+            {[...Array(totalPages)].map((_, index) => (
+              <button key={index + 1} onClick={() => paginate(index + 1)} className={`att-page-btn ${currentPage === index + 1 ? 'active' : ''}`}>{index + 1}</button>
+            ))}
+            <button className="att-page-btn" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages || totalPages === 0}>&gt;</button>
+          </div>
+        </div>
       </div>
 
       {isModalOpen && (
         <div className="ex-modal-overlay">
           <div className="ex-modal">
-            
             <div className="ex-modal-header">
               <div className="ex-modal-title-group">
                 <div className="ex-modal-icon"><IconCalendar /></div>
@@ -229,8 +305,7 @@ export default function Exams() {
             </div>
 
             <div className="ex-modal-body">
-              <div className="ex-section-title">📱 EXAM DETAILS</div>
-              
+              <div className="ex-section-title">📘 EXAM DETAILS</div>
               <div className="ex-form-row-2">
                 <div className="ex-form-group">
                   <label>Exam title <span>*</span></label>
@@ -246,7 +321,6 @@ export default function Exams() {
                   </select>
                 </div>
               </div>
-
               <div className="ex-form-row-2">
                 <div className="ex-form-group">
                   <label>Subject <span>*</span></label>
@@ -267,7 +341,6 @@ export default function Exams() {
                   </select>
                 </div>
               </div>
-
               <div className="ex-form-row-3">
                 <div className="ex-form-group">
                   <label>Exam date <span>*</span></label>
@@ -285,9 +358,7 @@ export default function Exams() {
                   </select>
                 </div>
               </div>
-
               <div className="ex-section-title"><IconSettings /> CONFIGURATION</div>
-              
               <div className="ex-form-row-4">
                 <div className="ex-form-group">
                   <label>Total marks</label>
@@ -309,37 +380,25 @@ export default function Exams() {
                   </select>
                 </div>
               </div>
-
               <div className="ex-switch-list">
                 <div className="ex-switch-row">
-                  <div className="ex-switch-label">
-                    <h4>Notify students</h4>
-                  </div>
+                  <div className="ex-switch-label"><h4>Notify students</h4></div>
                   <div className={`ex-toggle ${formData.notifyPortal ? 'on' : ''}`} onClick={() => handleToggle('notifyPortal')}></div>
                 </div>
                 <div className="ex-switch-row">
-                  <div className="ex-switch-label">
-                    <h4>Send SMS</h4>
-                  </div>
+                  <div className="ex-switch-label"><h4>Send SMS</h4></div>
                   <div className={`ex-toggle ${formData.sendSms ? 'on' : ''}`} onClick={() => handleToggle('sendSms')}></div>
                 </div>
               </div>
-
             </div>
-
             <div className="ex-modal-footer">
               <div className="ex-footer-actions">
                 <button className="ex-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button 
-                  className="ex-btn-publish" 
-                  onClick={handleScheduleExam}
-                  disabled={isLoading}
-                >
+                <button className="ex-btn-publish" onClick={handleScheduleExam} disabled={isLoading}>
                   {isLoading ? 'Wait...' : 'Schedule Exam'}
                 </button>
               </div>
             </div>
-
           </div>
         </div>
       )}

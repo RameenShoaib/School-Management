@@ -20,43 +20,40 @@ const SvgDelete = () => (
   </svg>
 );
 
-/* 👇 Naya Export Icon 👇 */
+/* Naya Export Icon */
 const SvgExport = () => (
   <svg fill="currentColor" viewBox="0 0 24 24">
-    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z" />
+    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z" />
   </svg>
 );
 
-export default function Header() {
+export default function Header({ onEdit, onRefresh, onDelete, onExport }) {
   return (
     <div className="action-header-bar">
+      <button className="action-btn" onClick={onEdit}>
+        <SvgEdit /> Edit
+      </button>
+
+      <div className="action-divider"></div>
       
-      {/* Left Side Buttons */}
-      <button className="action-btn" onClick={() => console.log("Edit clicked")}>
-        <SvgEdit />
-        Edit
+      <button className="action-btn" onClick={onRefresh}>
+        <SvgRefresh /> Refresh
       </button>
 
-      <span className="action-divider"></span>
-
-      <button className="action-btn" onClick={() => window.location.reload()}>
-        <SvgRefresh />
-        Refresh
+      <div className="action-divider"></div>
+      
+      <button className="action-btn delete-btn" onClick={onDelete}>
+        <SvgDelete /> Delete
       </button>
 
-      <span className="action-divider"></span>
-
-      <button className="action-btn delete-btn" onClick={() => console.log("Delete clicked")}>
-        <SvgDelete />
-        Delete
+      {/* 👇 Yahan marginLeft: 'auto' lagaya hai taake ye right side pe chala jaye 👇 */}
+      <button 
+        className="action-btn export-btn" 
+        onClick={onExport} 
+        style={{ marginLeft: 'auto' }}
+      >
+        <SvgExport /> Export
       </button>
-
-      {/* 👇 Right Side Export Button (margin-left: auto magic) 👇 */}
-      <button className="action-btn export-btn right-align" onClick={() => console.log("Export clicked")}>
-        <SvgExport />
-        Export
-      </button>
-
     </div>
   );
 }

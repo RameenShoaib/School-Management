@@ -14,6 +14,9 @@ export default function FeeManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // 痩 NEW: Checkbox Selection State
+  const [selectedRows, setSelectedRows] = useState([]);
+
   // Search/Lookup State
   const [studentSearch, setStudentSearch] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -45,6 +48,43 @@ export default function FeeManagement() {
 
   useEffect(() => { fetchData(); }, []);
 
+  // 👉 NEW: Export Logic Added
+  const handleExport = () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({ 
+        icon: 'warning', 
+        title: 'No Selection', 
+        text: 'Please select fee records from the table to export.', 
+        confirmButtonColor: '#2563eb' 
+      });
+      return;
+    }
+
+    const selectedData = feeRecords.filter(record => selectedRows.includes(record.payment_id));
+    const headers = ["Payment ID", "Student Name", "Roll No", "Grade", "Amount Received", "Date", "Method", "Status"];
+    
+    const csvRows = selectedData.map(r => [
+      r.payment_id,
+      `"${r.first_name} ${r.last_name}"`,
+      `"${r.roll_no}"`,
+      `"${r.grade}"`,
+      `"PKR ${r.amount_received}"`,
+      `"${new Date(r.payment_date).toLocaleDateString()}"`,
+      `"${r.payment_method}"`,
+      "Paid"
+    ].join(','));
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Fee_Records_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleStudentSearch = (val) => {
     setStudentSearch(val);
     const found = allStudents.find(s => 
@@ -63,31 +103,21 @@ export default function FeeManagement() {
     setFormData(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // 📝 MAIN SUBMIT FUNCTION
   const handleRecordPayment = async (e) => {
-    if (e) e.preventDefault(); // Form prevent default browser behavior
-    
+    if (e) e.preventDefault(); 
     if (!selectedStudent) {
       Swal.fire('Selection Required', 'Please find and select a student first.', 'warning');
       return;
     }
-
     setLoading(true);
-
-    const payload = {
-      ...formData,
-      studentId: selectedStudent.student_id
-    };
-
+    const payload = { ...formData, studentId: selectedStudent.student_id };
     try {
       const response = await fetch('http://localhost:5000/api/fees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       const res = await response.json();
-
       if (res.success) {
         Swal.fire({
           icon: 'success',
@@ -96,8 +126,7 @@ export default function FeeManagement() {
           confirmButtonColor: '#16a34a'
         });
         setIsModalOpen(false);
-        fetchData(); // Refresh list
-        // Reset Search
+        fetchData(); 
         setStudentSearch('');
         setSelectedStudent(null);
       } else {
@@ -117,6 +146,23 @@ export default function FeeManagement() {
     return matchesSearch;
   });
 
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allIds = filteredRecords.map(r => r.payment_id);
+      setSelectedRows(allIds);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedRows(prev => 
+      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id] 
+    );
+  };
+
+  const isAllSelected = filteredRecords.length > 0 && filteredRecords.every(r => selectedRows.includes(r.payment_id));
+
   return (
     <DashboardLayout userRole="admin" currentPath="/fees" userName="System Admin" userInitials="SA">
       <div className="fm-page-header">
@@ -130,12 +176,21 @@ export default function FeeManagement() {
         </div>
       </div>
 
-      <Header />
+      {/* 👉 Export prop linked here */}
+      <Header onExport={handleExport} onRefresh={fetchData} />
 
       <div className="fm-table-card">
         <div className="fm-search-area">
           <div className="fm-search-box">
-            <input type="text" placeholder="Search records..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <input 
+              type="text" 
+              placeholder="Search records..." 
+              value={searchTerm} 
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setSelectedRows([]); 
+              }} 
+            />
           </div>
         </div>
         
@@ -143,6 +198,13 @@ export default function FeeManagement() {
           <table className="fm-table">
             <thead>
               <tr>
+                <th style={{ width: '40px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={isAllSelected}
+                    onChange={handleSelectAll} 
+                  />
+                </th>
                 <th>Student</th>
                 <th>Grade</th>
                 <th>Amount Received</th>
@@ -154,7 +216,14 @@ export default function FeeManagement() {
             <tbody>
               {filteredRecords.length > 0 ? (
                 filteredRecords.map((r) => (
-                  <tr key={r.payment_id}>
+                  <tr key={r.payment_id} className={selectedRows.includes(r.payment_id) ? 'selected-row' : ''}>
+                    <td>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedRows.includes(r.payment_id)}
+                        onChange={() => handleSelectRow(r.payment_id)} 
+                      />
+                    </td>
                     <td><b>{r.first_name} {r.last_name}</b><br/><small>{r.roll_no}</small></td>
                     <td>{r.grade}</td>
                     <td>PKR {r.amount_received}</td>
@@ -164,7 +233,7 @@ export default function FeeManagement() {
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '3rem' }}>No fee records found.</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '3rem' }}>No fee records found.</td></tr>
               )}
             </tbody>
           </table>
@@ -177,7 +246,6 @@ export default function FeeManagement() {
             <div className="fm-modal-header">
                 <h2>Record Fee Payment</h2>
             </div>
-
             <div className="fm-modal-body">
               <div className="fm-section-title"><IconSearch /> 1. SEARCH STUDENT</div>
               <input 
@@ -187,14 +255,12 @@ export default function FeeManagement() {
                 value={studentSearch} 
                 onChange={(e) => handleStudentSearch(e.target.value)} 
               />
-
               {selectedStudent && (
                 <div className="fm-student-card" style={{marginTop: '10px', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0'}}>
                     <strong>{selectedStudent.first_name} {selectedStudent.last_name}</strong>
                     <p style={{margin: 0, fontSize: '12px', color: '#64748b'}}>Grade {selectedStudent.grade} | Roll: {selectedStudent.roll_no}</p>
                 </div>
               )}
-
               <div className="fm-section-title" style={{marginTop: '20px'}}>2. PAYMENT INFO</div>
               <div className="fm-form-row-2">
                 <div className="fm-form-group">
@@ -209,7 +275,6 @@ export default function FeeManagement() {
                   <input type="number" name="amountReceived" value={formData.amountReceived} onChange={handleInputChange} className="fm-input" />
                 </div>
               </div>
-
               <div className="fm-form-row-2">
                 <div className="fm-form-group">
                   <label>Payment Method</label>
@@ -225,14 +290,9 @@ export default function FeeManagement() {
                 </div>
               </div>
             </div>
-
             <div className="fm-modal-footer">
               <button className="fm-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
-              <button 
-                className="fm-btn-publish" 
-                onClick={handleRecordPayment} 
-                disabled={loading}
-              >
+              <button className="fm-btn-publish" onClick={handleRecordPayment} disabled={loading}>
                 {loading ? 'Processing...' : 'Save Payment'}
               </button>
             </div>

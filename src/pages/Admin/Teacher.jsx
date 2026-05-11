@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2'; // 👉 SweetAlert2 import kiya gaya hai
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
 import './Teacher.css';
@@ -28,7 +29,7 @@ export default function Teacher() {
   const [modalMode, setModalMode] = useState('add');
   const [selectedTeacherId, setSelectedTeacherId] = useState(null);
   
-  // 👉 NEW: Checkbox Selection State
+  // Checkbox Selection State
   const [selectedRows, setSelectedRows] = useState([]);
 
   // Database States
@@ -173,7 +174,6 @@ export default function Teacher() {
   const currentRecords = filteredTeachers.slice(firstRecordIndex, lastRecordIndex);
   const totalPages = Math.ceil(filteredTeachers.length / recordsPerPage);
 
-  // 👉 NEW: Checkbox Handlers
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       const allVisibleIds = currentRecords.map(record => record.id);
@@ -193,6 +193,54 @@ export default function Teacher() {
 
   const isAllSelected = currentRecords.length > 0 && currentRecords.every(record => selectedRows.includes(record.id));
 
+  // 👉 EXPORT TO EXCEL/CSV LOGIC FOR TEACHERS (WITH SWEET ALERT)
+  const handleExport = () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Selection',
+        text: 'Please select at least one teacher from the checkboxes to export.',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
+
+    // Filter only selected teachers
+    const selectedData = teachersData.filter(record => selectedRows.includes(record.id));
+
+    // Create CSV Headers
+    const headers = ["Teacher ID", "Full Name", "Employee ID", "Designation/Subject", "Classes", "Students", "Joined Date", "Status"];
+    
+    // Create CSV Rows Data
+    const csvRows = selectedData.map(record => {
+      return [
+        record.id,
+        `"${record.name}"`, 
+        `"${record.empId}"`,
+        `"${record.subject}"`,
+        `"${record.classes}"`,
+        `"${record.students}"`,
+        `"${record.joined}"`,
+        `"${record.status}"`
+      ].join(',');
+    });
+
+    // Combine Headers and Rows
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+
+    // Create a Blob and trigger Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Teachers_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <DashboardLayout userRole="admin" currentPath="/teachers" userName="System Admin" userInitials="SA">
       <div className="tc-page-header">
@@ -202,12 +250,13 @@ export default function Teacher() {
         </div>
         <div className="tc-header-right">
           <button className="tc-btn-primary" onClick={openAddModal}>+ Add teacher</button>
-          <button className="tc-btn-secondary">Export</button>
+          {/* ❌ UPRA WALA PURANA EXPORT BUTTON HATA DIYA HAI */}
           <div className="tc-avatar">SA</div>
         </div>
       </div>
 
-      <Header />
+      {/* 👉 HEADER MEIN EXPORT AUR REFRESH CONNECT KAR DIYE HAIN */}
+      <Header onExport={handleExport} onRefresh={fetchTeachers} />
 
       <div className="tc-table-card">
         <div className="tc-controls-row">

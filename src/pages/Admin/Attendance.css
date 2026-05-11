@@ -84,10 +84,15 @@
 
 /* --- PAGE WRAPPER (Scrolls ONLY the content below header) --- */
 .att-page-wrapper {
-  height: calc(100vh - 160px);
-  overflow-y: auto;
+  height: auto;
+  overflow-y: visible;
   padding-right: 15px;
-  padding-bottom: 40px;
+  padding-bottom: 20px;
+}
+
+/* Ensure DashboardLayout handles the main scroll if needed */
+.dashboard-main {
+  overflow-y: auto;
 }
 
 .att-action-bar {
@@ -264,7 +269,7 @@
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  margin-bottom: 24px;
+  margin-bottom: 10px; /* Reduced from 24px to remove extra gap */
 }
 
 .att-table-header {
@@ -381,10 +386,11 @@
   color: transparent;
 }
 
+/* Legend row adjustment */
 .att-legend-row {
   display: flex;
   gap: 20px;
-  padding: 16px 24px;
+  padding: 12px 24px; /* Slightly tighter padding */
   background-color: #ffffff;
   border-top: 1px solid #e2e8f0;
 }
@@ -698,4 +704,68 @@
 
 .att-btn-publish:hover {
   background: #1d4ed8;
+}
+
+/* --- PAGINATION STYLES (MATCHING 1ST SCREENSHOT) --- */
+
+/* Footer container jo left info aur right buttons ko align karega */
+.att-pagination-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* "Showing x of y records" text style */
+.att-page-info {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Buttons ka group gap ke sath */
+.att-page-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Base button style (for numbers and arrows) */
+.att-page-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px; /* Rounded corners */
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Active page (Blue background) */
+.att-page-btn.active {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+/* Hover effect numbers/arrows par */
+.att-page-btn:hover:not(.active):not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #2563eb;
+}
+
+/* Disabled state (< or > jab end par ho) */
+.att-page-btn:disabled {
+  background-color: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
 }

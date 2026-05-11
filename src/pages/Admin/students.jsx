@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2'; 
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
 import './students.css';
@@ -30,12 +31,10 @@ export default function Students() {
   const [modalMode, setModalMode] = useState('add'); 
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   
-  // 👉 NEW: Checkbox Selection State
+  // Checkbox Selection State
   const [selectedRows, setSelectedRows] = useState([]);
   
   const [studentsData, setStudentsData] = useState([]);
-  
-  // Yahan hum DB Classes store karenge
   const [availableClasses, setAvailableClasses] = useState([]); 
   
   const [isLoading, setIsLoading] = useState(true);
@@ -186,7 +185,6 @@ export default function Students() {
   const currentRecords = filteredRecords.slice(firstRecordIndex, lastRecordIndex);
   const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
 
-  // 👉 NEW: Checkbox Handlers
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       const allVisibleIds = currentRecords.map(record => record.id);
@@ -206,7 +204,54 @@ export default function Students() {
 
   const isAllSelected = currentRecords.length > 0 && currentRecords.every(record => selectedRows.includes(record.id));
 
-  // Extracting Unique Grades & their respective Sections from DB
+  // 👉 EXPORT TO EXCEL/CSV LOGIC (WITH SWEET ALERT)
+  const handleExport = () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Selection',
+        text: 'Please select at least one student from the checkboxes to export.',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
+
+    // Filter only selected students
+    const selectedData = studentsData.filter(record => selectedRows.includes(record.id));
+
+    // Create CSV Headers
+    const headers = ["Student ID", "Full Name", "Roll No", "Grade", "Section", "Guardian Name", "Fee Status", "Current Status"];
+    
+    // Create CSV Rows Data
+    const csvRows = selectedData.map(record => {
+      return [
+        record.id,
+        `"${record.name}"`, 
+        `"${record.rollNo}"`,
+        `"${record.grade}"`,
+        `"${record.section}"`,
+        `"${record.guardian}"`,
+        `"${record.feeStatus}"`,
+        `"${record.status}"`
+      ].join(',');
+    });
+
+    // Combine Headers and Rows
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+
+    // Create a Blob and trigger Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Students_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const uniqueGrades = [...new Set(availableClasses.map(c => c.grade).filter(Boolean))];
   const dynamicSections = formData.grade 
     ? [...new Set(availableClasses.filter(c => c.grade === formData.grade).map(c => c.section).filter(Boolean))]
@@ -221,12 +266,13 @@ export default function Students() {
         </div>
         <div className="st-header-right">
           <button className="st-btn-primary" onClick={openAddModal}>+ Add student</button>
-          <button className="st-btn-secondary">Export</button>
+          {/* ❌ UPRA WALA EXPORT HATA DIYA */}
           <div className="st-avatar">SA</div>
         </div>
       </div>
 
-      <Header />
+      {/* 👉 YAHAN SE HEADER COMPONENT KO onExport PASS KIYA */}
+      <Header onExport={handleExport} onRefresh={fetchStudents} />
 
       <div className="st-table-card">
         <div className="st-search-area">
@@ -240,7 +286,6 @@ export default function Students() {
           <table className="st-table">
             <thead>
               <tr>
-                {/* 👉 Header Checkbox */}
                 <th style={{ width: '40px' }}>
                   <input 
                     type="checkbox" 
@@ -255,7 +300,6 @@ export default function Students() {
               {isLoading ? <tr><td colSpan="9" style={{ textAlign: 'center', padding: '3rem' }}>Loading data...</td></tr> : 
                currentRecords.length > 0 ? currentRecords.map((record) => (
                 <tr key={record.id} className={selectedRows.includes(record.id) ? 'selected-row' : ''}>
-                  {/* 👉 Row Checkbox */}
                   <td>
                     <input 
                       type="checkbox" 
@@ -368,7 +412,6 @@ export default function Students() {
                   <div className="st-section-title-new">Academic Details</div>
                   <div className="st-row-3">
                     
-                    {/* 👉 DYNAMIC GRADES */}
                     <div>
                       <label className="st-label-new">Grade <span>*</span></label>
                       <select name="grade" value={formData.grade} onChange={handleInputChange} className="st-input-new">
@@ -380,7 +423,6 @@ export default function Students() {
                       </select>
                     </div>
 
-                    {/* 👉 DYNAMIC SECTIONS */}
                     <div>
                       <label className="st-label-new">Section <span>*</span></label>
                       <select name="section" value={formData.section} onChange={handleInputChange} className="st-input-new">
