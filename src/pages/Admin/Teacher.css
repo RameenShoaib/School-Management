@@ -5,16 +5,16 @@
 
 /* --- PAGE HEADER --- */
 .tc-page-header 
- { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-shrink: 0; }
-.tc-header-left h2 { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; letter-spacing: -0.5px; }
-.tc-header-left p { font-size: 13px; color: #64748b; margin: 0; }
-.tc-header-right { display: flex; align-items: center; gap: 12px; }
+ { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 22px; flex-shrink: 0; }
+.tc-header-left h2 { font-size: 27px; font-weight: 850; color: #0f172a; margin: 0 0 6px 0; letter-spacing: 0; }
+.tc-header-left p { font-size: 14px; color: #64748b; margin: 0; }
+.tc-header-right { display: flex; align-items: center; gap: 18px; }
 
-.tc-btn-primary { background-color: #2563eb; color: #ffffff; border: none; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease; }
-.tc-btn-primary:hover { background-color: #1d4ed8; }
+.tc-btn-primary { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: #ffffff; border: none; border-radius: 999px; padding: 12px 24px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.tc-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 16px 30px rgba(37, 99, 235, 0.28); }
 .tc-btn-secondary { background-color: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
 .tc-btn-secondary:hover { background-color: #f8fafc; border-color: #94a3b8; }
-.tc-avatar { width: 36px; height: 36px; border-radius: 50%; background-color: #dbeafe; color: #1e40af; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-left: 8px; }
+.tc-avatar { width: 46px; height: 46px; border-radius: 50%; background-color: #e8f0ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-weight: 850; font-size: 14px; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-left: 8px; }
 
 /* --- STATS ROW --- */
 .tc-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
@@ -28,16 +28,17 @@
 .tc-stat-sub.blue { color: #3b82f6; }
 
 /* --- TABLE CARD --- */
-.tc-table-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; margin-top: 4px; }
+.tc-table-card { background: rgba(255,255,255,0.96); border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 16px 40px rgba(15,23,42,0.05); display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; margin-top: 18px; }
 
 /* 👇 YAHAN SEARCH AREA KO 100% STUDENT JAISA BANAYA HAI 👇 */
 .tc-controls-row {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  background-color: #fafbfc; /* Student wala Grey background */
+  padding: 24px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: rgba(255,255,255,0.75);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .tc-search-box {
@@ -45,43 +46,60 @@
   align-items: center;
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px; /* Student ki tarah chotay corners */
-  padding: 8px 12px;
+  border-radius: 12px;
+  padding: 13px 16px;
   width: 100%;
-  max-width: 400px; /* Width limit ki hai taake student page jaisa lage */
+  max-width: 520px;
   color: #94a3b8;
 }
 
-.tc-search-box svg { width: 16px; height: 16px; margin-right: 8px; flex-shrink: 0; }
-.tc-search-box input { border: none; outline: none; width: 100%; font-size: 13px; color: #0f172a; background: transparent; }
+.tc-search-box svg { width: 18px; height: 18px; margin-right: 12px; flex-shrink: 0; }
+.tc-search-box input { border: none; outline: none; width: 100%; font-size: 14px; color: #0f172a; background: transparent; }
 .tc-search-box input::placeholder { color: #94a3b8; }
 
-.tc-filter-pills { display: flex; gap: 8px; }
-.tc-filter-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-.tc-filter-pill.active { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.tc-filter-pills { display: flex; gap: 14px; }
+.tc-filter-pill { padding: 12px 28px; border-radius: 999px; border: 1px solid #e2e8f0; background: #ffffff; color: #334155; font-size: 14px; font-weight: 750; cursor: pointer; transition: 0.2s; }
+.tc-filter-pill.active { background: #eff6ff; color: #4f46e5; border-color: #c7d2fe; box-shadow: inset 0 0 0 1px rgba(79,70,229,0.05); }
 .tc-filter-pill:hover:not(.active) { background: #f8fafc; border-color: #94a3b8; }
 
 /* --- TABLE STYLES --- */
 .tc-table-scroll { overflow-x: auto; width: 100%; }
 .tc-table { width: 100%; border-collapse: collapse; text-align: left; }
-.tc-table th { padding: 14px 20px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }
-.tc-table td { padding: 16px 20px; font-size: 13px; color: #334155; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
-.tc-table tr:hover { background-color: #f8fafc; }
+.tc-table th { padding: 17px 24px; font-size: 12px; font-weight: 850; color: #334155; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc; }
+.tc-table td { padding: 28px 24px; font-size: 14px; color: #1e2f52; border-bottom: 1px solid #e2e8f0; vertical-align: middle; font-weight: 650; }
+.tc-table tbody tr:hover { background-color: #fbfdff; }
 
-.tc-view-btn { background: transparent; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; }
-.tc-view-btn:hover { background: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
+.tc-sort { color: #7890b6; font-size: 11px; margin-left: 4px; }
 
-.tc-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; display: inline-block; }
-.status-active { background-color: #dcfce7; color: #16a34a; }
+.tc-name-cell { display: flex; align-items: center; gap: 16px; }
+.tc-teacher-avatar { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 850; flex: 0 0 auto; }
+.tc-teacher-avatar.color-0 { background: #e0f2fe; color: #0284c7; }
+.tc-teacher-avatar.color-1 { background: #f3e8ff; color: #7c3aed; }
+.tc-teacher-avatar.color-2 { background: #dbeafe; color: #2563eb; }
+.tc-teacher-avatar.color-3 { background: #ffedd5; color: #ea580c; }
+.tc-teacher-avatar.color-4 { background: #fce7f3; color: #db2777; }
+.tc-teacher-name { display: block; color: #0f172a; font-weight: 850; margin-bottom: 5px; }
+.tc-teacher-subtitle { display: block; color: #52637f; font-size: 13px; font-weight: 600; }
+
+.tc-view-btn { background: #f8fbff; border: 1px solid #c7d2fe; padding: 9px 18px; border-radius: 999px; font-size: 13px; font-weight: 850; color: #4f46e5; cursor: pointer; transition: all 0.2s; }
+.tc-view-btn:hover { background: #eef2ff; border-color: #a5b4fc; color: #3730a3; }
+
+.tc-actions-cell { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+.tc-more-btn { width: 28px; height: 34px; display: grid; place-items: center; border: none; background: transparent; color: #1e3a5f; cursor: pointer; }
+.tc-more-btn svg { width: 18px; height: 18px; }
+
+.tc-pill { font-size: 12px; font-weight: 850; padding: 9px 15px; border-radius: 999px; display: inline-flex; align-items: center; gap: 7px; }
+.tc-pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status-active { background-color: #dcfce7; color: #15803d; }
 .status-leave { background-color: #fef3c7; color: #d97706; }
 
 /* --- PAGINATION FOOTER --- */
-.tc-pagination-footer { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid #e2e8f0; background-color: #ffffff; margin-top: auto; }
-.tc-page-info { font-size: 13px; color: #64748b; font-weight: 500; }
+.tc-pagination-footer { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-top: 1px solid #e2e8f0; background-color: #ffffff; margin-top: auto; }
+.tc-page-info { font-size: 14px; color: #64748b; font-weight: 650; }
 .tc-page-buttons { display: flex; gap: 6px; }
-.tc-page-btn { min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.tc-page-btn { min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; }
 .tc-page-btn:hover:not(:disabled) { background-color: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
-.tc-page-btn.active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+.tc-page-btn.active { background-color: #4f46e5; color: #ffffff; border-color: #4f46e5; box-shadow: 0 10px 18px rgba(79,70,229,0.25); }
 .tc-page-btn:disabled { background-color: #f8fafc; color: #cbd5e1; border-color: #e2e8f0; cursor: not-allowed; }
 
 /* --- MODAL STYLES (Kept for fallback/other usage) --- */
@@ -196,4 +214,26 @@
   background: white; border: 1px solid #cbd5e1;
   padding: 6px 12px; border-radius: 6px; font-size: 12px;
   font-weight: 600; cursor: pointer; color: #334155;
+}
+
+/* Final polish: lighter body text for a cleaner staff table */
+.tc-table td {
+  font-weight: 500;
+  color: #243653;
+}
+
+.tc-teacher-name {
+  font-weight: 700;
+}
+
+.tc-teacher-subtitle,
+.tc-page-info {
+  font-weight: 500;
+}
+
+.tc-table th,
+.tc-teacher-avatar,
+.tc-pill,
+.tc-view-btn {
+  font-weight: 700;
 }

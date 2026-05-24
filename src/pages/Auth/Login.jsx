@@ -1,42 +1,48 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // 👈 Navigation ke liye
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getDashboardForRole } from "../../components/ProtectedRoute";
 import "./Login.css";
 
 const Login = () => {
   const [role, setRole] = useState("admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // Error message dikhane ke liye
-  const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  // 👇 Login button click hone par yeh function chalega 👇
+  useEffect(() => {
+    try {
+      const savedUser = JSON.parse(localStorage.getItem("user"));
+      if (savedUser?.role) {
+        navigate(getDashboardForRole(savedUser.role), { replace: true });
+      }
+    } catch {
+      localStorage.removeItem("user");
+    }
+  }, [navigate]);
+
   const handleLogin = async (e) => {
-    e.preventDefault(); // Page reload hone se bachayega
+    e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
-      // Backend ko data bhej rahe hain
       const response = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password, role }), // Frontend ka data
+        body: JSON.stringify({ email, password, role }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Login kamyab! User details local storage mein save kar lein
         localStorage.setItem("user", JSON.stringify(data.user));
-        
-        // Backend se aane wale URL par user ko bhej dein
-        navigate(data.redirectUrl);
+        navigate(getDashboardForRole(data.user.role), { replace: true });
       } else {
-        // Agar password ghalat ho toh error show karein
         setError(data.message);
       }
     } catch (err) {
@@ -50,7 +56,7 @@ const Login = () => {
   return (
     <div className="page">
       <div className="card">
-        <div className="icon">📘</div>
+        <div className="icon">ED</div>
 
         <h2>EduSync</h2>
         <p className="welcome">Welcome back</p>
@@ -60,10 +66,11 @@ const Login = () => {
           {["admin", "teacher", "student"].map((item) => (
             <button
               key={item}
+              type="button"
               className={role === item ? "tab active" : "tab"}
               onClick={() => {
                 setRole(item);
-                setError(""); // Tab change karne par error hata dein
+                setError("");
               }}
             >
               {item.charAt(0).toUpperCase() + item.slice(1)}
@@ -71,21 +78,24 @@ const Login = () => {
           ))}
         </div>
 
-        {/* Error Message Alert */}
-        {error && <div style={{ color: "red", fontSize: "12px", marginBottom: "10px", textAlign: "center" }}>{error}</div>}
+        {error && (
+          <div style={{ color: "red", fontSize: "12px", marginBottom: "10px", textAlign: "center" }}>
+            {error}
+          </div>
+        )}
 
         <form className="form" onSubmit={handleLogin}>
-          <input 
-            type="email" 
-            placeholder="Email address" 
+          <input
+            type="email"
+            placeholder="Email address"
             className="input-field"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
+          <input
+            type="password"
+            placeholder="Password"
             className="input-field"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

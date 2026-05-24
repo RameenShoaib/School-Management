@@ -1,4 +1,5 @@
 import React from 'react';
+import Swal from 'sweetalert2';
 import './header.css';
 
 /* Professional SVGs matching the D365 vibe */
@@ -28,28 +29,37 @@ const SvgExport = () => (
 );
 
 export default function Header({ onEdit, onRefresh, onDelete, onExport }) {
+  const fallbackAction = (label) => () => {
+    Swal.fire({
+      icon: 'info',
+      title: `${label} action`,
+      text: 'Select a record or use the page-specific controls to continue.',
+      confirmButtonColor: '#2563eb'
+    });
+  };
+
   return (
     <div className="action-header-bar">
-      <button className="action-btn" onClick={onEdit}>
+      <button className="action-btn" onClick={onEdit || fallbackAction('Edit')}>
         <SvgEdit /> Edit
       </button>
 
       <div className="action-divider"></div>
       
-      <button className="action-btn" onClick={onRefresh}>
+      <button className="action-btn" onClick={onRefresh || fallbackAction('Refresh')}>
         <SvgRefresh /> Refresh
       </button>
 
       <div className="action-divider"></div>
       
-      <button className="action-btn delete-btn" onClick={onDelete}>
+      <button className="action-btn delete-btn" onClick={onDelete || fallbackAction('Delete')}>
         <SvgDelete /> Delete
       </button>
 
       {/* 👇 Yahan marginLeft: 'auto' lagaya hai taake ye right side pe chala jaye 👇 */}
       <button 
         className="action-btn export-btn" 
-        onClick={onExport} 
+        onClick={onExport || fallbackAction('Export')} 
         style={{ marginLeft: 'auto' }}
       >
         <SvgExport /> Export

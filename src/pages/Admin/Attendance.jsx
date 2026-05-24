@@ -13,6 +13,14 @@ const IconEdit = () => <svg width="14" height="14" fill="currentColor" viewBox="
 const IconRefresh = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>;
 const IconDelete = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>;
 const IconExport = () => <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>;
+const SvgGroup = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 11c1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3 1.3 3 3 3Z"/><path d="M8 11c1.7 0 3-1.3 3-3S9.7 5 8 5 5 6.3 5 8s1.3 3 3 3Z"/><path d="M16 14c-2.7 0-5 1.3-5 3v2h10v-2c0-1.7-2.3-3-5-3Z"/><path d="M8 14c-2.7 0-5 1.3-5 3v2h5"/></svg>;
+const SvgAbsent = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M7 20v-1a5 5 0 0 1 5-5h1"/><path d="M18 14v6M15 17h6"/></svg>;
+const SvgClock = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg>;
+const SvgLeave = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 7V5h6v2"/><path d="M8 12h8"/></svg>;
+const SvgUsersMini = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M3 19c0-2.2 2.2-4 5-4"/><path d="M11 19c0-2.2 2.2-4 5-4"/></svg>;
+const SvgTrend = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 18h16"/><path d="m6 14 4-4 3 3 5-6"/><path d="M17 7h1v1"/></svg>;
+const SvgList = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 7h11M9 12h11M9 17h11"/><path d="M4 7h.01M4 12h.01M4 17h.01"/></svg>;
+const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.471 6.471 0 0 0 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0A4.5 4.5 0 1 1 14 9.5 4.505 4.505 0 0 1 9.5 14Z"/></svg>;
 
 const getMonday = (d) => {
   d = new Date(d);
@@ -28,6 +36,7 @@ export default function Attendance() {
 
   // Checkbox State
   const [selectedRows, setSelectedRows] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // 👉 NEW: Pagination State Added
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,8 +88,67 @@ export default function Attendance() {
 
     } catch (err) { console.error(err); }
   };
+  
 
   useEffect(() => { fetchData(); }, []);
+
+  const handleRefresh = async () => {
+    setSelectedRows([]);
+    await fetchData();
+    Swal.fire({
+      icon: 'success',
+      title: 'Attendance refreshed',
+      showConfirmButton: false,
+      timer: 900
+    });
+  };
+
+  const handleDelete = async () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({ icon: 'info', title: 'No Selection', text: 'Bhai, pehle attendance delete karne ke liye student select toh karein!', confirmButtonColor: '#2563eb' });
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Selected attendance records for ${selectedRows.length} students on the visible dates will be cleared!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, clear it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const dateRange = displayDates.map(d => d.fullDateStr);
+        const response = await fetch("http://localhost:5000/api/attendance/bulk-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: selectedRows, dates: dateRange })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          // ✅ FIX: Database se delete hone ke baad frontend state ko bhi filter karein
+          setAttendanceRecords(prev => 
+            prev.filter(rec => 
+              !(selectedRows.includes(rec.student_id) && dateRange.includes(rec.attendance_date.split('T')[0]))
+            )
+          );
+
+          Swal.fire({ icon: 'success', title: 'Cleared!', showConfirmButton: false, timer: 1500 });
+          setSelectedRows([]);
+          // fetchData(); // Refresh backup ke liye
+        } else { 
+          Swal.fire('Error', data.message, 'error'); 
+        }
+      } catch (err) { 
+        Swal.fire('Error', 'Server connection failed', 'error'); 
+      }
+    }
+  };
+  
 
   const todaysAttendance = attendanceRecords.filter(a => a.attendance_date.startsWith(todayDateString));
   const totalPresent = todaysAttendance.filter(a => a.status === 'Present').length;
@@ -135,7 +203,12 @@ export default function Attendance() {
   const displayedStudents = dbStudents.filter(s => {
     const matchGrade = tableFilters.grade === '' || s.grade === tableFilters.grade;
     const matchSection = tableFilters.section === '' || s.section === tableFilters.section;
-    return matchGrade && matchSection;
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const matchSearch = !normalizedSearch ||
+      s.name.toLowerCase().includes(normalizedSearch) ||
+      (s.grade || '').toLowerCase().includes(normalizedSearch) ||
+      (s.section || '').toLowerCase().includes(normalizedSearch);
+    return matchGrade && matchSection && matchSearch;
   });
 
   // 👉 NEW: Pagination Calculation Logic Added
@@ -272,7 +345,7 @@ export default function Attendance() {
       <div className="att-page-header">
         <div className="att-header-left">
           <h2>Attendance</h2>
-          <p>Today — {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          <p>Today - {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
         <div className="att-header-right">
           <button className="att-btn-primary" onClick={() => setIsModalOpen(true)}>Mark attendance</button>
@@ -280,20 +353,31 @@ export default function Attendance() {
         </div>
       </div>
 
-      <Header onExport={handleExport} onRefresh={fetchData} />
+      <Header
+        onExport={handleExport}
+        onRefresh={handleRefresh}
+        onDelete={handleDelete}
+        onEdit={() => {
+          if (selectedRows.length === 0) {
+            Swal.fire('No selection', 'Select students first, then click Edit to open attendance marking.', 'info');
+            return;
+          }
+          setIsModalOpen(true);
+        }}
+      />
 
       <div className="att-page-wrapper">
 
         <div className="att-stats-row">
-          <div className="att-stat-card"><span className="att-stat-title">Present today</span><span className="att-stat-value">{totalPresent}</span><span className="att-stat-sub green">{presentPercent}% attendance</span></div>
-          <div className="att-stat-card"><span className="att-stat-title">Absent</span><span className="att-stat-value">{totalAbsent}</span><span className="att-stat-sub red">{absentPercent}% absent</span></div>
-          <div className="att-stat-card"><span className="att-stat-title">Late arrivals</span><span className="att-stat-value">{totalLate}</span><span className="att-stat-sub yellow">{totalMarked > 0 ? ((totalLate/totalMarked)*100).toFixed(1) : 0}% late</span></div>
-          <div className="att-stat-card"><span className="att-stat-title">On holiday / leave</span><span className="att-stat-value">{totalHoliday}</span><span className="att-stat-sub blue">Docs submitted</span></div>
+          <div className="att-stat-card green"><span className="att-stat-icon"><SvgGroup /></span><div><span className="att-stat-title">Present today</span><span className="att-stat-value">{totalPresent}</span><span className="att-stat-sub green">{presentPercent}% attendance</span></div></div>
+          <div className="att-stat-card red"><span className="att-stat-icon"><SvgAbsent /></span><div><span className="att-stat-title">Absent</span><span className="att-stat-value">{totalAbsent}</span><span className="att-stat-sub red">{absentPercent}% absent</span></div></div>
+          <div className="att-stat-card yellow"><span className="att-stat-icon"><SvgClock /></span><div><span className="att-stat-title">Late arrivals</span><span className="att-stat-value">{totalLate}</span><span className="att-stat-sub yellow">{totalMarked > 0 ? ((totalLate/totalMarked)*100).toFixed(1) : 0}% late</span></div></div>
+          <div className="att-stat-card blue"><span className="att-stat-icon"><SvgLeave /></span><div><span className="att-stat-title">On holiday / leave</span><span className="att-stat-value">{totalHoliday}</span><span className="att-stat-sub blue">Data submitted</span></div></div>
         </div>
 
         <div className="att-charts-row">
           <div className="att-chart-card">
-            <h3>Attendance by grade — today</h3>
+            <h3><span className="att-card-title-icon"><SvgUsersMini /></span>Attendance by grade - today</h3>
             {dynamicGradeChart.length > 0 ? dynamicGradeChart.map((item, i) => (
               <div className="att-bar-row" key={i}>
                 <span className="att-bar-label">{item.g}</span>
@@ -303,7 +387,7 @@ export default function Attendance() {
             )) : <p style={{fontSize: '12px', color: '#94a3b8'}}>No students found in DB.</p>}
           </div>
           <div className="att-chart-card">
-            <h3>Weekly trend (Last 5 days)</h3>
+            <h3><span className="att-card-title-icon"><SvgTrend /></span>Weekly trend (last 5 days)</h3>
             {dynamicWeeklyTrend.map((item, i) => (
               <div className="att-bar-row" key={i}>
                 <span className="att-bar-label">{item.d}</span>
@@ -316,7 +400,41 @@ export default function Attendance() {
 
         <div className="att-table-card">
           <div className="att-table-header">
-            <h3>Detailed Attendance Record</h3>
+            <h3><span className="att-card-title-icon"><SvgList /></span>Detailed Attendance Record</h3>
+            <div className="att-table-controls">
+              <label className="att-search-box">
+                <SvgSearch />
+                <input
+                  type="text"
+                  placeholder="Filter by student, grade, class..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                    setSelectedRows([]);
+                  }}
+                />
+              </label>
+              <label className="att-control-field">
+                <span>Grade</span>
+                <select value={tableFilters.grade} onChange={(e) => { setTableFilters({...tableFilters, grade: e.target.value}); setCurrentPage(1); }}>
+                  <option value="">All Grades</option>
+                  {uniqueGrades.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </label>
+              <label className="att-control-field">
+                <span>Section</span>
+                <select value={tableFilters.section} onChange={(e) => { setTableFilters({...tableFilters, section: e.target.value}); setCurrentPage(1); }}>
+                  <option value="">All</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                </select>
+              </label>
+              <label className="att-control-field">
+                <span>Start Date</span>
+                <input type="date" value={tableFilters.startDate} onChange={(e) => setTableFilters({...tableFilters, startDate: e.target.value})} />
+              </label>
+            </div>
           </div>
 
           <div className="att-table-scroll">
@@ -369,7 +487,7 @@ export default function Attendance() {
                     <td style={{ verticalAlign: 'middle' }}>
                       <input type="checkbox" checked={selectedRows.includes(student.student_id)} onChange={() => handleSelectRow(student.student_id)} />
                     </td>
-                    <td style={{ fontWeight: 600, verticalAlign: 'middle' }}>{student.name}</td>
+                    <td className="att-student-name" style={{ verticalAlign: 'middle' }}>{student.name}</td>
                     <td style={{ color: '#64748b', verticalAlign: 'middle' }}>{student.grade}</td>
                     <td style={{ color: '#64748b', verticalAlign: 'middle' }}>Sec {student.section}</td>
                     
