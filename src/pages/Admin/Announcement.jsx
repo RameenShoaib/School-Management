@@ -1,70 +1,122 @@
-import React, { useState } from 'react';
-import DashboardLayout from '../../components/DashboardLayout'; 
-import Header from '../../components/Header/header'; 
+import React, { useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
+import DashboardLayout from '../../components/DashboardLayout';
+import Header from '../../components/Header/header';
 import './Announcement.css';
 
-/* Mock Data exactly like your wireframe */
 const announcementList = [
   {
-    title: "Mid-term exams begin April 25",
-    meta: "Posted Apr 10 · Admin · All students",
-    desc: "Exams will be held from April 25 to May 2. Students are advised to check their timetables.",
-    tags: [{ text: "All students", color: "blue" }, { text: "Read by 94%", color: "gray" }],
-    badge: { text: "Urgent", type: "urgent" }
+    title: 'Mid-term exams begin April 25',
+    meta: 'Posted Apr 10 · Admin · All students',
+    desc: 'Exams will be held from April 25 to May 2. Students are advised to check their timetables.',
+    month: 'APR',
+    day: '25',
+    tags: [{ text: 'All students', color: 'blue' }, { text: 'Read by 94%', color: 'gray' }],
+    badge: { text: 'Urgent', type: 'urgent' },
   },
   {
-    title: "Parent-teacher meeting — April 28",
-    meta: "Posted Apr 12 · Admin · All",
-    desc: "PTM scheduled from 9 AM to 1 PM. All subject teachers are required to be present.",
-    tags: [{ text: "All students", color: "blue" }, { text: "All teachers", color: "green" }, { text: "Read by 82%", color: "gray" }],
-    badge: { text: "General", type: "general" }
+    title: 'Parent-teacher meeting - April 28',
+    meta: 'Posted Apr 12 · Admin · All',
+    desc: 'PTM scheduled from 9 AM to 1 PM. All subject teachers are required to be present.',
+    month: 'APR',
+    day: '28',
+    tags: [{ text: 'All students', color: 'blue' }, { text: 'All teachers', color: 'green' }, { text: 'Read by 82%', color: 'gray' }],
+    badge: { text: 'General', type: 'general' },
   },
   {
-    title: "Sports day registration open",
-    meta: "Posted Apr 15 · Admin · All students",
-    desc: "Register for sports day events by April 22. Available events: cricket, football, athletics.",
-    tags: [{ text: "All students", color: "blue" }, { text: "Read by 74%", color: "gray" }],
-    badge: { text: "Event", type: "event" }
+    title: 'Sports day registration open',
+    meta: 'Posted Apr 15 · Admin · All students',
+    desc: 'Register for sports day events by April 22. Available events: cricket, football, athletics.',
+    month: 'MAY',
+    day: '15',
+    tags: [{ text: 'All students', color: 'blue' }, { text: 'Read by 74%', color: 'gray' }],
+    badge: { text: 'Event', type: 'event' },
   },
-  {
-    title: "Fee payment deadline — April 30",
-    meta: "Posted Apr 15 · Admin · Grades 6–10",
-    desc: "Monthly fee must be paid by April 30. Late payments will incur a surcharge of PKR 500.",
-    tags: [{ text: "Grades 6–10", color: "yellow" }, { text: "Read by 50%", color: "gray" }],
-    badge: { text: "Fee", type: "fee" }
-  }
 ];
 
-const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>;
-const SvgPlus = () => <svg fill="currentColor" viewBox="0 0 24 24" width="16" height="16"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>;
-
-/* 👇 Modal ke naye Icons 👇 */
-const IconMegaphone = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>;
-const IconClip = () => <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 015 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 005 0V5c0-1.38-1.12-2.5-2.5-2.5S8 3.62 8 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>;
+const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5C16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" /></svg>;
+const SvgPlus = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg>;
+const SvgArrowRight = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z" /></svg>;
+const SvgPaperPlane = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z" /></svg>;
+const SvgCalendar = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" /></svg>;
+const SvgPeople = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>;
+const SvgTrend = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4L19.7 9.71 22 12V6h-6z" /></svg>;
 
 export default function Announcements() {
   const [activeFilter, setActiveFilter] = useState('All');
-  const [searchTerm, setSearchTerm] = useState(''); 
-
-  /* 👇 Modal aur Toggle ki states 👇 */
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [pushOn, setPushOn] = useState(true);
-  const [emailOn, setEmailOn] = useState(true);
-  const [pinOn, setPinOn] = useState(false);
+  const [modalMode, setModalMode] = useState('add');
+  const [selectedAnnouncementId, setSelectedAnnouncementId] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
+  const [selectedAnnouncements, setSelectedAnnouncements] = useState([]);
+  const [formData, setFormData] = useState({
+    title: '',
+    category: 'Exam',
+    priority: 'Normal',
+    message: '',
+    audience: 'All students'
+  });
 
-  // ⚡ INSTANT Data Filter Logic (No Delays, No Limits)
-  const filteredAnnouncements = announcementList.filter((item) => {
-    // 1. Search Logic
-    const matchesSearch = 
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      item.desc.toLowerCase().includes(searchTerm.toLowerCase());
+  const getBadgeType = (item) => {
+    if ((item.priority || '').toLowerCase() === 'urgent') return 'urgent';
+    const category = (item.category || '').toLowerCase();
+    if (category.includes('event')) return 'event';
+    if (category.includes('fee')) return 'fee';
+    return 'general';
+  };
 
-    // 2. Category Buttons Logic
+  const formatAnnouncement = (row) => {
+    const createdAt = row.created_at ? new Date(row.created_at) : new Date();
+    const badgeType = getBadgeType(row);
+    return {
+      id: row.announcement_id,
+      title: row.title,
+      meta: `Posted ${createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${row.created_by || 'Admin'} - ${row.audience || 'All'}`,
+      desc: row.message,
+      month: createdAt.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+      day: createdAt.toLocaleDateString('en-US', { day: '2-digit' }),
+      category: row.category || 'General',
+      priority: row.priority || 'Normal',
+      audience: row.audience || 'All students',
+      status: row.status || 'Published',
+      readRate: row.read_rate || 0,
+      tags: [
+        { text: row.audience || 'All students', color: (row.audience || '').toLowerCase().includes('teacher') ? 'green' : 'blue' },
+        { text: `Read by ${row.read_rate || 0}%`, color: 'gray' }
+      ],
+      badge: { text: badgeType === 'urgent' ? 'Urgent' : row.category || 'General', type: badgeType },
+    };
+  };
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/announcements');
+      const result = await response.json();
+      if (result.success) {
+        setAnnouncements(result.data.map(formatAnnouncement));
+      } else {
+        throw new Error(result.message || 'Unable to load announcements.');
+      }
+    } catch (err) {
+      console.error('Announcement fetch error:', err);
+      setAnnouncements(announcementList.map((item, index) => ({ ...item, id: `fallback-${index}` })));
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
+  const filteredAnnouncements = announcements.filter((item) => {
+    const query = searchTerm.toLowerCase();
+    const matchesSearch = item.title.toLowerCase().includes(query) || item.desc.toLowerCase().includes(query);
+
     let matchesCategory = true;
     if (activeFilter === 'Students') {
-      matchesCategory = item.tags.some(tag => tag.text.toLowerCase().includes('student'));
+      matchesCategory = item.tags.some((tag) => tag.text.toLowerCase().includes('student'));
     } else if (activeFilter === 'Teachers') {
-      matchesCategory = item.tags.some(tag => tag.text.toLowerCase().includes('teacher'));
+      matchesCategory = item.tags.some((tag) => tag.text.toLowerCase().includes('teacher'));
     } else if (activeFilter === 'Urgent') {
       matchesCategory = item.badge.type === 'urgent';
     }
@@ -72,69 +124,176 @@ export default function Announcements() {
     return matchesSearch && matchesCategory;
   });
 
+  const handleSelectAll = (e) => {
+    setSelectedAnnouncements(e.target.checked ? filteredAnnouncements.map((item) => item.id) : []);
+  };
+
+  const handleSelectAnnouncement = (id) => {
+    setSelectedAnnouncements((prev) => (
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    ));
+  };
+
+  const handleExport = () => {
+    if (selectedAnnouncements.length === 0) {
+      Swal.fire('No selection', 'Please select at least one announcement to export.', 'info');
+      return;
+    }
+    const selectedRows = announcements.filter((item) => selectedAnnouncements.includes(item.id));
+    const csv = [
+      'Title,Posted,Description,Category',
+      ...selectedRows.map((item) => `"${item.title}","${item.meta}","${item.desc}","${item.badge.text}"`)
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Announcements_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const openAddModal = () => {
+    setModalMode('add');
+    setSelectedAnnouncementId(null);
+    setFormData({ title: '', category: 'Exam', priority: 'Normal', message: '', audience: 'All students' });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (item) => {
+    setModalMode('edit');
+    setSelectedAnnouncementId(item.id);
+    setFormData({
+      title: item.title,
+      category: item.category || 'General',
+      priority: item.priority || 'Normal',
+      message: item.desc,
+      audience: item.audience || 'All students'
+    });
+    setIsModalOpen(true);
+  };
+
+  const saveAnnouncement = async (status = 'Published') => {
+    if (!formData.title || !formData.message) {
+      Swal.fire('Required', 'Please enter both title and message.', 'warning');
+      return;
+    }
+
+    try {
+      const url = modalMode === 'edit'
+        ? `http://localhost:5000/api/announcements/${selectedAnnouncementId}`
+        : 'http://localhost:5000/api/announcements';
+      const method = modalMode === 'edit' ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, status, createdBy: 'Admin' })
+      });
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message || 'Could not save announcement.');
+
+      setIsModalOpen(false);
+      setSelectedAnnouncements([]);
+      await fetchAnnouncements();
+      Swal.fire(status === 'Draft' ? 'Draft saved' : 'Published', result.message, 'success');
+    } catch (err) {
+      Swal.fire('Error', err.message, 'error');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedAnnouncements.length === 0) {
+      Swal.fire('No selection', 'Please select announcements to delete.', 'info');
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: 'Delete selected announcements?',
+      text: `This will delete ${selectedAnnouncements.length} announcement(s) from the database.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const response = await fetch('http://localhost:5000/api/announcements/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedAnnouncements })
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'Could not delete announcements.');
+
+      setSelectedAnnouncements([]);
+      await fetchAnnouncements();
+      Swal.fire('Deleted', data.message, 'success');
+    } catch (err) {
+      Swal.fire('Error', err.message, 'error');
+    }
+  };
+
+  const isAllSelected = filteredAnnouncements.length > 0 && filteredAnnouncements.every((item) => selectedAnnouncements.includes(item.id));
+
   return (
-    <DashboardLayout 
-      userRole="admin" 
-      currentPath="/admin/announcement" 
-      userName="System Admin" 
-      userInitials="SA"
-    >
+    <DashboardLayout userRole="admin" currentPath="/admin/announcement" userName="System Admin" userInitials="SA">
       <header className="ann-header">
         <div className="ann-header-left">
           <h2>Announcements</h2>
           <p>Broadcast messages to students, teachers, or everyone</p>
         </div>
         <div className="ann-header-right">
-          {/* 👇 onClick event add kiya gaya hai 👇 */}
-          <button className="ann-btn-primary" onClick={() => setIsModalOpen(true)}>
+          <button className="ann-btn-primary" onClick={openAddModal} type="button">
             <SvgPlus /> New announcement
           </button>
           <div className="ann-avatar">SA</div>
         </div>
       </header>
 
-      <Header />
+      <Header
+        onEdit={() => {
+          const item = announcements.find((announcement) => announcement.id === selectedAnnouncements[0]);
+          selectedAnnouncements.length === 1 && item
+            ? openEditModal(item)
+            : Swal.fire('Select one announcement', 'Choose exactly one announcement checkbox, then click Edit.', 'info');
+        }}
+        onRefresh={() => { setSelectedAnnouncements([]); fetchAnnouncements(); }}
+        onDelete={handleDelete}
+        onExport={handleExport}
+      />
 
       <div className="ann-stats-row">
         <div className="ann-stat-card">
-          <span className="ann-stat-title">Total sent</span>
-          <span className="ann-stat-value">142</span>
-          <span className="ann-stat-sub neutral">This academic year</span>
+          <div className="ann-stat-icon blue"><SvgPaperPlane /></div>
+          <div className="ann-stat-copy"><span>Total sent</span><strong>142</strong><small>This academic year</small></div>
         </div>
         <div className="ann-stat-card">
-          <span className="ann-stat-title">This month</span>
-          <span className="ann-stat-value">8</span>
-          <span className="ann-stat-sub neutral">4 urgent</span>
+          <div className="ann-stat-icon purple"><SvgCalendar /></div>
+          <div className="ann-stat-copy"><span>This month</span><strong>8</strong><small className="purple">4 urgent</small></div>
         </div>
         <div className="ann-stat-card">
-          <span className="ann-stat-title">Audience reach</span>
-          <span className="ann-stat-value">1,334</span>
-          <span className="ann-stat-sub neutral">Students + Teachers</span>
+          <div className="ann-stat-icon green"><SvgPeople /></div>
+          <div className="ann-stat-copy"><span>Audience reach</span><strong>1,334</strong><small>Students + Teachers</small></div>
         </div>
         <div className="ann-stat-card">
-          <span className="ann-stat-title">Avg read rate</span>
-          <span className="ann-stat-value">78%</span>
-          <span className="ann-stat-sub">↑ 4% vs. last month</span>
+          <div className="ann-stat-icon orange"><SvgTrend /></div>
+          <div className="ann-stat-copy"><span>Avg read rate</span><strong>78%</strong><small className="green">14% vs. last month</small></div>
         </div>
       </div>
 
       <div className="ann-controls">
         <div className="ann-search">
           <SvgSearch />
-          <input 
-            type="text" 
-            placeholder="Search announcements..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)} 
-          />
+          <input type="text" placeholder="Search announcements..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <div className="ann-filters">
           {['All', 'Students', 'Teachers', 'Urgent'].map((filter) => (
-            <button 
-              key={filter} 
-              className={`ann-filter-btn ${activeFilter === filter ? 'active' : ''}`}
-              onClick={() => setActiveFilter(filter)}
-            >
+            <button key={filter} className={`ann-filter-btn ${activeFilter === filter ? 'active' : ''}`} onClick={() => setActiveFilter(filter)} type="button">
               {filter}
             </button>
           ))}
@@ -142,193 +301,90 @@ export default function Announcements() {
       </div>
 
       <div className="ann-list-container">
-        <div className="ann-list-header">Recent announcements</div>
+        <div className="ann-list-header">
+          <input type="checkbox" checked={isAllSelected} onChange={handleSelectAll} />
+          <span>Recent announcements</span>
+        </div>
         <div className="ann-list-scroll">
-          {filteredAnnouncements.length > 0 ? (
-            filteredAnnouncements.map((item, i) => (
-              <div key={i} className="ann-item">
-                <div className="ann-item-content">
-                  <span className="ann-item-title">{item.title}</span>
-                  <span className="ann-item-meta">{item.meta}</span>
-                  <p className="ann-item-desc">{item.desc}</p>
-                  <div className="ann-tags">
-                    {item.tags.map((tag, tIndex) => (
-                      <span key={tIndex} className={`ann-tag ${tag.color}`}>{tag.text}</span>
-                    ))}
-                  </div>
-                </div>
-                <span className={`ann-badge ${item.badge.type}`}>{item.badge.text}</span>
+          {filteredAnnouncements.length > 0 ? filteredAnnouncements.map((item) => (
+            <div key={item.id} className="ann-item">
+              <input className="ann-row-checkbox" type="checkbox" checked={selectedAnnouncements.includes(item.id)} onChange={() => handleSelectAnnouncement(item.id)} />
+              <div className={`ann-date-tile ${item.badge.type}`}>
+                <span>{item.month}</span>
+                <strong>{item.day}</strong>
               </div>
-            ))
-          ) : (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
-              No announcements match your search or filter.
+              <div className="ann-item-content">
+                <div className="ann-title-row">
+                  <span className="ann-item-title">{item.title}</span>
+                  <span className={`ann-badge ${item.badge.type}`}>{item.badge.text}</span>
+                </div>
+                <span className="ann-item-meta">{item.meta}</span>
+                <p className="ann-item-desc">{item.desc}</p>
+                <div className="ann-tags">
+                  {item.tags.map((tag) => <span key={tag.text} className={`ann-tag ${tag.color}`}>{tag.text}</span>)}
+                </div>
+              </div>
+              <button className="ann-row-action" type="button" aria-label={`Open ${item.title}`} onClick={() => Swal.fire(item.title, item.desc, 'info')}><SvgArrowRight /></button>
             </div>
+          )) : (
+            <div className="ann-empty">No announcements match your search or filter.</div>
           )}
+        </div>
+        <div className="ann-list-footer">
+          <span>Showing 1 to {filteredAnnouncements.length} of {filteredAnnouncements.length} announcements</span>
+          <div className="ann-pagination">
+            <button type="button" onClick={() => Swal.fire('Announcements', 'You are already on the first page.', 'info')}>‹</button>
+            <button type="button" className="active" disabled>1</button>
+            <button type="button" onClick={() => Swal.fire('Announcements', 'No more announcement pages available.', 'info')}>›</button>
+          </div>
         </div>
       </div>
 
-      {/* =========================================
-          ✨ THE NEW ANNOUNCEMENT MODAL ✨
-          ========================================= */}
       {isModalOpen && (
         <div className="ann-modal-overlay">
           <div className="ann-modal">
-            
-            {/* Modal Header */}
             <div className="ann-modal-header">
-              <div className="ann-modal-title-group">
-                <div className="ann-modal-icon"><IconMegaphone /></div>
-                <div className="ann-modal-title">
-                  <h2>New Announcement</h2>
-                  <p>Broadcast a message to students, teachers, or everyone</p>
-                </div>
+              <div className="ann-modal-title">
+                <h2>{modalMode === 'edit' ? 'Edit Announcement' : 'New Announcement'}</h2>
+                <p>Broadcast a message to students, teachers, or everyone</p>
               </div>
-              <div className="ann-draft-pill">Draft</div>
+              <span className="ann-draft-pill">Draft</span>
             </div>
-
-            {/* Modal Body */}
             <div className="ann-modal-body">
-              
-              {/* SECTION 1: DETAILS */}
-              <div>
-                <div className="ann-section-title">Announcement Details</div>
-                
+              <div className="ann-form-group">
+                <label>Title <span>*</span></label>
+                <input className="ann-input" placeholder="e.g. Mid-term exams begin April 25" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+              </div>
+              <div className="ann-form-row">
                 <div className="ann-form-group">
-                  <label>Title <span>*</span></label>
-                  <input type="text" className="ann-input" placeholder="📌 e.g. Mid-term exams begin April 25" />
+                  <label>Category <span>*</span></label>
+                  <select className="ann-input" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}><option>Exam</option><option>Event</option><option>Fee</option><option>General</option></select>
                 </div>
-
-                <div className="ann-form-row">
-                  <div className="ann-form-group">
-                    <label>Category <span>*</span></label>
-                    <select className="ann-input">
-                      <option>Select category</option>
-                      <option>Exam</option>
-                      <option>Event</option>
-                      <option>Holiday</option>
-                    </select>
-                  </div>
-                  <div className="ann-form-group">
-                    <label>Priority</label>
-                    <select className="ann-input">
-                      <option>Normal</option>
-                      <option>High</option>
-                      <option>Urgent</option>
-                    </select>
-                  </div>
-                </div>
-
                 <div className="ann-form-group">
-                  <label>Message body <span>*</span></label>
-                  <textarea className="ann-input ann-textarea" placeholder="Write the full announcement message here..."></textarea>
-                  <span style={{ fontSize: '10px', color: '#94a3b8' }}>Supports plain text. Max 1,000 characters.</span>
+                  <label>Priority</label>
+                  <select className="ann-input" value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })}><option>Normal</option><option>High</option><option>Urgent</option></select>
                 </div>
               </div>
-
-              {/* SECTION 2: TARGET AUDIENCE */}
-              <div>
-                <div className="ann-section-title">Target Audience</div>
-                
-                <div className="ann-form-group">
-                  <label>Send to <span>*</span></label>
-                  <div className="ann-target-group">
-                    <div className="ann-target-pill active">◉ Everyone</div>
-                    <div className="ann-target-pill">○ All students</div>
-                    <div className="ann-target-pill">○ All teachers</div>
-                    <div className="ann-target-pill">○ Specific grades</div>
-                    <div className="ann-target-pill">○ Specific class</div>
-                  </div>
-                </div>
-
-                <div className="ann-form-row">
-                  <div className="ann-form-group">
-                    <label>Select grades (if applicable)</label>
-                    <div className="ann-target-group">
-                      <div className="ann-target-pill active">☑ Grade 1-3</div>
-                      <div className="ann-target-pill active">☑ Grade 4-6</div>
-                      <div className="ann-target-pill">☐ Grade 7-9</div>
-                      <div className="ann-target-pill">☐ Grade 10</div>
-                    </div>
-                  </div>
-                  <div className="ann-form-group">
-                    <label>Select class (if applicable)</label>
-                    <select className="ann-input">
-                      <option>All classes</option>
-                    </select>
-                  </div>
-                </div>
+              <div className="ann-form-group">
+                <label>Audience</label>
+                <select className="ann-input" value={formData.audience} onChange={(e) => setFormData({ ...formData, audience: e.target.value })}><option>All students</option><option>All teachers</option><option>All</option></select>
               </div>
-
-              {/* SECTION 3: SCHEDULING */}
-              <div>
-                <div className="ann-section-title">Scheduling & Delivery</div>
-                
-                <div className="ann-form-row-3">
-                  <div className="ann-form-group">
-                    <label>Publish date <span>*</span></label>
-                    <input type="date" className="ann-input" defaultValue="2026-04-20" />
-                  </div>
-                  <div className="ann-form-group">
-                    <label>Expiry date</label>
-                    <input type="date" className="ann-input" />
-                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>Leave blank for no expiry</span>
-                  </div>
-                  <div className="ann-form-group">
-                    <label>Publish time</label>
-                    <input type="time" className="ann-input" defaultValue="08:00" />
-                  </div>
-                </div>
-
-                <div className="ann-switch-row">
-                  <div className="ann-switch-label">
-                    <h4>Send push notification</h4>
-                    <p>Notify users via the EduSync mobile app</p>
-                  </div>
-                  <div className={`ann-toggle ${pushOn ? 'on' : ''}`} onClick={() => setPushOn(!pushOn)}></div>
-                </div>
-                <div className="ann-switch-row">
-                  <div className="ann-switch-label">
-                    <h4>Send email notification</h4>
-                    <p>Email all recipients when published</p>
-                  </div>
-                  <div className={`ann-toggle ${emailOn ? 'on' : ''}`} onClick={() => setEmailOn(!emailOn)}></div>
-                </div>
-                <div className="ann-switch-row">
-                  <div className="ann-switch-label">
-                    <h4>Pin to notice board</h4>
-                    <p>Show at the top of the school notice board</p>
-                  </div>
-                  <div className={`ann-toggle ${pinOn ? 'on' : ''}`} onClick={() => setPinOn(!pinOn)}></div>
-                </div>
+              <div className="ann-form-group">
+                <label>Message body <span>*</span></label>
+                <textarea className="ann-input ann-textarea" placeholder="Write the full announcement message here..." value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} />
               </div>
-
-              {/* SECTION 4: ATTACHMENT */}
-              <div>
-                <div className="ann-section-title">Attachment (Optional)</div>
-                <div className="ann-upload-area">
-                  <IconClip />
-                  <p><span>Click to upload</span> or drag and drop</p>
-                  <p style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>PDF, DOCX, JPG, PNG up to 5 MB</p>
-                </div>
-              </div>
-
             </div>
-
-            {/* Modal Footer */}
             <div className="ann-modal-footer">
-              <div className="ann-req-text">* Required fields</div>
+              <span className="ann-req-text">* Required fields</span>
               <div className="ann-footer-actions">
-                <button className="ann-btn-discard" onClick={() => setIsModalOpen(false)}>Discard</button>
-                <button className="ann-btn-draft">Save as draft</button>
-                <button className="ann-btn-publish" onClick={() => setIsModalOpen(false)}>Publish announcement</button>
+                <button className="ann-btn-discard" type="button" onClick={() => setIsModalOpen(false)}>Discard</button>
+                <button className="ann-btn-draft" type="button" onClick={() => saveAnnouncement('Draft')}>Save as draft</button>
+                <button className="ann-btn-publish" type="button" onClick={() => saveAnnouncement('Published')}>{modalMode === 'edit' ? 'Update announcement' : 'Publish announcement'}</button>
               </div>
             </div>
-
           </div>
         </div>
       )}
-
     </DashboardLayout>
   );
 }

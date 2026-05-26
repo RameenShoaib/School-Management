@@ -4,15 +4,17 @@
    ========================================= */
 
 .app-sidebar {
-  background: #ffffff;
-  padding: 1.25rem 0 0; 
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.98) 100%);
+  padding: 1.35rem 0 0; 
   height: 100vh;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid rgba(203, 213, 225, 0.72);
+  box-shadow: 18px 0 40px rgba(15, 23, 42, 0.04);
   scrollbar-width: none; 
   -ms-overflow-style: none;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans, 'Segoe UI', system-ui, -apple-system, sans-serif);
 }
 
 .app-sidebar::-webkit-scrollbar {
@@ -24,7 +26,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
   padding: 0 24px; 
 }
 
@@ -32,13 +34,19 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 3px;
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #0891b2);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
 }
 
 .sidebar-logo-icon .logo-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #2d6cdf;
-  border-radius: 3px;
+  width: 7px;
+  height: 7px;
+  background-color: rgba(255, 255, 255, 0.96);
+  border-radius: 2px;
   display: block;
 }
 
@@ -46,7 +54,7 @@
   font-size: 20px;
   font-weight: 800;
   color: #0f172a;
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
   margin: 0;
 }
 
@@ -61,13 +69,13 @@
 }
 
 .sidebar-nav-group {
-  margin-bottom: 16px; 
+  margin-bottom: 14px; 
 }
 
 .sidebar-nav-label {
   font-size: 11px;
   font-weight: 700;
-  color: #94a3b8;
+  color: #7c8a9c;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 6px;
@@ -79,24 +87,26 @@
   position: relative; 
   display: flex;
   align-items: center;
-  padding: 8px 24px; 
+  margin: 2px 12px;
+  padding: 9px 12px; 
   font-size: 14px;
-  font-weight: 500;
-  color: #64748b;
+  font-weight: 650;
+  color: #526275;
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s ease;
   user-select: none;
-  gap: 16px; 
+  gap: 12px;
+  border-radius: 8px;
 }
 
 .sidebar-nav-icon {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: #74849a;
   transition: color 0.2s ease;
 }
 
@@ -108,43 +118,44 @@
 .sidebar-nav-item.active::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
   width: 3px;
-  background-color: #2d6cdf;
+  background: linear-gradient(180deg, #2563eb, #0891b2);
   border-top-right-radius: 4px;
   border-bottom-right-radius: 4px;
 }
 
 .sidebar-nav-item:hover {
   color: #0f172a;
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
 }
 .sidebar-nav-item:hover .sidebar-nav-icon {
   color: #64748b;
 }
 .sidebar-nav-item.active {
-  color: #2d6cdf;
-  font-weight: 600;
-  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 750;
+  background: linear-gradient(135deg, #eff6ff, #eefbff);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
 }
 .sidebar-nav-item.active .sidebar-nav-icon {
-  color: #2d6cdf;
+  color: #1d4ed8;
 }
 
 /* Sidebar Bottom (Profile & Logout) */
 .sidebar-bottom {
   margin-top: auto; 
   padding: 16px 0;
-  border-top: 1px solid #f1f5f9;
-  background: #ffffff;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .sidebar-nav-item--logout {
   color: #ef4444;
   margin-bottom: 8px; 
-  gap: 12px; 
+  gap: 12px;
 }
 .sidebar-nav-item--logout .sidebar-nav-icon {
   color: #ef4444;
@@ -163,7 +174,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 24px;
+  padding: 10px 24px 8px;
   width: 100%;
   user-select: none;
   cursor: pointer;
@@ -177,8 +188,8 @@
 .sidebar-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background-color: #dbeafe;
+  border-radius: 10px;
+  background: #dbeafe;
   color: #1e40af;
   display: flex;
   align-items: center;
@@ -203,6 +214,9 @@
   font-size: 14px;
   font-weight: 600;
   color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-profile-role {

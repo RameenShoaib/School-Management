@@ -38,7 +38,7 @@ const initDatabase = async () => {
 
     // 2. Subjects Table
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS subjects_table (
+      CREATE TABLE IF NOT EXISTS subjects (
         subject_id SERIAL PRIMARY KEY,
         subject_name VARCHAR(100) NOT NULL,
         subject_code VARCHAR(50),
@@ -76,7 +76,7 @@ const initDatabase = async () => {
         exam_type VARCHAR(100),
         subject VARCHAR(100),
         grade VARCHAR(50),
-        sections TEXT[], 
+        sections TEXT[],
         exam_date DATE,
         start_time TIME,
         duration VARCHAR(50),
@@ -93,6 +93,56 @@ const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    await pool.query(`ALTER TABLE exams ADD COLUMN IF NOT EXISTS subject_id INTEGER;`);
+    await pool.query(`ALTER TABLE exams ADD COLUMN IF NOT EXISTS class_id INTEGER;`);
+    await pool.query(`ALTER TABLE exams ADD COLUMN IF NOT EXISTS room_number VARCHAR(255);`);
+    await pool.query(`ALTER TABLE exams ADD COLUMN IF NOT EXISTS weightage_percent INTEGER;`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS generated_reports (
+        report_id SERIAL PRIMARY KEY,
+        report_name VARCHAR(255) NOT NULL,
+        report_type VARCHAR(100),
+        generated_by VARCHAR(100),
+        format VARCHAR(50) DEFAULT 'PDF',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        announcement_id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(80) DEFAULT 'General',
+        priority VARCHAR(80) DEFAULT 'Normal',
+        message TEXT NOT NULL,
+        audience VARCHAR(80) DEFAULT 'All students',
+        status VARCHAR(50) DEFAULT 'Published',
+        read_rate INTEGER DEFAULT 0,
+        created_by VARCHAR(100) DEFAULT 'Admin',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    const annCount = await pool.query("SELECT COUNT(*) FROM announcements");
+    if (Number(annCount.rows[0].count) === 0) {
+      await pool.query(
+        `INSERT INTO announcements (title, category, priority, message, audience, status, read_rate, created_at)
+         VALUES
+         ($1, 'Exam', 'Urgent', $2, 'All students', 'Published', 94, '2026-04-10'),
+         ($3, 'General', 'Normal', $4, 'All', 'Published', 82, '2026-04-12'),
+         ($5, 'Event', 'Normal', $6, 'All students', 'Published', 74, '2026-04-15')`,
+        [
+          'Mid-term exams begin April 25',
+          'Exams will be held from April 25 to May 2. Students are advised to check their timetables.',
+          'Parent-teacher meeting - April 28',
+          'PTM scheduled from 9 AM to 1 PM. All subject teachers are required to be present.',
+          'Sports day registration open',
+          'Register for sports day events by April 22. Available events: cricket, football, athletics.'
+        ]
+      );
+    }
 
     // AUTOMATIC FIXES FOR NEON DB (From Previous Fixes)
     await pool.query(`
@@ -133,12 +183,79 @@ app.post('/api/login', async (req, res) => {
 });
 
 // ==========================================
+// ANNOUNCEMENTS ROUTES
+// ==========================================
+app.get('/api/announcements', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM announcements ORDER BY created_at DESC, announcement_id DESC");
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/announcements', async (req, res) => {
+  const { title, category, priority, message, audience, status, createdBy } = req.body;
+  if (!title || !message) {
+    return res.status(400).json({ success: false, message: 'Title and message are required.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO announcements (title, category, priority, message, audience, status, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [title, category || 'General', priority || 'Normal', message, audience || 'All students', status || 'Published', createdBy || 'Admin']
+    );
+    res.json({ success: true, data: result.rows[0], message: 'Announcement saved.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/announcements/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, category, priority, message, audience, status } = req.body;
+  if (!title || !message) {
+    return res.status(400).json({ success: false, message: 'Title and message are required.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE announcements
+       SET title = $1, category = $2, priority = $3, message = $4, audience = $5, status = $6
+       WHERE announcement_id = $7
+       RETURNING *`,
+      [title, category || 'General', priority || 'Normal', message, audience || 'All students', status || 'Published', id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ success: false, message: 'Announcement not found.' });
+    res.json({ success: true, data: result.rows[0], message: 'Announcement updated.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/announcements/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: 'No announcement IDs provided.' });
+  }
+
+  try {
+    const result = await pool.query("DELETE FROM announcements WHERE announcement_id = ANY($1)", [ids]);
+    res.json({ success: true, message: `${result.rowCount} announcement(s) deleted.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
 // 🎓 STUDENTS ROUTES
 // ==========================================
-// Backend (server.js) mein ye route dhund kar update karein
+
+// 1. GET ALL STUDENTS
 app.get('/api/students', async (req, res) => {
   try {
-    // SELECT * lagana zaroori hai taake naye add kiye gaye columns bhi fetch hon
     const query = "SELECT * FROM students ORDER BY student_id DESC";
     const result = await pool.query(query);
     res.json({ success: true, data: result.rows });
@@ -148,6 +265,31 @@ app.get('/api/students', async (req, res) => {
   }
 });
 
+// 2. BULK DELETE STUDENTS (Isay hamesha alag route rakhna hai)
+app.post('/api/students/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "No IDs provided" });
+  }
+
+  try {
+    // PostgreSQL ANY($1) query
+    const query = "DELETE FROM students WHERE student_id = ANY($1)";
+    const result = await pool.query(query, [ids]);
+
+    if (result.rowCount > 0) {
+      res.json({ success: true, message: `${result.rowCount} students deleted.` });
+    } else {
+      res.json({ success: false, message: "No records found to delete." });
+    }
+  } catch (error) {
+    console.error("Delete Error:", error);
+    res.status(500).json({ success: false, message: "Database error: " + error.message });
+  }
+});
+
+// 3. CREATE NEW STUDENT (With User Account)
 app.post('/api/students', async (req, res) => {
   const client = await pool.connect();
 
@@ -168,31 +310,27 @@ app.post('/api/students', async (req, res) => {
 
     await client.query('BEGIN');
 
-    // -------------------------------------------------------------
-    // STEP 1: CREATE USER ACCOUNT (Fixed: password_hash column use kiya hai)
-    // -------------------------------------------------------------
-    const defaultPassword = 'Student@123'; // Note: Real system mein isko bcrypt se hash kar lena
+    // STEP 1: CREATE USER ACCOUNT
+    const defaultPassword = 'Student@123';
     const userEmail = validString(email) || `${autoRollNo.toLowerCase()}@edusync.com`;
 
     const userQuery = `
-      INSERT INTO users (email, password_hash, role) 
-      VALUES ($1, $2, 'Student') 
+      INSERT INTO users (email, password_hash, role)
+      VALUES ($1, $2, 'Student')
       RETURNING user_id;
     `;
     const userResult = await client.query(userQuery, [userEmail, defaultPassword]);
     const newUserId = userResult.rows[0].user_id;
 
-    // -------------------------------------------------------------
-    // STEP 2: CREATE STUDENT RECORD 
-    // -------------------------------------------------------------
+    // STEP 2: CREATE STUDENT RECORD
     const studentQuery = `
       INSERT INTO students (
-        first_name, middle_name, last_name, date_of_birth, gender, 
-        blood_group, cnic, religion, email, phone, 
+        first_name, middle_name, last_name, date_of_birth, gender,
+        blood_group, cnic, religion, email, phone,
         residential_address, city, province, postal_code,
         grade, section, enrollment_date, previous_school,
-        guardian_name, guardian_relation, guardian_occupation, 
-        guardian_contact, guardian_email, monthly_fee, 
+        guardian_name, guardian_relation, guardian_occupation,
+        guardian_contact, guardian_email, monthly_fee,
         fee_discount, notes, status, fee_status, roll_no, user_id
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
@@ -203,28 +341,26 @@ app.post('/api/students', async (req, res) => {
     `;
 
     const studentValues = [
-      validString(firstName), validString(middleName), validString(lastName), 
-      validDate(dob), validString(gender), validString(bloodGroup), 
-      validString(cnic), validString(religion), validString(email), 
-      validString(phone), validString(address), validString(city), 
-      validString(province), validString(postalCode), validString(grade), 
-      validString(section), validDate(admissionDate), validString(prevSchool), 
-      validString(guardianName), validString(guardianRelation), 
-      validString(guardianOccupation), validString(guardianContact), 
-      validString(guardianEmail), validNum(monthlyFee), 
+      validString(firstName), validString(middleName), validString(lastName),
+      validDate(dob), validString(gender), validString(bloodGroup),
+      validString(cnic), validString(religion), validString(email),
+      validString(phone), validString(address), validString(city),
+      validString(province), validString(postalCode), validString(grade),
+      validString(section), validDate(admissionDate), validString(prevSchool),
+      validString(guardianName), validString(guardianRelation),
+      validString(guardianOccupation), validString(guardianContact),
+      validString(guardianEmail), validNum(monthlyFee),
       validString(feeDiscount), validString(notes),
-      autoRollNo, 
-      newUserId // Naya banne wala user_id seedha student ke sath link ho gaya!
+      autoRollNo, newUserId
     ];
 
     const result = await client.query(studentQuery, studentValues);
-
     await client.query('COMMIT');
 
-    res.status(201).json({ 
-      success: true, 
-      message: "Student & User Account created successfully!", 
-      data: result.rows[0] 
+    res.status(201).json({
+      success: true,
+      message: "Student & User Account created successfully!",
+      data: result.rows[0]
     });
 
   } catch (error) {
@@ -236,11 +372,10 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
-// Example Backend Route for Updating Student
+// 4. UPDATE STUDENT RECORD
 app.put('/api/students/:id', async (req, res) => {
   try {
     const studentId = req.params.id;
-    
     const {
       firstName, middleName, lastName, dob, gender, bloodGroup, cnic, religion,
       email, phone, address, city, province, postalCode,
@@ -249,45 +384,42 @@ app.put('/api/students/:id', async (req, res) => {
       monthlyFee, feeDiscount, notes
     } = req.body;
 
-    // Type Formatting: Khali (empty) dates ko strictly NULL kar rahe hain taake DB error na de
     const validDate = (dateStr) => (dateStr && dateStr.trim() !== '') ? dateStr : null;
     const validString = (str) => (str && String(str).trim() !== '') ? String(str) : null;
     const validNum = (num) => (num && !isNaN(num)) ? parseFloat(num) : 0;
 
     const query = `
-      UPDATE students 
-      SET 
-        first_name = $1, middle_name = $2, last_name = $3, date_of_birth = $4, gender = $5, 
-        blood_group = $6, cnic = $7, religion = $8, email = $9, phone = $10, 
+      UPDATE students
+      SET
+        first_name = $1, middle_name = $2, last_name = $3, date_of_birth = $4, gender = $5,
+        blood_group = $6, cnic = $7, religion = $8, email = $9, phone = $10,
         residential_address = $11, city = $12, province = $13, postal_code = $14,
         grade = $15, section = $16, enrollment_date = $17, previous_school = $18,
-        guardian_name = $19, guardian_relation = $20, guardian_occupation = $21, 
-        guardian_contact = $22, guardian_email = $23, monthly_fee = $24, 
+        guardian_name = $19, guardian_relation = $20, guardian_occupation = $21,
+        guardian_contact = $22, guardian_email = $23, monthly_fee = $24,
         fee_discount = $25, notes = $26
       WHERE student_id = $27
       RETURNING *;
     `;
 
     const values = [
-      validString(firstName), validString(middleName), validString(lastName), 
-      validDate(dob), // Perfectly handled Date
-      validString(gender), validString(bloodGroup), validString(cnic), validString(religion), 
-      validString(email), validString(phone), validString(address), validString(city), 
-      validString(province), validString(postalCode), validString(grade), validString(section), 
-      validDate(admissionDate), // Perfectly handled Date
-      validString(prevSchool), validString(guardianName), validString(guardianRelation), 
-      validString(guardianOccupation), 
-      validString(guardianContact), // Safely casted to String
-      validString(guardianEmail), 
-      validNum(monthlyFee), 
-      validString(feeDiscount), validString(notes), 
+      validString(firstName), validString(middleName), validString(lastName),
+      validDate(dob), validString(gender), validString(bloodGroup),
+      validString(cnic), validString(religion), validString(email),
+      validString(phone), validString(address), validString(city),
+      validString(province), validString(postalCode), validString(grade),
+      validString(section), validDate(admissionDate), validString(prevSchool),
+      validString(guardianName), validString(guardianRelation),
+      validString(guardianOccupation), validString(guardianContact),
+      validString(guardianEmail), validNum(monthlyFee),
+      validString(feeDiscount), validString(notes),
       studentId
     ];
 
     const result = await pool.query(query, values);
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, message: "Student not found in database." });
+      return res.status(404).json({ success: false, message: "Student not found." });
     }
 
     res.json({ success: true, message: "Student record updated fully!" });
@@ -300,143 +432,90 @@ app.put('/api/students/:id', async (req, res) => {
 // ==========================================
 // 👨‍🏫 TEACHERS ROUTES
 // ==========================================
+
+// 1. GET ALL TEACHERS
 app.get('/api/teachers', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM teachers ORDER BY teacher_id DESC');
     res.json({ success: true, data: result.rows });
-  } catch (err) { 
-    res.status(500).json({ success: false, message: 'Error fetching teachers' }); 
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error fetching teachers' });
   }
 });
 
+// 2. BULK DELETE TEACHERS (Naya Route)
+app.post('/api/teachers/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "No teacher IDs provided" });
+  }
+  try {
+    const query = "DELETE FROM teachers WHERE teacher_id = ANY($1)";
+    const result = await pool.query(query, [ids]);
+    res.json({ success: true, message: `${result.rowCount} teacher(s) deleted successfully.` });
+  } catch (error) {
+    console.error("Delete Error:", error.message);
+    res.status(500).json({ success: false, message: "Database Error" });
+  }
+});
 
-// ==========================================
-// UPDATE EXISTING TEACHER
-// ==========================================
+// 3. UPDATE EXISTING TEACHER
 app.put('/api/teachers/:id', async (req, res) => {
   try {
     const teacherId = req.params.id;
-    const { 
-      firstName, lastName, gender, dob, cnic, phone, 
-      designation, empType, email, joiningDate 
-    } = req.body;
-
+    const { firstName, lastName, gender, dob, cnic, phone, designation, empType, email, joiningDate } = req.body;
     const validDate = (dateStr) => (dateStr && dateStr.trim() !== '') ? dateStr : null;
     const validString = (str) => (str && String(str).trim() !== '') ? String(str) : null;
 
-    // Database columns ke exact names (Fixed: phone -> phone_number)
     const query = `
-      UPDATE teachers 
-      SET 
-        first_name = $1, last_name = $2, gender = $3, date_of_birth = $4, 
-        cnic = $5, phone_number = $6, designation = $7, employment_type = $8, 
-        email = $9, joining_date = $10
+      UPDATE teachers
+      SET first_name = $1, last_name = $2, gender = $3, date_of_birth = $4,
+          cnic = $5, phone_number = $6, designation = $7, employment_type = $8,
+          email = $9, joining_date = $10
       WHERE teacher_id = $11
       RETURNING *;
     `;
-
-    const values = [
-      validString(firstName), validString(lastName), validString(gender), 
-      validDate(dob), validString(cnic), validString(phone), 
-      validString(designation), validString(empType), validString(email), 
-      validDate(joiningDate), 
-      teacherId
-    ];
-
+    const values = [validString(firstName), validString(lastName), validString(gender), validDate(dob), validString(cnic), validString(phone), validString(designation), validString(empType), validString(email), validDate(joiningDate), teacherId];
     const result = await pool.query(query, values);
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, message: "Teacher not found in database." });
-    }
-
+    if (result.rowCount === 0) return res.status(404).json({ success: false, message: "Teacher not found." });
     res.json({ success: true, message: "Teacher updated fully!" });
-  } catch (error) {
-    console.error("Update Error (Teacher):", error);
-    res.status(500).json({ success: false, message: "Server error during update" });
-  }
+  } catch (error) { res.status(500).json({ success: false, message: "Server error during update" }); }
 });
 
-
-// ==========================================
-// ADD NEW TEACHER ROUTE (With User Account)
-// ==========================================
-// ==========================================
-// ADD NEW TEACHER ROUTE (With User Account)
-// ==========================================
+// 4. ADD NEW TEACHER (With User Account)
 app.post('/api/teachers', async (req, res) => {
   const client = await pool.connect();
-
   try {
-    const {
-      firstName, lastName, gender, dob, cnic, phone, 
-      designation, empType, email, joiningDate
-    } = req.body;
-
+    const { firstName, lastName, gender, dob, cnic, phone, designation, empType, email, joiningDate } = req.body;
     const validDate = (dateStr) => (dateStr && dateStr.trim() !== '') ? dateStr : null;
     const validString = (str) => (str && String(str).trim() !== '') ? String(str) : null;
-
     const autoEmpId = `T-${Math.floor(100 + Math.random() * 900)}`;
 
     await client.query('BEGIN');
-
-    
-// -------------------------------------------------------------
-    // STEP 1: CREATE USER ACCOUNT (users table)
-    // -------------------------------------------------------------
-    const defaultPassword = 'Teacher@123'; 
     const userEmail = validString(email) || `${autoEmpId.toLowerCase()}@edusync.com`;
 
-    const userQuery = `
-      INSERT INTO users (email, password_hash, role) 
-      VALUES ($1, $2, 'Teacher') 
-      RETURNING user_id;
-    `;
-    const userResult = await client.query(userQuery, [userEmail, defaultPassword]);
+    // Email Check to avoid duplicate key error
+    const emailCheck = await client.query('SELECT user_id FROM users WHERE email = $1', [userEmail]);
+    if (emailCheck.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, message: "Email already exists in users table." });
+    }
+
+    const userResult = await client.query(`INSERT INTO users (email, password_hash, role) VALUES ($1, $2, 'Teacher') RETURNING user_id;`, [userEmail, 'Teacher@123']);
     const newUserId = userResult.rows[0].user_id;
 
-    // -------------------------------------------------------------
-    // STEP 2: CREATE TEACHER RECORD (teachers table)
-    // -------------------------------------------------------------
-    // -------------------------------------------------------------
-    // STEP 2: CREATE TEACHER RECORD (teachers table)
-    // -------------------------------------------------------------
-    // (Fixed: phone_number)
     const teacherQuery = `
-      INSERT INTO teachers (
-        first_name, last_name, gender, date_of_birth, cnic, 
-        phone_number, designation, employment_type, email, joining_date, 
-        emp_id, status, user_id
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Active', $12
-      ) RETURNING *;
+      INSERT INTO teachers (first_name, last_name, gender, date_of_birth, cnic, phone_number, designation, employment_type, email, joining_date, emp_id, status, user_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Active', $12) RETURNING *;
     `;
-    
-   const teacherValues = [
-      validString(firstName), validString(lastName), validString(gender), 
-      validDate(dob), validString(cnic), validString(phone), 
-      validString(designation), validString(empType), validString(email), 
-      validDate(joiningDate), 
-      autoEmpId,  
-      newUserId   
-    ];
-
-  const result = await client.query(teacherQuery, teacherValues);
-
+    const values = [validString(firstName), validString(lastName), validString(gender), validDate(dob), validString(cnic), validString(phone), validString(designation), validString(empType), validString(email), validDate(joiningDate), autoEmpId, newUserId];
+    await client.query(teacherQuery, values);
     await client.query('COMMIT');
-
-    res.status(201).json({ 
-      success: true, 
-      message: "Teacher & User Account created successfully!", 
-      data: result.rows[0] 
-    });
-
+    res.status(201).json({ success: true, message: "Teacher created successfully!" });
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error("Insert Error (Teacher):", error);
-    res.status(500).json({ success: false, message: "Server error during teacher registration" });
-  } finally {
-    client.release();
-  }
+    res.status(500).json({ success: false, message: "Server error during registration: " + error.message });
+  } finally { client.release(); }
 });
 
 // ==========================================
@@ -453,47 +532,66 @@ app.get('/api/classes', async (req, res) => {
   }
 });
 
+// 👉 NEW: BULK DELETE CLASSES
+app.post('/api/classes/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "No class IDs provided" });
+  }
+  try {
+    // PostgreSQL ANY($1) query for multiple IDs
+    const query = "DELETE FROM classes WHERE class_id = ANY($1)";
+    const result = await pool.query(query, [ids]);
+
+    if (result.rowCount > 0) {
+      res.json({ success: true, message: `${result.rowCount} class(es) deleted successfully.` });
+    } else {
+      res.json({ success: false, message: "No records found to delete." });
+    }
+  } catch (error) {
+    console.error("Bulk Delete Error (Classes):", error);
+    res.status(500).json({ success: false, message: "Server Database Error" });
+  }
+});
+
 // --- UPDATE EXISTING CLASS (PUT) ---
 app.put('/api/classes/:id', async (req, res) => {
   try {
     const classId = req.params.id;
-    const { 
-      grade, section, maxCapacity, roomNumber, academicYear, 
-      notes, teacher, coTeacher, startTime, endTime, 
-      subjects, settings 
+    const {
+      grade, section, maxCapacity, roomNumber, academicYear,
+      notes, teacher, coTeacher, startTime, endTime,
+      subjects, settings
     } = req.body;
 
     const query = `
-      UPDATE classes 
-      SET 
-        grade = $1, section = $2, max_capacity = $3, room_number = $4, 
-        academic_year = $5, notes = $6, teacher_name = $7, co_teacher = $8, 
+      UPDATE classes
+      SET
+        grade = $1, section = $2, max_capacity = $3, room_number = $4,
+        academic_year = $5, notes = $6, teacher_name = $7, co_teacher = $8,
         start_time = $9, end_time = $10, subjects = $11, settings = $12
       WHERE class_id = $13
       RETURNING *;
     `;
 
     const values = [
-      grade, 
-      section, 
-      maxCapacity ? parseInt(maxCapacity) : 0, 
-      roomNumber, 
-      academicYear, 
-      notes, 
-      teacher, 
-      coTeacher, 
-      startTime, 
-      endTime, 
-      subjects || [], // 👈 Yahan se bhi JSON.stringify HATA DIYA (Direct Array)
-      JSON.stringify(settings || {}), 
+      grade,
+      section,
+      maxCapacity ? parseInt(maxCapacity) : 0,
+      roomNumber,
+      academicYear,
+      notes,
+      teacher,
+      coTeacher,
+      startTime,
+      endTime,
+      subjects || [],
+      JSON.stringify(settings || {}),
       classId
     ];
 
     const result = await pool.query(query, values);
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, message: "Class not found in database." });
-    }
+    if (result.rowCount === 0) return res.status(404).json({ success: false, message: "Class not found." });
 
     res.json({ success: true, message: "Class updated successfully!" });
   } catch (error) {
@@ -505,16 +603,16 @@ app.put('/api/classes/:id', async (req, res) => {
 // --- ADD NEW CLASS (POST) ---
 app.post('/api/classes', async (req, res) => {
   try {
-    const { 
-      grade, section, maxCapacity, roomNumber, academicYear, 
-      notes, teacher, coTeacher, startTime, endTime, 
-      subjects, settings 
+    const {
+      grade, section, maxCapacity, roomNumber, academicYear,
+      notes, teacher, coTeacher, startTime, endTime,
+      subjects, settings
     } = req.body;
 
     const query = `
       INSERT INTO classes (
-        grade, section, max_capacity, room_number, academic_year, 
-        notes, teacher_name, co_teacher, start_time, end_time, 
+        grade, section, max_capacity, room_number, academic_year,
+        notes, teacher_name, co_teacher, start_time, end_time,
         subjects, settings, status
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'Active'
@@ -522,18 +620,18 @@ app.post('/api/classes', async (req, res) => {
     `;
 
     const values = [
-      grade, 
-      section, 
-      maxCapacity ? parseInt(maxCapacity) : 0, 
-      roomNumber, 
-      academicYear, 
-      notes, 
-      teacher, 
-      coTeacher, 
-      startTime, 
-      endTime, 
-      subjects || [], // 👈 Yahan se JSON.stringify HATA DIYA (Direct Array)
-      JSON.stringify(settings || {}) 
+      grade,
+      section,
+      maxCapacity ? parseInt(maxCapacity) : 0,
+      roomNumber,
+      academicYear,
+      notes,
+      teacher,
+      coTeacher,
+      startTime,
+      endTime,
+      subjects || [],
+      JSON.stringify(settings || {})
     ];
 
     const result = await pool.query(query, values);
@@ -545,28 +643,100 @@ app.post('/api/classes', async (req, res) => {
   }
 });
 
+// ==========================================
+// 📚 SUBJECTS ROUTES
+// ==========================================
+
 app.get('/api/subjects', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM subjects_table ORDER BY subject_id DESC');
+    const result = await pool.query('SELECT * FROM subjects ORDER BY subject_id DESC');
     res.json({ success: true, data: result.rows });
-  } catch (err) { res.status(500).json({ success: false, message: 'Error fetching subjects' }); }
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error fetching subjects' });
+  }
+});
+
+// 👉 NEW: BULK DELETE SUBJECTS
+app.post('/api/subjects/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "No subject IDs provided" });
+  }
+  try {
+    // PostgreSQL ANY($1) query for multiple IDs
+    const query = "DELETE FROM subjects WHERE subject_id = ANY($1)";
+    const result = await pool.query(query, [ids]);
+
+    if (result.rowCount > 0) {
+      res.json({ success: true, message: `${result.rowCount} subject(s) deleted successfully.` });
+    } else {
+      res.json({ success: false, message: "No records found to delete." });
+    }
+  } catch (error) {
+    console.error("Bulk Delete Error (Subjects):", error);
+    res.status(500).json({ success: false, message: "Server Database Error" });
+  }
+});
+
+app.put('/api/subjects/:id', async (req, res) => {
+  const { id } = req.params;
+  const { subjectName, subjectCode, gradeLevel, subjectCategory, teacherName, weeklyPeriods, creditHours, isElective, hasLab } = req.body;
+  try {
+    const query = `
+      UPDATE subjects
+      SET subject_name = $1,
+          subject_code = $2,
+          grade_level = $3,
+          subject_category = $4,
+          teacher_name = $5,
+          weekly_periods = $6,
+          credit_hours = $7,
+          is_elective = $8,
+          has_lab = $9
+      WHERE subject_id = $10
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      subjectName,
+      subjectCode,
+      gradeLevel,
+      subjectCategory,
+      teacherName,
+      weeklyPeriods,
+      creditHours,
+      isElective,
+      hasLab,
+      id
+    ]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Subject not found' });
+    }
+
+    res.json({ success: true, message: 'Subject updated successfully!', data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 app.post('/api/subjects', async (req, res) => {
   const { subjectName, subjectCode, gradeLevel, subjectCategory, teacherName, weeklyPeriods, creditHours, isElective, hasLab } = req.body;
   try {
     const query = `
-      INSERT INTO subjects_table (subject_name, subject_code, grade_level, subject_category, teacher_name, weekly_periods, credit_hours, is_elective, has_lab)
+      INSERT INTO subjects (subject_name, subject_code, grade_level, subject_category, teacher_name, weekly_periods, credit_hours, is_elective, has_lab)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
     `;
     await pool.query(query, [subjectName, subjectCode, gradeLevel, subjectCategory, teacherName, weeklyPeriods, creditHours, isElective, hasLab]);
     res.json({ success: true, message: 'Subject added successfully!' });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // ==========================================
 // 📅 ATTENDANCE ROUTES
 // ==========================================
+
 app.get('/api/attendance', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM attendance ORDER BY attendance_date DESC');
@@ -589,7 +759,7 @@ app.post('/api/attendance/bulk', async (req, res) => {
       const query = `
         INSERT INTO attendance (student_id, class_id, attendance_date, status, remarks, marked_by)
         VALUES ($1::integer, $2::integer, $3::date, $4::varchar, $5::text, $6::varchar)
-        ON CONFLICT (student_id, attendance_date) 
+        ON CONFLICT (student_id, attendance_date)
         DO UPDATE SET status = EXCLUDED.status, remarks = EXCLUDED.remarks, marked_by = EXCLUDED.marked_by;
       `;
 
@@ -608,23 +778,36 @@ app.post('/api/attendance/bulk', async (req, res) => {
   }
 });
 
+// 👉 NEW: BULK DELETE ATTENDANCE
+app.post('/api/attendance/bulk-delete', async (req, res) => {
+  const { ids, dates } = req.body;
+  if (!ids || ids.length === 0 || !dates || dates.length === 0) {
+    return res.status(400).json({ success: false, message: "No students or dates selected." });
+  }
+  try {
+    // Selected students aur visible dates ka record delete karega
+    const query = "DELETE FROM attendance WHERE student_id = ANY($1) AND attendance_date = ANY($2)";
+    const result = await pool.query(query, [ids, dates]);
+    res.json({ success: true, message: `${result.rowCount} records cleared.` });
+  } catch (error) {
+    console.error("Bulk Delete Error:", error);
+    res.status(500).json({ success: false, message: "Server error during deletion" });
+  }
+});
 // ==========================================
-// 📝 EXAMS ROUTES (NEW ADDITION) 🔥
+// 📝 EXAMS ROUTES
 // ==========================================
-// ==========================================
-// 📝 EXAMS ROUTES (UPDATED FOR JOINS & IDs)
-// ==========================================
+
 app.get('/api/exams', async (req, res) => {
   try {
-    // JOIN lagaya hai taake IDs ki jagah real names UI par show hon
     const query = `
-      SELECT 
-        e.*, 
-        s.subject_name, 
-        c.grade, c.section, 
+      SELECT
+        e.*,
+        s.subject_name,
+        c.grade, c.section,
         t.first_name AS invigilator_first_name, t.last_name AS invigilator_last_name
       FROM exams e
-      LEFT JOIN subjects_table s ON e.subject_id = s.subject_id
+      LEFT JOIN subjects s ON e.subject_id = s.subject_id
       LEFT JOIN classes c ON e.class_id = c.class_id
       LEFT JOIN teachers t ON e.invigilator_id = t.teacher_id
       ORDER BY e.exam_date ASC;
@@ -636,57 +819,122 @@ app.get('/api/exams', async (req, res) => {
   }
 });
 
-app.post('/api/exams', async (req, res) => {
+// 👉 NEW: BULK DELETE EXAMS
+app.post('/api/exams/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "No exam IDs provided" });
+  }
+  try {
+    // PostgreSQL ANY($1) query for multiple IDs
+    const query = "DELETE FROM exams WHERE exam_id = ANY($1)";
+    const result = await pool.query(query, [ids]);
+
+    if (result.rowCount > 0) {
+      res.json({ success: true, message: `${result.rowCount} exam(s) deleted successfully.` });
+    } else {
+      res.json({ success: false, message: "No records found to delete." });
+    }
+  } catch (error) {
+    console.error("Bulk Delete Error (Exams):", error);
+    res.status(500).json({ success: false, message: "Server Database Error" });
+  }
+});
+
+app.put('/api/exams/:id', async (req, res) => {
   const data = req.body;
+  const toInt = (val) => {
+    const p = parseInt(val, 10);
+    return isNaN(p) ? null : p;
+  };
 
   try {
     const query = `
+      UPDATE exams
+      SET
+        exam_title = $1,
+        exam_type = $2,
+        subject_id = $3,
+        class_id = $4,
+        exam_date = $5,
+        start_time = $6,
+        duration = $7,
+        room_number = $8,
+        invigilator_id = $9,
+        total_marks = $10,
+        passing_marks = $11,
+        weightage_percent = $12,
+        grading_scale = $13,
+        notify_portal = $14,
+        send_sms = $15,
+        auto_publish = $16
+      WHERE exam_id = $17
+      RETURNING *;
+    `;
+    const values = [
+      data.examTitle,
+      data.examType,
+      toInt(data.subjectId),
+      toInt(data.classId),
+      data.examDate || null,
+      data.startTime || null,
+      data.duration,
+      data.roomNumber,
+      toInt(data.invigilatorId),
+      toInt(data.totalMarks) || 100,
+      toInt(data.passingMarks) || 50,
+      toInt(data.weightagePercent) || 0,
+      data.gradingScale,
+      data.notifyPortal,
+      data.sendSms,
+      data.autoPublish,
+      req.params.id
+    ];
+    const result = await pool.query(query, values);
+    if (result.rowCount === 0) return res.status(404).json({ success: false, message: 'Exam not found.' });
+    res.json({ success: true, data: result.rows[0], message: 'Exam updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server Database Error: " + err.message });
+  }
+});
+
+app.post('/api/exams', async (req, res) => {
+  const data = req.body;
+  try {
+    const query = `
       INSERT INTO exams (
-        exam_title, exam_type, subject_id, class_id, exam_date, start_time, 
-        duration, room_number, invigilator_id, total_marks, passing_marks, 
+        exam_title, exam_type, subject_id, class_id, exam_date, start_time,
+        duration, room_number, invigilator_id, total_marks, passing_marks,
         weightage_percent, grading_scale, notify_portal, send_sms, auto_publish
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *;
     `;
-    
-    // 🔥 Safe parsing function to prevent NaN or empty string errors
+
     const toInt = (val) => {
       const p = parseInt(val, 10);
       return isNaN(p) ? null : p;
     };
 
     const values = [
-      data.examTitle, 
-      data.examType, 
-      toInt(data.subjectId), 
-      toInt(data.classId), 
-      data.examDate || null, 
-      data.startTime || null, 
-      data.duration, 
-      data.roomNumber, 
-      toInt(data.invigilatorId), 
-      toInt(data.totalMarks) || 100, 
-      toInt(data.passingMarks) || 50, 
-      toInt(data.weightagePercent) || 0, 
-      data.gradingScale, 
-      data.notifyPortal, 
-      data.sendSms, 
-      data.autoPublish
+      data.examTitle, data.examType, toInt(data.subjectId), toInt(data.classId),
+      data.examDate || null, data.startTime || null, data.duration,
+      data.roomNumber, toInt(data.invigilatorId), toInt(data.totalMarks) || 100,
+      toInt(data.passingMarks) || 50, toInt(data.weightagePercent) || 0,
+      data.gradingScale, data.notifyPortal, data.sendSms, data.autoPublish
     ];
-    
+
     await pool.query(query, values);
     res.json({ success: true, message: 'Exam scheduled successfully!' });
   } catch (err) {
-    console.error("DB Error:", err.message);
     res.status(500).json({ success: false, message: "Server Database Error: " + err.message });
   }
 });
 
-// Get all fee records with student details
+// --- GET ALL FEE RECORDS ---
 app.get('/api/fees', async (req, res) => {
   try {
     const query = `
-      SELECT f.*, s.first_name, s.last_name, s.roll_no, s.grade 
+      SELECT f.*, s.first_name, s.last_name, s.roll_no, s.grade
       FROM fee_payments f
       JOIN students s ON f.student_id = s.student_id
       ORDER BY f.payment_date DESC;
@@ -698,18 +946,83 @@ app.get('/api/fees', async (req, res) => {
   }
 });
 
-// Record a new payment
-// ==========================================
-// 💰 FEE MANAGEMENT ROUTE
-// ==========================================
+// 👉 NEW: BULK DELETE FEE RECORDS
+app.post('/api/fees/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "No payment IDs provided" });
+  }
+  try {
+    // PostgreSQL ANY($1) query for multiple IDs
+    const query = "DELETE FROM fee_payments WHERE payment_id = ANY($1)";
+    const result = await pool.query(query, [ids]);
+
+    if (result.rowCount > 0) {
+      res.json({ success: true, message: `${result.rowCount} fee record(s) deleted successfully.` });
+    } else {
+      res.json({ success: false, message: "No records found to delete." });
+    }
+  } catch (error) {
+    console.error("Bulk Delete Error (Fees):", error);
+    res.status(500).json({ success: false, message: "Server Database Error" });
+  }
+});
+
+app.put('/api/fees/:id', async (req, res) => {
+  const data = req.body;
+  try {
+    const query = `
+      UPDATE fee_payments
+      SET
+        student_id = $1,
+        payment_type = $2,
+        fee_month = $3,
+        payment_date = $4,
+        amount_due = $5,
+        discount_amount = $6,
+        amount_received = $7,
+        payment_method = $8,
+        transaction_id = $9,
+        remarks = $10,
+        print_receipt = $11,
+        email_guardian = $12,
+        sms_confirm = $13
+      WHERE payment_id = $14
+      RETURNING *;
+    `;
+    const values = [
+      parseInt(data.studentId, 10),
+      data.paymentType || 'Monthly fee',
+      data.feeMonth,
+      data.paymentDate || new Date(),
+      parseFloat(data.amountDue) || 0,
+      parseFloat(data.discountAmount) || 0,
+      parseFloat(data.amountReceived) || 0,
+      data.paymentMethod || 'Cash',
+      data.transactionId || null,
+      data.remarks || '',
+      data.printReceipt ?? true,
+      data.emailGuardian ?? true,
+      data.smsConfirm ?? false,
+      req.params.id
+    ];
+    const result = await pool.query(query, values);
+    if (result.rowCount === 0) return res.status(404).json({ success: false, message: 'Fee record not found.' });
+    res.json({ success: true, data: result.rows[0], message: 'Payment updated!' });
+  } catch (err) {
+    console.error("Database Error updating Fees:", err.message);
+    res.status(500).json({ success: false, message: "Database Error: " + err.message });
+  }
+});
+
+// --- RECORD NEW PAYMENT ---
 app.post('/api/fees', async (req, res) => {
   const data = req.body;
-  
   try {
     const query = `
       INSERT INTO fee_payments (
-        student_id, payment_type, fee_month, payment_date, amount_due, 
-        discount_amount, amount_received, payment_method, transaction_id, 
+        student_id, payment_type, fee_month, payment_date, amount_due,
+        discount_amount, amount_received, payment_method, transaction_id,
         remarks, print_receipt, email_guardian, sms_confirm
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *;
@@ -739,14 +1052,13 @@ app.post('/api/fees', async (req, res) => {
   }
 });
 
-// 1. Snapshot Analytics (Admissions, Fees, etc.)
+// --- ANALYTICS SNAPSHOT ---
 app.get('/api/reports/snapshot', async (req, res) => {
   try {
     const students = await pool.query("SELECT COUNT(*) FROM students");
     const classes = await pool.query("SELECT COUNT(*) FROM classes");
     const fees = await pool.query("SELECT SUM(amount_received) as total FROM fee_payments");
-    
-    // Yahan hum static logic bhej rahe hain snapshot bars ke liye
+
     res.json({
       success: true,
       data: [
@@ -764,6 +1076,20 @@ app.get('/api/reports/recent', async (req, res) => {
     const result = await pool.query("SELECT * FROM generated_reports ORDER BY created_at DESC LIMIT 10");
     res.json({ success: true, data: result.rows });
   } catch (err) { res.status(500).send(err.message); }
+});
+
+app.post('/api/reports/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: 'No report IDs provided.' });
+  }
+
+  try {
+    const result = await pool.query("DELETE FROM generated_reports WHERE report_id = ANY($1)", [ids]);
+    res.json({ success: true, message: `${result.rowCount} report(s) deleted.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 const { jsPDF } = require("jspdf");
@@ -785,11 +1111,11 @@ app.get('/api/reports/download-pdf/:id', async (req, res) => {
         ];
 
         const doc = new jsPDF();
-        
+
         // 🏫 Header
         doc.setFontSize(20);
         doc.text("EDUSYNC LMS - OFFICIAL REPORT", 105, 15, { align: "center" });
-        
+
         doc.setFontSize(10);
         doc.text(`Report Name: ${report.report_name}`, 14, 25);
         doc.text(`Generated By: ${report.generated_by}`, 14, 30);

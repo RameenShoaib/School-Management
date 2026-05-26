@@ -1,4 +1,5 @@
 import React from 'react';
+import Swal from 'sweetalert2';
 import './header.css';
 
 /* Professional SVGs matching the D365 vibe */
@@ -20,43 +21,49 @@ const SvgDelete = () => (
   </svg>
 );
 
-/* 👇 Naya Export Icon 👇 */
+/* Naya Export Icon */
 const SvgExport = () => (
   <svg fill="currentColor" viewBox="0 0 24 24">
-    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z" />
+    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z" />
   </svg>
 );
 
-export default function Header() {
+export default function Header({ onEdit, onRefresh, onDelete, onExport }) {
+  const fallbackAction = (label) => () => {
+    Swal.fire({
+      icon: 'info',
+      title: `${label} action`,
+      text: 'Select a record or use the page-specific controls to continue.',
+      confirmButtonColor: '#2563eb'
+    });
+  };
+
   return (
     <div className="action-header-bar">
+      <button className="action-btn" onClick={onEdit || fallbackAction('Edit')}>
+        <SvgEdit /> Edit
+      </button>
+
+      <div className="action-divider"></div>
       
-      {/* Left Side Buttons */}
-      <button className="action-btn" onClick={() => console.log("Edit clicked")}>
-        <SvgEdit />
-        Edit
+      <button className="action-btn" onClick={onRefresh || fallbackAction('Refresh')}>
+        <SvgRefresh /> Refresh
       </button>
 
-      <span className="action-divider"></span>
-
-      <button className="action-btn" onClick={() => window.location.reload()}>
-        <SvgRefresh />
-        Refresh
+      <div className="action-divider"></div>
+      
+      <button className="action-btn delete-btn" onClick={onDelete || fallbackAction('Delete')}>
+        <SvgDelete /> Delete
       </button>
 
-      <span className="action-divider"></span>
-
-      <button className="action-btn delete-btn" onClick={() => console.log("Delete clicked")}>
-        <SvgDelete />
-        Delete
+      {/* 👇 Yahan marginLeft: 'auto' lagaya hai taake ye right side pe chala jaye 👇 */}
+      <button 
+        className="action-btn export-btn" 
+        onClick={onExport || fallbackAction('Export')} 
+        style={{ marginLeft: 'auto' }}
+      >
+        <SvgExport /> Export
       </button>
-
-      {/* 👇 Right Side Export Button (margin-left: auto magic) 👇 */}
-      <button className="action-btn export-btn right-align" onClick={() => console.log("Export clicked")}>
-        <SvgExport />
-        Export
-      </button>
-
     </div>
   );
 }

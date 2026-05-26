@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2'; // 👉 SweetAlert2 import kiya gaya hai
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
 import './Classes.css';
@@ -7,9 +8,16 @@ import './Classes.css';
 const IconSchool = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>;
 const IconInfo = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>;
 const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>;
+const SvgClassTile = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3Z"/><path d="M8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Z"/><path d="M16 14c-2.67 0-5 1.34-5 3v2h10v-2c0-1.66-2.33-3-5-3Z"/><path d="M8 14c-2.67 0-5 1.34-5 3v2h5"/></svg>;
+const SvgMore = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2Zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Z"/></svg>;
 
 // Helper function to safely parse null/undefined
 const val = (v) => (v !== null && v !== undefined) ? v : '';
+const getInitials = (name = '') => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return 'NA';
+  return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
+};
 
 export default function Classes() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,7 +25,6 @@ export default function Classes() {
   const [modalMode, setModalMode] = useState('add');
   const [selectedClassId, setSelectedClassId] = useState(null);
 
-  // 👉 NEW: Checkbox Selection State
   const [selectedRows, setSelectedRows] = useState([]);
 
   // Pagination State
@@ -27,6 +34,7 @@ export default function Classes() {
   // 🗄️ Database States
   const [classesData, setClassesData] = useState([]);
   const [availableSubjects, setAvailableSubjects] = useState([]); 
+  const [availableTeachers, setAvailableTeachers] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
 
   // 📝 Form States
@@ -88,10 +96,56 @@ export default function Classes() {
     } catch (err) { console.error("Failed to fetch available subjects:", err); }
   };
 
+  const fetchAvailableTeachers = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/teachers");
+      const result = await response.json();
+      if (result.success) {
+        const teacherNames = result.data.map(t => `${t.first_name} ${t.last_name}`.trim()).filter(Boolean);
+        setAvailableTeachers([...new Set(teacherNames)]);
+      }
+    } catch (err) { console.error("Failed to fetch available teachers:", err); }
+  };
+
   useEffect(() => {
     fetchClasses();
     fetchAvailableSubjects(); 
+    fetchAvailableTeachers(); 
   }, []);
+
+  // 👉 NEW: Bulk Delete Logic for Classes
+  const handleDelete = async () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({ icon: 'info', title: 'No Selection', text: 'Bhai, pehle delete karne ke liye class select toh karein!', confirmButtonColor: '#2563eb' });
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Selected ${selectedRows.length} class(es) will be deleted permanently!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete selected'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch("http://localhost:5000/api/classes/bulk-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: selectedRows })
+        });
+        const data = await response.json();
+        if (data.success) {
+          Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Classes removed successfully.', timer: 1500, showConfirmButton: false });
+          setSelectedRows([]);
+          fetchClasses();
+        } else { Swal.fire('Error', data.message, 'error'); }
+      } catch (err) { Swal.fire('Error', 'Server connection failed', 'error'); }
+    }
+  };
 
   const openAddModal = () => {
     setModalMode('add');
@@ -172,14 +226,11 @@ export default function Classes() {
   const currentRecords = filteredRecords.slice(firstRecordIndex, lastRecordIndex);
   const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
 
-  // 👉 NEW: Checkbox Handlers
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      // Jab header wala check ho, toh is page par mojood sabhi records ki ID array mein daal do
       const allVisibleIds = currentRecords.map(cls => cls.id);
       setSelectedRows(allVisibleIds);
     } else {
-      // Uncheck karne par array khali kar do
       setSelectedRows([]);
     }
   };
@@ -187,13 +238,61 @@ export default function Classes() {
   const handleSelectRow = (id) => {
     setSelectedRows(prev => 
       prev.includes(id) 
-        ? prev.filter(rowId => rowId !== id) // Agar pehle se select tha, toh remove kar do
-        : [...prev, id] // Agar select nahi tha, toh array mein add kar do
+        ? prev.filter(rowId => rowId !== id)
+        : [...prev, id] 
     );
   };
 
-  // Pata lagane ke liye ke kya saare current records selected hain
   const isAllSelected = currentRecords.length > 0 && currentRecords.every(cls => selectedRows.includes(cls.id));
+
+  // 👉 EXPORT TO EXCEL/CSV LOGIC (WITH SWEET ALERT)
+  const handleExport = () => {
+    if (selectedRows.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Selection',
+        text: 'Please select at least one class from the checkboxes to export.',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
+
+    // Filter only selected classes
+    const selectedData = classesData.filter(record => selectedRows.includes(record.id));
+
+    // Create CSV Headers
+    const headers = ["Class ID", "Grade", "Section", "Class Teacher", "Students Capacity", "Attendance %", "Avg Grade", "Subjects Count", "Status"];
+    
+    // Create CSV Rows Data
+    const csvRows = selectedData.map(record => {
+      return [
+        record.id,
+        `"${record.grade}"`,
+        `"${record.section}"`,
+        `"${record.teacher || 'Not Assigned'}"`,
+        `"${record.students}"`,
+        `"${record.attendance}%"`,
+        `"${record.avgGrade}"`,
+        `"${record.subjects}"`,
+        `"${record.status}"`
+      ].join(',');
+    });
+
+    // Combine Headers and Rows
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+
+    // Create a Blob and trigger Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Classes_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <DashboardLayout userRole="admin" currentPath="/classes" userName="System Admin" userInitials="SA">
@@ -208,7 +307,18 @@ export default function Classes() {
         </div>
       </div>
 
-      <Header />
+      {/* 👉 HEADER UPDATED WITH ONDELETE PROP */}
+      <Header
+        onExport={handleExport}
+        onRefresh={fetchClasses}
+        onDelete={handleDelete}
+        onEdit={() => {
+          const selectedRecord = classesData.find(record => record.id === selectedRows[0]);
+          selectedRows.length === 1 && selectedRecord
+            ? openEditModal(selectedRecord)
+            : Swal.fire('Select one class', 'Choose exactly one class checkbox, then click Edit.', 'info');
+        }}
+      />
 
       <div className="cl-table-card">
         
@@ -220,7 +330,10 @@ export default function Classes() {
               type="text" 
               placeholder="Search by class name, teacher..." 
               value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setSelectedRows([]); // Reset on search
+              }} 
             />
           </div>
           <div className="cl-filter-group">
@@ -235,24 +348,23 @@ export default function Classes() {
           <table className="cl-list-table">
             <thead>
               <tr>
-                {/* 👉 Header Checkbox */}
-                <th>
+                <th style={{ width: '40px' }}>
                   <input 
                     type="checkbox" 
                     checked={isAllSelected}
                     onChange={handleSelectAll} 
                   />
                 </th>
-                <th>Class</th>
-                <th>Grade</th>
-                <th>Section</th>
-                <th>Class teacher</th>
-                <th>Students</th>
-                <th>Attendance</th>
-                <th>Avg grade</th>
-                <th>Subjects</th>
-                <th>Status</th>
-                <th></th>
+                <th>Class <span className="cl-sort">↕</span></th>
+                <th>Grade <span className="cl-sort">↕</span></th>
+                <th>Section <span className="cl-sort">↕</span></th>
+                <th>Class teacher <span className="cl-sort">↕</span></th>
+                <th>Students <span className="cl-sort">↕</span></th>
+                <th>Attendance <span className="cl-sort">↕</span></th>
+                <th>Avg grade <span className="cl-sort">↕</span></th>
+                <th>Subjects <span className="cl-sort">↕</span></th>
+                <th>Status <span className="cl-sort">↕</span></th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -264,7 +376,6 @@ export default function Classes() {
                 currentRecords.map((cls) => {
                   return (
                     <tr key={cls.id} className={selectedRows.includes(cls.id) ? 'selected-row' : ''}>
-                      {/* 👉 Row Checkbox */}
                       <td>
                         <input 
                           type="checkbox" 
@@ -273,26 +384,30 @@ export default function Classes() {
                         />
                       </td>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div className="cl-class-cell">
+                          <span className={`cl-class-icon color-${cls.id % 4}`}>
+                            <SvgClassTile />
+                          </span>
                           <div>
-                            <div style={{ fontWeight: 600, color: '#0f172a' }}>{cls.grade} — Section {cls.section}</div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>Room - {cls.rawData.academic_year || '2025-26'}</div>
+                            <div className="cl-class-title">{cls.grade} - Section {cls.section}</div>
+                            <div className="cl-class-sub">Room {cls.rawData.room_number || '-'} • {cls.rawData.academic_year || '2025 - 2026'}</div>
                           </div>
                         </div>
                       </td>
                       <td>{cls.grade}</td>
                       <td>{cls.section}</td>
                       <td>
-                        <div style={{ fontWeight: 500, color: '#334155' }}>
-                          {cls.teacher || 'Not Assigned'}
+                        <div className="cl-teacher-cell">
+                          <span className={`cl-teacher-avatar color-${cls.id % 5}`}>{getInitials(cls.teacher || 'Not Assigned')}</span>
+                          <span>{cls.teacher || 'Not Assigned'}</span>
                         </div>
                       </td>
                       <td>
                         <div className="cl-progress-cell">
                           <div className="cl-progress-bar">
-                            <div className="cl-progress-fill blue" style={{ width: `${(cls.students / 40) * 100}%` }}></div>
+                            <div className="cl-progress-fill blue" style={{ width: `${Math.min(((cls.students || 0) / 40) * 100, 100)}%` }}></div>
                           </div>
-                          <span style={{ fontSize: '11px', fontWeight: 600 }}>{cls.students || 0}/40</span>
+                          <span className="cl-progress-text">{cls.students || 0}/40</span>
                         </div>
                       </td>
                       <td>
@@ -300,13 +415,18 @@ export default function Classes() {
                           <div className="cl-progress-bar">
                             <div className={`cl-progress-fill ${cls.attendance > 90 ? 'green' : 'red'}`} style={{ width: `${cls.attendance}%` }}></div>
                           </div>
-                          <span style={{ fontSize: '11px', fontWeight: 600 }}>{cls.attendance}%</span>
+                          <span className="cl-progress-text">{cls.attendance}%</span>
                         </div>
                       </td>
-                      <td style={{ fontWeight: 600 }}>{cls.avgGrade}</td>
+                      <td className="cl-grade-cell">{cls.avgGrade}</td>
                       <td>{cls.subjects}</td>
                       <td><span className={`cl-status-pill ${cls.statusClass}`}>{cls.status}</span></td>
-                      <td><button className="cl-btn-view" onClick={() => openEditModal(cls)}>View / Edit</button></td>
+                      <td>
+                        <div className="cl-actions-cell">
+                          <button className="cl-btn-view" onClick={() => openEditModal(cls)}>View / Edit</button>
+                          <button className="cl-more-btn" type="button" aria-label="More class actions" onClick={() => Swal.fire(`${cls.grade} - Section ${cls.section}`, `Teacher: ${cls.teacher || 'Not Assigned'}\nSubjects: ${cls.subjects}\nCapacity: ${cls.students || 0}`, 'info')}><SvgMore /></button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
@@ -332,7 +452,7 @@ export default function Classes() {
       </div>
 
       {/* ======================================= */}
-      {/* MODAL (Untouched and exactly same as before) */}
+      {/* MODAL */}
       {/* ======================================= */}
       {isModalOpen && (
         <div className="cl-modal-overlay">
@@ -399,22 +519,33 @@ export default function Classes() {
               <div style={{ marginTop: '24px' }}>
                 <div className="cl-section-title">Teacher Assignment</div>
                 <div className="cl-form-row-2">
+                  
+                  {/* 👉 DYNAMIC CLASS TEACHER */}
                   <div className="cl-form-group">
                     <label>Class / homeroom teacher <span>*</span></label>
                     <select name="teacher" value={formData.teacher} onChange={handleInputChange} className="cl-input">
                       <option value="">Select teacher</option>
-                      <option value="Ms. Fatima Noor">Ms. Fatima Noor</option>
-                      <option value="Mr. Ahmed Raza">Mr. Ahmed Raza</option>
-                      <option value="Ms. Hira Khan">Ms. Hira Khan</option>
+                      {availableTeachers.length > 0 ? (
+                        availableTeachers.map((tName, i) => (
+                          <option key={i} value={tName}>{tName}</option>
+                        ))
+                      ) : (
+                        <option disabled>No teachers found in DB</option>
+                      )}
                     </select>
                   </div>
+
+                  {/* 👉 DYNAMIC CO-TEACHER */}
                   <div className="cl-form-group">
                     <label>Co-teacher (optional)</label>
                     <select name="coTeacher" value={formData.coTeacher} onChange={handleInputChange} className="cl-input">
                       <option value="None">None</option>
-                      <option value="Ms. Sana">Ms. Sana</option>
+                      {availableTeachers.map((tName, i) => (
+                        <option key={i} value={tName}>{tName}</option>
+                      ))}
                     </select>
                   </div>
+
                 </div>
               </div>
 
