@@ -9,6 +9,9 @@ const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M1
 const SvgFilter = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>;
 const SvgColumns = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M9 5v14M15 5v14"/></svg>;
 const SvgMore = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>;
+const SvgEye = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>;
+const SvgEyeOff = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="m3 3 18 18"/><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"/><path d="M9.9 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.1 6.8C3.5 8.7 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.2-1"/></svg>;
+const SvgGrip = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M9 5.5A1.5 1.5 0 1 1 6 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9-13A1.5 1.5 0 1 1 15 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>;
 const IconStudent = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>;
 const IconUser = () => <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>;
 const IconFolder = () => <svg width="24" height="24" fill="#fbbf24" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>;
@@ -65,6 +68,10 @@ export default function Students() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+  const [columnSearchTerm, setColumnSearchTerm] = useState('');
+  const [draftColumns, setDraftColumns] = useState([]);
+  const [draggedColumnKey, setDraggedColumnKey] = useState(null);
+  const [dragOverColumnKey, setDragOverColumnKey] = useState(null);
   const [modalMode, setModalMode] = useState('add');
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
@@ -401,6 +408,69 @@ export default function Students() {
 
   const resetColumns = () => setColumns(buildDefaultStudentColumns());
 
+  const openColumnModal = () => {
+    setDraftColumns([...columns].sort((a, b) => a.order - b.order));
+    setColumnSearchTerm('');
+    setIsColumnModalOpen(true);
+  };
+
+  const closeColumnModal = () => {
+    setIsColumnModalOpen(false);
+    setColumnSearchTerm('');
+    setDraftColumns([]);
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const applyColumnChanges = () => {
+    setColumns(draftColumns.map((column, order) => ({ ...column, order })));
+    closeColumnModal();
+  };
+
+  const sortDraftVisibleFirst = () => {
+    setDraftColumns((prev) => [...prev]
+      .sort((a, b) => Number(b.visible) - Number(a.visible) || a.order - b.order)
+      .map((column, order) => ({ ...column, order })));
+  };
+
+  const handleDraftColumnToggle = (key) => {
+    setDraftColumns((prev) => prev.map((column) => column.key === key ? { ...column, visible: !column.visible } : column));
+  };
+
+  const moveDraftColumnTo = (sourceKey, targetKey) => {
+    setDraftColumns((prev) => {
+      const sourceIndex = prev.findIndex((column) => column.key === sourceKey);
+      const targetIndex = prev.findIndex((column) => column.key === targetKey);
+      if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return prev;
+      const reordered = [...prev];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      return reordered.map((column, order) => ({ ...column, order }));
+    });
+  };
+
+  const handleDraftColumnDragStart = (e, key) => {
+    e.dataTransfer.setData('text/plain', key);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedColumnKey(key);
+  };
+
+  const handleDraftColumnDrop = (e, targetKey) => {
+    e.preventDefault();
+    moveDraftColumnTo(e.dataTransfer.getData('text/plain'), targetKey);
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const handleDraftColumnDragEnd = () => {
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const modalColumns = (draftColumns.length ? draftColumns : orderedColumns)
+    .filter((column) => column.label.toLowerCase().includes(columnSearchTerm.toLowerCase().trim()));
+  const draftVisibleCount = (draftColumns.length ? draftColumns : orderedColumns).filter((column) => column.visible).length;
+
   const filteredRecords = studentsData.filter(record => {
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
@@ -508,7 +578,7 @@ export default function Students() {
             <input type="text" placeholder="Search by name, roll no..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
           <div className="st-view-tools">
-            <button className="st-configure-btn" type="button" onClick={() => setIsColumnModalOpen(true)}>
+            <button className="st-configure-btn" type="button" onClick={openColumnModal}>
               <SvgColumns />
               Configure columns
             </button>
@@ -578,6 +648,54 @@ export default function Students() {
       </div>
 
       {isColumnModalOpen && (
+        <div className="st-column-overlay">
+          <div className="st-column-modal">
+            <div className="st-column-header">
+              <div>
+                <h2>Configure View</h2>
+                <p>Choose which columns appear in the student list.</p>
+              </div>
+              <button className="st-column-close" type="button" onClick={closeColumnModal} aria-label="Close configure view">x</button>
+            </div>
+            <div className="st-column-search">
+              <SvgSearch />
+              <input type="text" placeholder="Search columns..." value={columnSearchTerm} onChange={(e) => setColumnSearchTerm(e.target.value)} />
+            </div>
+            <div className="st-column-list-header">
+              <span>Columns</span>
+              <button type="button" onClick={sortDraftVisibleFirst}>Visible first ({draftVisibleCount})</button>
+            </div>
+            <div className="st-column-list">
+              {modalColumns.map((column) => (
+                <div
+                  className={`st-column-row ${draggedColumnKey === column.key ? 'is-dragging' : ''} ${dragOverColumnKey === column.key && draggedColumnKey !== column.key ? 'is-drag-over' : ''}`}
+                  key={column.key}
+                  draggable
+                  onDragStart={(e) => handleDraftColumnDragStart(e, column.key)}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverColumnKey(column.key); }}
+                  onDragLeave={() => setDragOverColumnKey((current) => current === column.key ? null : current)}
+                  onDrop={(e) => handleDraftColumnDrop(e, column.key)}
+                  onDragEnd={handleDraftColumnDragEnd}
+                >
+                  <button className={`st-column-visibility ${column.visible ? 'visible' : 'hidden'}`} type="button" onClick={() => handleDraftColumnToggle(column.key)} aria-label={`${column.visible ? 'Hide' : 'Show'} ${column.label}`}>
+                    {column.visible ? <SvgEye /> : <SvgEyeOff />}
+                  </button>
+                  <span className="st-column-row-label">{column.label}</span>
+                  <button className="st-column-grip" type="button" draggable onDragStart={(e) => handleDraftColumnDragStart(e, column.key)} onDragEnd={handleDraftColumnDragEnd} aria-label={`Drag ${column.label}`}>
+                    <SvgGrip />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="st-column-footer">
+              <button className="st-column-cancel" type="button" onClick={closeColumnModal}>Cancel</button>
+              <button className="st-column-apply" type="button" onClick={applyColumnChanges}>Apply Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {false && isColumnModalOpen && (
         <div className="st-column-overlay">
           <div className="st-column-modal">
             <div className="st-column-header">

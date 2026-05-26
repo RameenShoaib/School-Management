@@ -15,6 +15,11 @@ const SvgLanguage = () => <svg fill="none" stroke="currentColor" strokeWidth="2"
 const SvgUrdu = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16.7 6.5c.9 0 1.6.7 1.6 1.6 0 2.9-2.3 5.3-5.2 5.3H11c-.6 0-1 .4-1 1s.4 1 1 1h6.6v2H11c-1.7 0-3-1.3-3-3s1.3-3 3-3h2.1c1.8 0 3.2-1.5 3.2-3.3 0-.1-.1-.1-.1-.1h-1.7v-2h2.2ZM7.2 17.6c-.7 0-1.2-.5-1.2-1.2s.5-1.2 1.2-1.2 1.2.5 1.2 1.2-.5 1.2-1.2 1.2Z"/></svg>;
 const SvgChart = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 19V9M12 19V5M19 19v-7"/></svg>;
 const SvgMore = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2Zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Z"/></svg>;
+const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"/></svg>;
+const SvgColumns = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M9 5v14M15 5v14"/></svg>;
+const SvgEye = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>;
+const SvgEyeOff = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="m3 3 18 18"/><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"/><path d="M9.9 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.1 6.8C3.5 8.7 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.2-1"/></svg>;
+const SvgGrip = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M9 5.5A1.5 1.5 0 1 1 6 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9-13A1.5 1.5 0 1 1 15 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>;
 
 const getSubjectIcon = (name = '') => {
   const lower = name.toLowerCase();
@@ -24,13 +29,59 @@ const getSubjectIcon = (name = '') => {
   return <SvgBookOpen />;
 };
 
+const SUBJECT_VIEW_STORAGE_KEY = 'edusync.admin.subjects.columnView.v1';
+const subjectColumnDefinitions = [
+  { key: 'subjectName', label: 'Subject', defaultWidth: 250, visible: true },
+  { key: 'type', label: 'Type', defaultWidth: 130, visible: true },
+  { key: 'teachers', label: 'Teachers', defaultWidth: 130, visible: true },
+  { key: 'classes', label: 'Classes', defaultWidth: 130, visible: true },
+  { key: 'avgScore', label: 'Avg Score', defaultWidth: 140, visible: true },
+  { key: 'gradeLevel', label: 'Grade Level', defaultWidth: 160, visible: false },
+  { key: 'subjectCode', label: 'Subject Code', defaultWidth: 160, visible: false },
+  { key: 'weeklyPeriods', label: 'Weekly Periods', defaultWidth: 170, visible: false },
+  { key: 'creditHours', label: 'Credit Hours', defaultWidth: 150, visible: false },
+  { key: 'lab', label: 'Lab', defaultWidth: 110, visible: false }
+];
+
+const buildDefaultSubjectColumns = () => subjectColumnDefinitions.map((column, index) => ({
+  ...column,
+  width: column.defaultWidth,
+  order: index
+}));
+
 export default function Subjects() {
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjectsData, setSubjectsData] = useState([]);
   const [availableGrades, setAvailableGrades] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modalMode, setModalMode] = useState('add');
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
+  const [columns, setColumns] = useState(() => {
+    const defaults = buildDefaultSubjectColumns();
+    try {
+      const saved = JSON.parse(localStorage.getItem(SUBJECT_VIEW_STORAGE_KEY));
+      if (!Array.isArray(saved)) return defaults;
+      return defaults.map((column) => {
+        const savedColumn = saved.find((item) => item.key === column.key);
+        return savedColumn
+          ? {
+              ...column,
+              visible: savedColumn.visible !== false,
+              width: Number(savedColumn.width) || column.defaultWidth,
+              order: Number.isFinite(savedColumn.order) ? savedColumn.order : column.order
+            }
+          : column;
+      });
+    } catch {
+      return defaults;
+    }
+  });
+  const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+  const [columnSearchTerm, setColumnSearchTerm] = useState('');
+  const [draftColumns, setDraftColumns] = useState([]);
+  const [draggedColumnKey, setDraggedColumnKey] = useState(null);
+  const [dragOverColumnKey, setDragOverColumnKey] = useState(null);
 
   // 👉 NEW: Checkbox Selection State
   const [selectedRows, setSelectedRows] = useState([]);
@@ -70,6 +121,11 @@ export default function Subjects() {
     fetchSubjects();
     fetchClasses();
   }, []);
+
+  useEffect(() => {
+    const compactColumns = columns.map(({ key, visible, width, order }) => ({ key, visible, width, order }));
+    localStorage.setItem(SUBJECT_VIEW_STORAGE_KEY, JSON.stringify(compactColumns));
+  }, [columns]);
 
   // 👉 NEW: Bulk Delete Logic for Subjects
   const handleDelete = async () => {
@@ -173,9 +229,165 @@ export default function Subjects() {
   };
 
   // 👉 Checkbox Handlers
+  const orderedColumns = [...columns].sort((a, b) => a.order - b.order);
+  const visibleColumns = orderedColumns.filter((column) => column.visible);
+
+  const getColumnValue = (subject, key) => ({
+    subjectName: subject.subject_name,
+    type: subject.subject_category,
+    teachers: subject.teacher_name ? 1 : 0,
+    classes: subject.weekly_periods,
+    avgScore: '--',
+    gradeLevel: subject.grade_level,
+    subjectCode: subject.subject_code,
+    weeklyPeriods: subject.weekly_periods,
+    creditHours: subject.credit_hours,
+    lab: subject.has_lab ? 'Yes' : 'No'
+  }[key] ?? '');
+
+  const renderColumnValue = (subject, column) => {
+    if (column.key === 'subjectName') {
+      return (
+        <div className="sbj-subject-cell">
+          <span className={`sbj-subject-icon color-${subject.subject_id % 4}`}>
+            {getSubjectIcon(subject.subject_name)}
+          </span>
+          <span className="sbj-subject-name">{subject.subject_name}</span>
+        </div>
+      );
+    }
+
+    if (column.key === 'type') {
+      const category = subject.subject_category || 'Core';
+      return <span className={`sbj-pill ${category.toLowerCase()}`}>{category}</span>;
+    }
+
+    return getColumnValue(subject, column.key) || '-';
+  };
+
+  const handleColumnToggle = (key) => {
+    setColumns((prev) => prev.map((column) => column.key === key ? { ...column, visible: !column.visible } : column));
+  };
+
+  const handleColumnWidthChange = (key, width) => {
+    const numericWidth = Math.max(100, Math.min(Number(width) || 100, 440));
+    setColumns((prev) => prev.map((column) => column.key === key ? { ...column, width: numericWidth } : column));
+  };
+
+  const moveColumnTo = (sourceKey, targetKey) => {
+    setColumns((prev) => {
+      const sorted = [...prev].sort((a, b) => a.order - b.order);
+      const sourceIndex = sorted.findIndex((column) => column.key === sourceKey);
+      const targetIndex = sorted.findIndex((column) => column.key === targetKey);
+      if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return prev;
+      const reordered = [...sorted];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      return reordered.map((column, order) => ({ ...column, order }));
+    });
+  };
+
+  const handleColumnDragStart = (e, key) => {
+    e.dataTransfer.setData('text/plain', key);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleColumnDrop = (e, targetKey) => {
+    e.preventDefault();
+    moveColumnTo(e.dataTransfer.getData('text/plain'), targetKey);
+  };
+
+  const startColumnResize = (e, key) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = columns.find((column) => column.key === key)?.width || 140;
+    const handleMouseMove = (moveEvent) => handleColumnWidthChange(key, startWidth + moveEvent.clientX - startX);
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.classList.remove('sbj-resizing-columns');
+    };
+    document.body.classList.add('sbj-resizing-columns');
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const resetColumns = () => setColumns(buildDefaultSubjectColumns());
+
+  const openColumnModal = () => {
+    setDraftColumns([...columns].sort((a, b) => a.order - b.order));
+    setColumnSearchTerm('');
+    setIsColumnModalOpen(true);
+  };
+
+  const closeColumnModal = () => {
+    setIsColumnModalOpen(false);
+    setColumnSearchTerm('');
+    setDraftColumns([]);
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const applyColumnChanges = () => {
+    setColumns(draftColumns.map((column, order) => ({ ...column, order })));
+    closeColumnModal();
+  };
+
+  const sortDraftVisibleFirst = () => {
+    setDraftColumns((prev) => [...prev]
+      .sort((a, b) => Number(b.visible) - Number(a.visible) || a.order - b.order)
+      .map((column, order) => ({ ...column, order })));
+  };
+
+  const handleDraftColumnToggle = (key) => {
+    setDraftColumns((prev) => prev.map((column) => (
+      column.key === key ? { ...column, visible: !column.visible } : column
+    )));
+  };
+
+  const moveDraftColumnTo = (sourceKey, targetKey) => {
+    setDraftColumns((prev) => {
+      const sourceIndex = prev.findIndex((column) => column.key === sourceKey);
+      const targetIndex = prev.findIndex((column) => column.key === targetKey);
+      if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return prev;
+      const reordered = [...prev];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      return reordered.map((column, order) => ({ ...column, order }));
+    });
+  };
+
+  const handleDraftColumnDragStart = (e, key) => {
+    e.dataTransfer.setData('text/plain', key);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedColumnKey(key);
+  };
+
+  const handleDraftColumnDrop = (e, targetKey) => {
+    e.preventDefault();
+    moveDraftColumnTo(e.dataTransfer.getData('text/plain'), targetKey);
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const handleDraftColumnDragEnd = () => {
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const modalColumns = (draftColumns.length ? draftColumns : orderedColumns)
+    .filter((column) => column.label.toLowerCase().includes(columnSearchTerm.toLowerCase().trim()));
+  const draftVisibleCount = (draftColumns.length ? draftColumns : orderedColumns).filter((column) => column.visible).length;
+
+  const filteredSubjects = subjectsData.filter((subject) => {
+    const search = searchTerm.toLowerCase().trim();
+    return !search || visibleColumns.some((column) => String(getColumnValue(subject, column.key)).toLowerCase().includes(search));
+  });
+
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const allIds = subjectsData.map(sub => sub.subject_id);
+      const allIds = filteredSubjects.map(sub => sub.subject_id);
       setSelectedRows(allIds);
     } else {
       setSelectedRows([]);
@@ -190,7 +402,7 @@ export default function Subjects() {
     );
   };
 
-  const isAllSelected = subjectsData.length > 0 && subjectsData.every(sub => selectedRows.includes(sub.subject_id));
+  const isAllSelected = filteredSubjects.length > 0 && filteredSubjects.every(sub => selectedRows.includes(sub.subject_id));
 
   // 👉 EXPORT TO EXCEL/CSV LOGIC (WITH SWEET ALERT)
   const handleExport = () => {
@@ -265,47 +477,89 @@ export default function Subjects() {
       />
 
       <div className="sbj-scroll-wrapper">
-        <div className="sbj-stats-row">
-          <div className="sbj-stat-card purple">
-            <div className="sbj-stat-icon"><SvgClipboard /></div>
-            <div className="sbj-stat-copy">
-              <span className="sbj-stat-title">Total subjects</span>
-              <span className="sbj-stat-value">{subjectsData.length}</span>
-              <span className="sbj-stat-sub neutral">Core + elective</span>
-            </div>
-          </div>
-          <div className="sbj-stat-card blue">
-            <div className="sbj-stat-icon"><SvgBookOpen /></div>
-            <div className="sbj-stat-copy">
-              <span className="sbj-stat-title">Core subjects</span>
-              <span className="sbj-stat-value">{subjectsData.filter(s => s.subject_category === 'Core').length}</span>
-              <span className="sbj-stat-sub blue">Mandatory</span>
-            </div>
-          </div>
-          <div className="sbj-stat-card green">
-            <div className="sbj-stat-icon"><SvgCap /></div>
-            <div className="sbj-stat-copy">
-              <span className="sbj-stat-title">Electives</span>
-              <span className="sbj-stat-value">{subjectsData.filter(s => s.subject_category === 'Elective').length}</span>
-              <span className="sbj-stat-sub green">Optional</span>
-            </div>
-          </div>
-          <div className="sbj-stat-card orange">
-            <div className="sbj-stat-icon"><SvgFolder /></div>
-            <div className="sbj-stat-copy">
-              <span className="sbj-stat-title">Unassigned</span>
-              <span className="sbj-stat-value">0</span>
-              <span className="sbj-stat-sub green">All covered</span>
-            </div>
-          </div>
-        </div>
-
         <div className="sbj-main-grid">
           <div className="sbj-card">
             <div className="sbj-card-heading">
               <span className="sbj-card-heading-icon"><SvgBookOpen /></span>
               <h3 className="sbj-card-title">Subjects overview</h3>
             </div>
+            <div className="sbj-table-toolbar">
+              <div className="sbj-search-box">
+                <SvgSearch />
+                <input
+                  type="text"
+                  placeholder="Search visible columns..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setSelectedRows([]);
+                  }}
+                />
+              </div>
+              <button className="sbj-configure-btn" type="button" onClick={openColumnModal}>
+                <SvgColumns />
+                Configure columns
+              </button>
+            </div>
+            <div className="sbj-table-scroll">
+              <table className="sbj-table" style={{ minWidth: `${visibleColumns.reduce((total, column) => total + column.width, 220) + 110}px` }}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '40px' }}>
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={handleSelectAll}
+                      />
+                    </th>
+                    {visibleColumns.map((column) => (
+                      <th
+                        key={column.key}
+                        className="sbj-configurable-th"
+                        draggable
+                        onDragStart={(e) => handleColumnDragStart(e, column.key)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => handleColumnDrop(e, column.key)}
+                        style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
+                      >
+                        <span className="sbj-column-label">{column.label}</span>
+                        <span className="sbj-column-drag-hint">Drag</span>
+                        <span className="sbj-resize-handle" onMouseDown={(e) => startColumnResize(e, column.key)} />
+                      </th>
+                    ))}
+                    <th style={{ width: '70px', minWidth: '70px' }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr><td colSpan={visibleColumns.length + 2} style={{textAlign: 'center', padding: '20px', color: '#94a3b8'}}>Loading records...</td></tr>
+                  ) : filteredSubjects.length === 0 ? (
+                    <tr><td colSpan={visibleColumns.length + 2} style={{textAlign: 'center', padding: '20px', color: '#94a3b8'}}>No subjects found.</td></tr>
+                  ) : (
+                    filteredSubjects.map((sub) => (
+                      <tr key={sub.subject_id} className={selectedRows.includes(sub.subject_id) ? 'selected-row' : ''}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={selectedRows.includes(sub.subject_id)}
+                            onChange={() => handleSelectRow(sub.subject_id)}
+                          />
+                        </td>
+                        {visibleColumns.map((column) => (
+                          <td key={column.key} style={{ width: `${column.width}px`, minWidth: `${column.width}px`, maxWidth: `${column.width}px` }}>
+                            <div className="sbj-cell-content">{renderColumnValue(sub, column)}</div>
+                          </td>
+                        ))}
+                        <td>
+                          <button className="sbj-more-btn" type="button" aria-label="More subject actions" onClick={() => Swal.fire(sub.subject_name, `Type: ${sub.subject_category}\nGrade: ${sub.grade_level || '-'}\nWeekly periods: ${sub.weekly_periods || '-'}`, 'info')}><SvgMore /></button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {false && (
             <table className="sbj-table">
               <thead>
                 <tr>
@@ -363,27 +617,79 @@ export default function Subjects() {
                 )}
               </tbody>
             </table>
+            )}
           </div>
 
-          <div className="sbj-right-col">
-            <div className="sbj-card">
-              <div className="sbj-card-heading">
-                <span className="sbj-card-heading-icon"><SvgChart /></span>
-                <h3 className="sbj-card-title">Average score by subject</h3>
+        </div>
+      </div>
+
+      {isColumnModalOpen && (
+        <div className="sbj-column-overlay">
+          <div className="sbj-column-modal">
+            <div className="sbj-column-header">
+              <div>
+                <h2>Configure View</h2>
+                <p>Choose which columns appear in the subjects list.</p>
               </div>
-              <div className="sbj-score-box">
-                <div className="sbj-score-title">Maths</div>
-                <div className="sbj-score-row">
-                  <div className="sbj-bar-track">
-                    <div className="sbj-bar-fill blue" style={{width: '76%'}}></div>
-                  </div>
-                  <span className="sbj-bar-val">76%</span>
+              <button className="sbj-column-close" type="button" onClick={closeColumnModal} aria-label="Close configure view">x</button>
+            </div>
+            <div className="sbj-column-search">
+              <SvgSearch />
+              <input
+                type="text"
+                placeholder="Search columns..."
+                value={columnSearchTerm}
+                onChange={(e) => setColumnSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="sbj-column-list-header">
+              <span>Columns</span>
+              <button type="button" onClick={sortDraftVisibleFirst}>Visible first ({draftVisibleCount})</button>
+            </div>
+            <div className="sbj-column-list">
+              {modalColumns.map((column) => (
+                <div
+                  className={`sbj-column-row ${draggedColumnKey === column.key ? 'is-dragging' : ''} ${dragOverColumnKey === column.key && draggedColumnKey !== column.key ? 'is-drag-over' : ''}`}
+                  key={column.key}
+                  draggable
+                  onDragStart={(e) => handleDraftColumnDragStart(e, column.key)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverColumnKey(column.key);
+                  }}
+                  onDragLeave={() => setDragOverColumnKey((current) => current === column.key ? null : current)}
+                  onDrop={(e) => handleDraftColumnDrop(e, column.key)}
+                  onDragEnd={handleDraftColumnDragEnd}
+                >
+                  <button
+                    className={`sbj-column-visibility ${column.visible ? 'visible' : 'hidden'}`}
+                    type="button"
+                    onClick={() => handleDraftColumnToggle(column.key)}
+                    aria-label={`${column.visible ? 'Hide' : 'Show'} ${column.label}`}
+                  >
+                    {column.visible ? <SvgEye /> : <SvgEyeOff />}
+                  </button>
+                  <span className="sbj-column-row-label">{column.label}</span>
+                  <button
+                    className="sbj-column-grip"
+                    type="button"
+                    draggable
+                    onDragStart={(e) => handleDraftColumnDragStart(e, column.key)}
+                    onDragEnd={handleDraftColumnDragEnd}
+                    aria-label={`Drag ${column.label}`}
+                  >
+                    <SvgGrip />
+                  </button>
                 </div>
-              </div>
+              ))}
+            </div>
+            <div className="sbj-column-footer">
+              <button className="sbj-column-cancel" type="button" onClick={closeColumnModal}>Cancel</button>
+              <button className="sbj-column-apply" type="button" onClick={applyColumnChanges}>Apply Changes</button>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {isModalOpen && (
         <div className="sbj-modal-overlay">
