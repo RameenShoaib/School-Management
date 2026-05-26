@@ -8,8 +8,12 @@ import './Classes.css';
 const IconSchool = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>;
 const IconInfo = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>;
 const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>;
+const SvgColumns = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M9 5v14M15 5v14"/></svg>;
 const SvgClassTile = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3Z"/><path d="M8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Z"/><path d="M16 14c-2.67 0-5 1.34-5 3v2h10v-2c0-1.66-2.33-3-5-3Z"/><path d="M8 14c-2.67 0-5 1.34-5 3v2h5"/></svg>;
 const SvgMore = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2Zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Z"/></svg>;
+const SvgEye = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>;
+const SvgEyeOff = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="m3 3 18 18"/><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"/><path d="M9.9 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.1 6.8C3.5 8.7 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.2-1"/></svg>;
+const SvgGrip = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M9 5.5A1.5 1.5 0 1 1 6 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9-13A1.5 1.5 0 1 1 15 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>;
 
 // Helper function to safely parse null/undefined
 const val = (v) => (v !== null && v !== undefined) ? v : '';
@@ -18,6 +22,27 @@ const getInitials = (name = '') => {
   if (!parts.length) return 'NA';
   return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
 };
+
+const CLASS_VIEW_STORAGE_KEY = 'edusync.admin.classes.columnView.v1';
+const classColumnDefinitions = [
+  { key: 'className', label: 'Class', defaultWidth: 260, visible: true },
+  { key: 'grade', label: 'Grade', defaultWidth: 120, visible: true },
+  { key: 'section', label: 'Section', defaultWidth: 120, visible: true },
+  { key: 'teacher', label: 'Class Teacher', defaultWidth: 220, visible: true },
+  { key: 'students', label: 'Students', defaultWidth: 160, visible: true },
+  { key: 'attendance', label: 'Attendance', defaultWidth: 170, visible: true },
+  { key: 'avgGrade', label: 'Avg Grade', defaultWidth: 130, visible: true },
+  { key: 'subjects', label: 'Subjects', defaultWidth: 130, visible: true },
+  { key: 'status', label: 'Status', defaultWidth: 150, visible: true },
+  { key: 'room', label: 'Room', defaultWidth: 130, visible: false },
+  { key: 'academicYear', label: 'Academic Year', defaultWidth: 170, visible: false }
+];
+
+const buildDefaultClassColumns = () => classColumnDefinitions.map((column, index) => ({
+  ...column,
+  width: column.defaultWidth,
+  order: index
+}));
 
 export default function Classes() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +55,31 @@ export default function Classes() {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 7; 
+  const [columns, setColumns] = useState(() => {
+    const defaults = buildDefaultClassColumns();
+    try {
+      const saved = JSON.parse(localStorage.getItem(CLASS_VIEW_STORAGE_KEY));
+      if (!Array.isArray(saved)) return defaults;
+      return defaults.map((column) => {
+        const savedColumn = saved.find((item) => item.key === column.key);
+        return savedColumn
+          ? {
+              ...column,
+              visible: savedColumn.visible !== false,
+              width: Number(savedColumn.width) || column.defaultWidth,
+              order: Number.isFinite(savedColumn.order) ? savedColumn.order : column.order
+            }
+          : column;
+      });
+    } catch {
+      return defaults;
+    }
+  });
+  const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+  const [columnSearchTerm, setColumnSearchTerm] = useState('');
+  const [draftColumns, setDraftColumns] = useState([]);
+  const [draggedColumnKey, setDraggedColumnKey] = useState(null);
+  const [dragOverColumnKey, setDragOverColumnKey] = useState(null);
 
   // 🗄️ Database States
   const [classesData, setClassesData] = useState([]);
@@ -67,6 +117,7 @@ export default function Classes() {
 
           return {
             id: cls.class_id,
+            className: `${cls.grade} - Section ${cls.section}`,
             grade: cls.grade,
             section: cls.section,
             teacher: cls.teacher_name,
@@ -76,6 +127,8 @@ export default function Classes() {
             avgGrade: ["A", "A-", "B+", "B", "B-"][Math.floor(Math.random() * 5)], 
             status: subCount > 0 ? "ACTIVE" : "SUB ASSIGNED",
             statusClass: subCount > 0 ? "cl-status-active" : "cl-status-sub",
+            room: cls.room_number || '-',
+            academicYear: cls.academic_year || '2025 - 2026',
             rawData: cls 
           };
         });
@@ -112,6 +165,11 @@ export default function Classes() {
     fetchAvailableSubjects(); 
     fetchAvailableTeachers(); 
   }, []);
+
+  useEffect(() => {
+    const compactColumns = columns.map(({ key, visible, width, order }) => ({ key, visible, width, order }));
+    localStorage.setItem(CLASS_VIEW_STORAGE_KEY, JSON.stringify(compactColumns));
+  }, [columns]);
 
   // 👉 NEW: Bulk Delete Logic for Classes
   const handleDelete = async () => {
@@ -215,11 +273,192 @@ export default function Classes() {
     finally { setIsSubmitting(false); }
   };
 
+  const orderedColumns = [...columns].sort((a, b) => a.order - b.order);
+  const visibleColumns = orderedColumns.filter((column) => column.visible);
+
+  const getColumnValue = (cls, key) => ({
+    className: cls.className,
+    grade: cls.grade,
+    section: cls.section,
+    teacher: cls.teacher || 'Not Assigned',
+    students: `${cls.students || 0}/40`,
+    attendance: `${cls.attendance}%`,
+    avgGrade: cls.avgGrade,
+    subjects: cls.subjects,
+    status: cls.status,
+    room: cls.room,
+    academicYear: cls.academicYear
+  }[key] ?? '');
+
+  const renderColumnValue = (cls, column) => {
+    if (column.key === 'className') {
+      return (
+        <div className="cl-class-cell">
+          <span className={`cl-class-icon color-${cls.id % 4}`}>
+            <SvgClassTile />
+          </span>
+          <div>
+            <div className="cl-class-title">{cls.className}</div>
+            <div className="cl-class-sub">Room {cls.room} - {cls.academicYear}</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (column.key === 'teacher') {
+      return (
+        <div className="cl-teacher-cell">
+          <span className={`cl-teacher-avatar color-${cls.id % 5}`}>{getInitials(cls.teacher || 'Not Assigned')}</span>
+          <span>{cls.teacher || 'Not Assigned'}</span>
+        </div>
+      );
+    }
+
+    if (column.key === 'students') {
+      return (
+        <div className="cl-progress-cell">
+          <div className="cl-progress-bar">
+            <div className="cl-progress-fill blue" style={{ width: `${Math.min(((cls.students || 0) / 40) * 100, 100)}%` }}></div>
+          </div>
+          <span className="cl-progress-text">{cls.students || 0}/40</span>
+        </div>
+      );
+    }
+
+    if (column.key === 'attendance') {
+      return (
+        <div className="cl-progress-cell">
+          <div className="cl-progress-bar">
+            <div className={`cl-progress-fill ${cls.attendance > 90 ? 'green' : 'red'}`} style={{ width: `${cls.attendance}%` }}></div>
+          </div>
+          <span className="cl-progress-text">{cls.attendance}%</span>
+        </div>
+      );
+    }
+
+    if (column.key === 'avgGrade') return <span className="cl-grade-cell">{cls.avgGrade}</span>;
+    if (column.key === 'status') return <span className={`cl-status-pill ${cls.statusClass}`}>{cls.status}</span>;
+    return getColumnValue(cls, column.key) || '-';
+  };
+
+  const handleColumnToggle = (key) => {
+    setColumns((prev) => prev.map((column) => column.key === key ? { ...column, visible: !column.visible } : column));
+  };
+
+  const handleColumnWidthChange = (key, width) => {
+    const numericWidth = Math.max(100, Math.min(Number(width) || 100, 440));
+    setColumns((prev) => prev.map((column) => column.key === key ? { ...column, width: numericWidth } : column));
+  };
+
+  const moveColumnTo = (sourceKey, targetKey) => {
+    setColumns((prev) => {
+      const sorted = [...prev].sort((a, b) => a.order - b.order);
+      const sourceIndex = sorted.findIndex((column) => column.key === sourceKey);
+      const targetIndex = sorted.findIndex((column) => column.key === targetKey);
+      if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return prev;
+      const reordered = [...sorted];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      return reordered.map((column, order) => ({ ...column, order }));
+    });
+  };
+
+  const handleColumnDragStart = (e, key) => {
+    e.dataTransfer.setData('text/plain', key);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleColumnDrop = (e, targetKey) => {
+    e.preventDefault();
+    moveColumnTo(e.dataTransfer.getData('text/plain'), targetKey);
+  };
+
+  const startColumnResize = (e, key) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = columns.find((column) => column.key === key)?.width || 140;
+    const handleMouseMove = (moveEvent) => handleColumnWidthChange(key, startWidth + moveEvent.clientX - startX);
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.classList.remove('cl-resizing-columns');
+    };
+    document.body.classList.add('cl-resizing-columns');
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const resetColumns = () => setColumns(buildDefaultClassColumns());
+
+  const openColumnModal = () => {
+    setDraftColumns([...columns].sort((a, b) => a.order - b.order));
+    setColumnSearchTerm('');
+    setIsColumnModalOpen(true);
+  };
+
+  const closeColumnModal = () => {
+    setIsColumnModalOpen(false);
+    setColumnSearchTerm('');
+    setDraftColumns([]);
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const applyColumnChanges = () => {
+    setColumns(draftColumns.map((column, order) => ({ ...column, order })));
+    closeColumnModal();
+  };
+
+  const sortDraftVisibleFirst = () => {
+    setDraftColumns((prev) => [...prev]
+      .sort((a, b) => Number(b.visible) - Number(a.visible) || a.order - b.order)
+      .map((column, order) => ({ ...column, order })));
+  };
+
+  const handleDraftColumnToggle = (key) => {
+    setDraftColumns((prev) => prev.map((column) => column.key === key ? { ...column, visible: !column.visible } : column));
+  };
+
+  const moveDraftColumnTo = (sourceKey, targetKey) => {
+    setDraftColumns((prev) => {
+      const sourceIndex = prev.findIndex((column) => column.key === sourceKey);
+      const targetIndex = prev.findIndex((column) => column.key === targetKey);
+      if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return prev;
+      const reordered = [...prev];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      return reordered.map((column, order) => ({ ...column, order }));
+    });
+  };
+
+  const handleDraftColumnDragStart = (e, key) => {
+    e.dataTransfer.setData('text/plain', key);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedColumnKey(key);
+  };
+
+  const handleDraftColumnDrop = (e, targetKey) => {
+    e.preventDefault();
+    moveDraftColumnTo(e.dataTransfer.getData('text/plain'), targetKey);
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const handleDraftColumnDragEnd = () => {
+    setDraggedColumnKey(null);
+    setDragOverColumnKey(null);
+  };
+
+  const modalColumns = (draftColumns.length ? draftColumns : orderedColumns)
+    .filter((column) => column.label.toLowerCase().includes(columnSearchTerm.toLowerCase().trim()));
+  const draftVisibleCount = (draftColumns.length ? draftColumns : orderedColumns).filter((column) => column.visible).length;
+
   // Filters & Pagination Logic
-  const filteredRecords = classesData.filter(cls => 
-    cls.grade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (cls.teacher && cls.teacher.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredRecords = classesData.filter(cls => {
+    const search = searchTerm.toLowerCase().trim();
+    return !search || visibleColumns.some((column) => String(getColumnValue(cls, column.key)).toLowerCase().includes(search));
+  });
 
   const lastRecordIndex = currentPage * recordsPerPage;
   const firstRecordIndex = lastRecordIndex - recordsPerPage;
@@ -337,6 +576,10 @@ export default function Classes() {
             />
           </div>
           <div className="cl-filter-group">
+            <button className="cl-configure-btn" type="button" onClick={openColumnModal}>
+              <SvgColumns />
+              Configure columns
+            </button>
             <select className="cl-filter-select"><option>All grades</option></select>
             <select className="cl-filter-select"><option>All sections</option></select>
             <select className="cl-filter-select"><option>All statuses</option></select>
@@ -345,7 +588,7 @@ export default function Classes() {
 
         {/* Table Container */}
         <div className="cl-table-container">
-          <table className="cl-list-table">
+          <table className="cl-list-table" style={{ minWidth: `${visibleColumns.reduce((total, column) => total + column.width, 220) + 190}px` }}>
             <thead>
               <tr>
                 <th style={{ width: '40px' }}>
@@ -355,23 +598,29 @@ export default function Classes() {
                     onChange={handleSelectAll} 
                   />
                 </th>
-                <th>Class <span className="cl-sort">↕</span></th>
-                <th>Grade <span className="cl-sort">↕</span></th>
-                <th>Section <span className="cl-sort">↕</span></th>
-                <th>Class teacher <span className="cl-sort">↕</span></th>
-                <th>Students <span className="cl-sort">↕</span></th>
-                <th>Attendance <span className="cl-sort">↕</span></th>
-                <th>Avg grade <span className="cl-sort">↕</span></th>
-                <th>Subjects <span className="cl-sort">↕</span></th>
-                <th>Status <span className="cl-sort">↕</span></th>
-                <th>Actions</th>
+                {visibleColumns.map((column) => (
+                  <th
+                    key={column.key}
+                    className="cl-configurable-th"
+                    draggable
+                    onDragStart={(e) => handleColumnDragStart(e, column.key)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleColumnDrop(e, column.key)}
+                    style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
+                  >
+                    <span className="cl-column-label">{column.label}</span>
+                    <span className="cl-column-drag-hint">Drag</span>
+                    <span className="cl-resize-handle" onMouseDown={(e) => startColumnResize(e, column.key)} />
+                  </th>
+                ))}
+                <th style={{ width: '150px', minWidth: '150px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan="11" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading classes...</td></tr>
+                <tr><td colSpan={visibleColumns.length + 2} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading classes...</td></tr>
               ) : currentRecords.length === 0 ? (
-                <tr><td colSpan="11" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No classes found.</td></tr>
+                <tr><td colSpan={visibleColumns.length + 2} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No classes found.</td></tr>
               ) : (
                 currentRecords.map((cls) => {
                   return (
@@ -383,44 +632,11 @@ export default function Classes() {
                           onChange={() => handleSelectRow(cls.id)} 
                         />
                       </td>
-                      <td>
-                        <div className="cl-class-cell">
-                          <span className={`cl-class-icon color-${cls.id % 4}`}>
-                            <SvgClassTile />
-                          </span>
-                          <div>
-                            <div className="cl-class-title">{cls.grade} - Section {cls.section}</div>
-                            <div className="cl-class-sub">Room {cls.rawData.room_number || '-'} • {cls.rawData.academic_year || '2025 - 2026'}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{cls.grade}</td>
-                      <td>{cls.section}</td>
-                      <td>
-                        <div className="cl-teacher-cell">
-                          <span className={`cl-teacher-avatar color-${cls.id % 5}`}>{getInitials(cls.teacher || 'Not Assigned')}</span>
-                          <span>{cls.teacher || 'Not Assigned'}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="cl-progress-cell">
-                          <div className="cl-progress-bar">
-                            <div className="cl-progress-fill blue" style={{ width: `${Math.min(((cls.students || 0) / 40) * 100, 100)}%` }}></div>
-                          </div>
-                          <span className="cl-progress-text">{cls.students || 0}/40</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="cl-progress-cell">
-                          <div className="cl-progress-bar">
-                            <div className={`cl-progress-fill ${cls.attendance > 90 ? 'green' : 'red'}`} style={{ width: `${cls.attendance}%` }}></div>
-                          </div>
-                          <span className="cl-progress-text">{cls.attendance}%</span>
-                        </div>
-                      </td>
-                      <td className="cl-grade-cell">{cls.avgGrade}</td>
-                      <td>{cls.subjects}</td>
-                      <td><span className={`cl-status-pill ${cls.statusClass}`}>{cls.status}</span></td>
+                      {visibleColumns.map((column) => (
+                        <td key={column.key} style={{ width: `${column.width}px`, minWidth: `${column.width}px`, maxWidth: `${column.width}px` }}>
+                          <div className="cl-cell-content">{renderColumnValue(cls, column)}</div>
+                        </td>
+                      ))}
                       <td>
                         <div className="cl-actions-cell">
                           <button className="cl-btn-view" onClick={() => openEditModal(cls)}>View / Edit</button>
@@ -450,6 +666,86 @@ export default function Classes() {
         </div>
 
       </div>
+
+      {isColumnModalOpen && (
+        <div className="cl-column-overlay">
+          <div className="cl-column-modal">
+            <div className="cl-column-header">
+              <div>
+                <h2>Configure View</h2>
+                <p>Choose which columns appear in the classes list.</p>
+              </div>
+              <button className="cl-column-close" type="button" onClick={closeColumnModal} aria-label="Close configure view">x</button>
+            </div>
+            <div className="cl-column-search">
+              <SvgSearch />
+              <input type="text" placeholder="Search columns..." value={columnSearchTerm} onChange={(e) => setColumnSearchTerm(e.target.value)} />
+            </div>
+            <div className="cl-column-list-header">
+              <span>Columns</span>
+              <button type="button" onClick={sortDraftVisibleFirst}>Visible first ({draftVisibleCount})</button>
+            </div>
+            <div className="cl-column-list">
+              {modalColumns.map((column) => (
+                <div
+                  className={`cl-column-row ${draggedColumnKey === column.key ? 'is-dragging' : ''} ${dragOverColumnKey === column.key && draggedColumnKey !== column.key ? 'is-drag-over' : ''}`}
+                  key={column.key}
+                  draggable
+                  onDragStart={(e) => handleDraftColumnDragStart(e, column.key)}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverColumnKey(column.key); }}
+                  onDragLeave={() => setDragOverColumnKey((current) => current === column.key ? null : current)}
+                  onDrop={(e) => handleDraftColumnDrop(e, column.key)}
+                  onDragEnd={handleDraftColumnDragEnd}
+                >
+                  <button className={`cl-column-visibility ${column.visible ? 'visible' : 'hidden'}`} type="button" onClick={() => handleDraftColumnToggle(column.key)} aria-label={`${column.visible ? 'Hide' : 'Show'} ${column.label}`}>
+                    {column.visible ? <SvgEye /> : <SvgEyeOff />}
+                  </button>
+                  <span className="cl-column-row-label">{column.label}</span>
+                  <button className="cl-column-grip" type="button" draggable onDragStart={(e) => handleDraftColumnDragStart(e, column.key)} onDragEnd={handleDraftColumnDragEnd} aria-label={`Drag ${column.label}`}>
+                    <SvgGrip />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="cl-column-footer">
+              <button className="cl-column-cancel" type="button" onClick={closeColumnModal}>Cancel</button>
+              <button className="cl-column-apply" type="button" onClick={applyColumnChanges}>Apply Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {false && isColumnModalOpen && (
+        <div className="cl-column-overlay">
+          <div className="cl-column-modal">
+            <div className="cl-column-header">
+              <div>
+                <h2>Configure Classes View</h2>
+                <p>Choose which columns appear in the classes list.</p>
+              </div>
+              <button className="cl-column-close" type="button" onClick={() => setIsColumnModalOpen(false)}>x</button>
+            </div>
+            <div className="cl-column-toolbar">
+              <span>{visibleColumns.length} visible columns</span>
+              <button type="button" onClick={resetColumns}>Reset default view</button>
+            </div>
+            <div className="cl-column-list">
+              {orderedColumns.map((column) => (
+                <div className="cl-column-row" key={column.key}>
+                  <label className="cl-column-check">
+                    <input type="checkbox" checked={column.visible} onChange={() => handleColumnToggle(column.key)} />
+                    <span>{column.label}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div className="cl-column-footer">
+              <p>Search scans only the columns visible in this view.</p>
+              <button className="cl-btn-primary" type="button" onClick={() => setIsColumnModalOpen(false)}>Apply view</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ======================================= */}
       {/* MODAL */}
