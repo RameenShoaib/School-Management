@@ -61,6 +61,8 @@ export default function Teacher() {
   const [draftColumns, setDraftColumns] = useState([]);
   const [draggedColumnKey, setDraggedColumnKey] = useState(null);
   const [dragOverColumnKey, setDragOverColumnKey] = useState(null);
+  const [tableDragColumnKey, setTableDragColumnKey] = useState(null);
+  const [tableDragTargetKey, setTableDragTargetKey] = useState(null);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
@@ -267,13 +269,9 @@ export default function Teacher() {
   const renderColumnValue = (teacher, column) => {
     if (column.key === 'name') {
       return (
-        <div className="tc-name-cell">
-          <span className={`tc-teacher-avatar color-${teacher.id % 5}`}>{getInitials(teacher.name)}</span>
-          <div>
-            <span className="tc-teacher-name">{teacher.name}</span>
-            <span className="tc-teacher-subtitle">{teacher.subject}</span>
-          </div>
-        </div>
+        <button className="tc-record-link" type="button" onClick={() => openEditModal(teacher)}>
+          {teacher.name}
+        </button>
       );
     }
     if (column.key === 'status') return <span className={`tc-pill ${teacher.statusClass}`}>{teacher.status}</span>;
@@ -305,11 +303,19 @@ export default function Teacher() {
   const handleColumnDragStart = (e, key) => {
     e.dataTransfer.setData('text/plain', key);
     e.dataTransfer.effectAllowed = 'move';
+    setTableDragColumnKey(key);
   };
 
   const handleColumnDrop = (e, targetKey) => {
     e.preventDefault();
     moveColumnTo(e.dataTransfer.getData('text/plain'), targetKey);
+    setTableDragColumnKey(null);
+    setTableDragTargetKey(null);
+  };
+
+  const handleColumnDragEnd = () => {
+    setTableDragColumnKey(null);
+    setTableDragTargetKey(null);
   };
 
   const startColumnResize = (e, key) => {
@@ -541,11 +547,16 @@ export default function Teacher() {
                 {visibleColumns.map((column) => (
                   <th
                     key={column.key}
-                    className="tc-configurable-th"
+                    className={`tc-configurable-th ${tableDragColumnKey === column.key ? 'is-table-dragging' : ''} ${tableDragTargetKey === column.key && tableDragColumnKey !== column.key ? 'is-table-drag-over' : ''}`}
                     draggable
                     onDragStart={(e) => handleColumnDragStart(e, column.key)}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setTableDragTargetKey(column.key);
+                    }}
+                    onDragLeave={() => setTableDragTargetKey((current) => current === column.key ? null : current)}
                     onDrop={(e) => handleColumnDrop(e, column.key)}
+                    onDragEnd={handleColumnDragEnd}
                     style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
                   >
                     <span className="tc-column-label">{column.label}</span>

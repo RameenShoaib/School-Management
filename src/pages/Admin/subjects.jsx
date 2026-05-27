@@ -82,6 +82,8 @@ export default function Subjects() {
   const [draftColumns, setDraftColumns] = useState([]);
   const [draggedColumnKey, setDraggedColumnKey] = useState(null);
   const [dragOverColumnKey, setDragOverColumnKey] = useState(null);
+  const [tableDragColumnKey, setTableDragColumnKey] = useState(null);
+  const [tableDragTargetKey, setTableDragTargetKey] = useState(null);
 
   // 👉 NEW: Checkbox Selection State
   const [selectedRows, setSelectedRows] = useState([]);
@@ -248,12 +250,9 @@ export default function Subjects() {
   const renderColumnValue = (subject, column) => {
     if (column.key === 'subjectName') {
       return (
-        <div className="sbj-subject-cell">
-          <span className={`sbj-subject-icon color-${subject.subject_id % 4}`}>
-            {getSubjectIcon(subject.subject_name)}
-          </span>
-          <span className="sbj-subject-name">{subject.subject_name}</span>
-        </div>
+        <button className="sbj-record-link" type="button" onClick={() => openEditModal(subject)}>
+          {subject.subject_name}
+        </button>
       );
     }
 
@@ -290,11 +289,19 @@ export default function Subjects() {
   const handleColumnDragStart = (e, key) => {
     e.dataTransfer.setData('text/plain', key);
     e.dataTransfer.effectAllowed = 'move';
+    setTableDragColumnKey(key);
   };
 
   const handleColumnDrop = (e, targetKey) => {
     e.preventDefault();
     moveColumnTo(e.dataTransfer.getData('text/plain'), targetKey);
+    setTableDragColumnKey(null);
+    setTableDragTargetKey(null);
+  };
+
+  const handleColumnDragEnd = () => {
+    setTableDragColumnKey(null);
+    setTableDragTargetKey(null);
   };
 
   const startColumnResize = (e, key) => {
@@ -515,11 +522,16 @@ export default function Subjects() {
                     {visibleColumns.map((column) => (
                       <th
                         key={column.key}
-                        className="sbj-configurable-th"
+                        className={`sbj-configurable-th ${tableDragColumnKey === column.key ? 'is-table-dragging' : ''} ${tableDragTargetKey === column.key && tableDragColumnKey !== column.key ? 'is-table-drag-over' : ''}`}
                         draggable
                         onDragStart={(e) => handleColumnDragStart(e, column.key)}
-                        onDragOver={(e) => e.preventDefault()}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setTableDragTargetKey(column.key);
+                        }}
+                        onDragLeave={() => setTableDragTargetKey((current) => current === column.key ? null : current)}
                         onDrop={(e) => handleColumnDrop(e, column.key)}
+                        onDragEnd={handleColumnDragEnd}
                         style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
                       >
                         <span className="sbj-column-label">{column.label}</span>

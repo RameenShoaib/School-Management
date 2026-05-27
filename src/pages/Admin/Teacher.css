@@ -174,6 +174,226 @@
   .tc-column-search { width: auto; }
 }
 
+/* Clean entity-list view matching students */
+.tc-table-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.tc-controls-row {
+  padding: 14px 22px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tc-search-box {
+  max-width: 360px;
+  border-color: #d1d5db;
+  border-radius: 4px;
+  padding: 9px 11px;
+  box-shadow: none;
+}
+
+.tc-search-box input {
+  font-size: 13px;
+}
+
+.tc-filter-pills {
+  gap: 8px;
+}
+
+.tc-filter-pill,
+.tc-configure-btn {
+  height: 36px;
+  border-color: #d1d5db;
+  border-radius: 4px;
+  box-shadow: none;
+  background: #ffffff;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tc-filter-pill.active {
+  background: #f3f4f6;
+  color: #111827;
+  border-color: #d1d5db;
+  box-shadow: none;
+}
+
+.tc-table-scroll {
+  padding: 18px 22px 6px;
+  background: #ffffff;
+}
+
+.tc-table {
+  border-collapse: collapse;
+  color: #000000;
+}
+
+.tc-table th {
+  padding: 0 10px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #d1d5db;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.tc-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid #d1d5db;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.tc-table tbody tr:hover,
+.tc-table tbody tr:hover td {
+  background: #ffffff;
+}
+
+.tc-table input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #2563eb;
+}
+
+.tc-column-drag-hint {
+  display: none;
+}
+
+.tc-column-label {
+  padding-right: 0;
+}
+
+.tc-resize-handle {
+  top: 2px;
+  bottom: 8px;
+}
+
+.tc-record-link {
+  border: 0;
+  background: transparent;
+  color: #0067ff;
+  font: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tc-record-link:hover {
+  text-decoration: underline;
+}
+
+.tc-pill {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.tc-pill::before {
+  display: none;
+}
+
+.status-active {
+  color: #047857;
+  background: transparent;
+}
+
+.status-leave {
+  color: #b45309;
+  background: transparent;
+}
+
+.tc-actions-cell {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.tc-view-btn {
+  border: 0;
+  background: transparent;
+  color: #0067ff;
+  border-radius: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.tc-view-btn:hover {
+  background: transparent;
+  border-color: transparent;
+  color: #0067ff;
+  text-decoration: underline;
+}
+
+.tc-more-btn {
+  width: 24px;
+  height: 24px;
+  color: #6b7280;
+}
+
+.tc-pagination-footer {
+  padding: 13px 22px;
+  border-top: 0;
+  background: #ffffff;
+}
+
+.tc-page-info {
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.tc-page-btn {
+  min-width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.tc-configurable-th {
+  position: relative;
+}
+
+.tc-configurable-th::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: -1px;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+  pointer-events: none;
+}
+
+.tc-configurable-th.is-table-dragging {
+  color: #9ca3af;
+  background: #f9fafb;
+}
+
+.tc-configurable-th.is-table-drag-over::before {
+  background: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.tc-configurable-th.is-table-drag-over {
+  background: #f8fbff;
+}
+
 /* --- NEW WIDE MODAL STYLES (Similar to Student Form) --- */
 .tc-modal-wide {
   background: white;

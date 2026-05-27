@@ -1596,3 +1596,189 @@
     width: auto;
   }
 }
+
+/* Clean entity-list view matching students, teachers, and classes */
+.sbj-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: none;
+  overflow: hidden;
+  min-height: auto;
+}
+
+.sbj-card-heading {
+  padding: 14px 22px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sbj-card-heading-icon {
+  display: none;
+}
+
+.sbj-card-title {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sbj-table-toolbar {
+  padding: 14px 22px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sbj-search-box {
+  max-width: 360px;
+  border-color: #d1d5db;
+  border-radius: 4px;
+  padding: 9px 11px;
+  box-shadow: none;
+}
+
+.sbj-search-box input {
+  font-size: 13px;
+}
+
+.sbj-configure-btn {
+  height: 36px;
+  border-color: #d1d5db;
+  border-radius: 4px;
+  box-shadow: none;
+  background: #ffffff;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sbj-table-scroll {
+  padding: 18px 22px 6px;
+  background: #ffffff;
+}
+
+.sbj-table {
+  border-collapse: collapse;
+  color: #000000;
+}
+
+.sbj-table th {
+  padding: 0 10px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #d1d5db;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.sbj-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid #d1d5db;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.sbj-table tbody tr:hover,
+.sbj-table tbody tr:hover td {
+  background: #ffffff;
+}
+
+.sbj-table input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #2563eb;
+}
+
+.sbj-column-drag-hint {
+  display: none;
+}
+
+.sbj-column-label {
+  padding-right: 0;
+}
+
+.sbj-resize-handle {
+  top: 2px;
+  bottom: 8px;
+}
+
+.sbj-record-link {
+  border: 0;
+  background: transparent;
+  color: #0067ff;
+  font: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.sbj-record-link:hover {
+  text-decoration: underline;
+}
+
+.sbj-pill {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.sbj-pill.core {
+  color: #047857;
+  background: transparent;
+}
+
+.sbj-pill.elective {
+  color: #b45309;
+  background: transparent;
+}
+
+.sbj-more-btn {
+  width: 24px;
+  height: 24px;
+  color: #6b7280;
+  border-radius: 4px;
+}
+
+.sbj-more-btn:hover {
+  background: #ffffff;
+  color: #6b7280;
+}
+
+.sbj-configurable-th {
+  position: relative;
+}
+
+.sbj-configurable-th::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: -1px;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+  pointer-events: none;
+}
+
+.sbj-configurable-th.is-table-dragging {
+  color: #9ca3af;
+  background: #f9fafb;
+}
+
+.sbj-configurable-th.is-table-drag-over {
+  background: #f8fbff;
+}
+
+.sbj-configurable-th.is-table-drag-over::before {
+  background: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
