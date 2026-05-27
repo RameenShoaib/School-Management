@@ -1113,3 +1113,229 @@
 @media (max-width: 760px) {
   .st-column-search { width: auto; }
 }
+
+/* Clean entity-list view inspired by the provided reference */
+.st-table-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.st-search-area {
+  padding: 14px 22px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.st-search-box {
+  max-width: 360px;
+  border-color: #d1d5db;
+  border-radius: 4px;
+  padding: 9px 11px;
+  box-shadow: none;
+}
+
+.st-search-box input {
+  font-size: 13px;
+}
+
+.st-configure-btn,
+.st-filter-btn {
+  height: 36px;
+  border-color: #d1d5db;
+  border-radius: 4px;
+  box-shadow: none;
+  background: #ffffff;
+}
+
+.st-configure-btn {
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.st-filter-btn {
+  width: 38px;
+}
+
+.st-table-scroll {
+  padding: 18px 22px 6px;
+  background: #ffffff;
+}
+
+.st-table {
+  border-collapse: collapse;
+  color: #000000;
+}
+
+.st-table th {
+  padding: 0 10px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #d1d5db;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.st-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid #d1d5db;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.st-table tbody tr:hover {
+  background: #ffffff;
+}
+
+.st-table tbody tr:hover td {
+  background: #ffffff;
+}
+
+.st-table input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #2563eb;
+}
+
+.st-column-drag-hint {
+  display: none;
+}
+
+.st-column-label {
+  padding-right: 0;
+}
+
+.st-resize-handle {
+  top: 2px;
+  bottom: 8px;
+}
+
+.st-cell-content {
+  color: inherit;
+}
+
+.st-record-link {
+  border: 0;
+  background: transparent;
+  color: #0067ff;
+  font: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.st-record-link:hover {
+  text-decoration: underline;
+}
+
+.st-pill {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.st-pill.paid,
+.st-pill.active {
+  color: #047857;
+  background: transparent;
+}
+
+.st-pill.pending {
+  color: #b45309;
+  background: transparent;
+}
+
+.st-pill.overdue,
+.st-pill.leave {
+  color: #dc2626;
+  background: transparent;
+}
+
+.st-actions-cell {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.st-view-btn {
+  border: 0;
+  background: transparent;
+  color: #0067ff;
+  border-radius: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.st-view-btn:hover {
+  background: transparent;
+  border-color: transparent;
+  color: #0067ff;
+  text-decoration: underline;
+}
+
+.st-more-btn {
+  width: 24px;
+  height: 24px;
+  color: #6b7280;
+}
+
+.st-pagination-footer {
+  padding: 13px 22px;
+  border-top: 0;
+  background: #ffffff;
+}
+
+.st-page-info {
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.st-page-btn {
+  min-width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.st-configurable-th {
+  position: relative;
+}
+
+.st-configurable-th::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: -1px;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+  pointer-events: none;
+}
+
+.st-configurable-th.is-table-dragging {
+  color: #9ca3af;
+  background: #f9fafb;
+}
+
+.st-configurable-th.is-table-drag-over {
+  background: #f8fbff;
+}
+
+.st-configurable-th.is-table-drag-over::before {
+  background: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}

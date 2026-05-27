@@ -80,6 +80,8 @@ export default function Classes() {
   const [draftColumns, setDraftColumns] = useState([]);
   const [draggedColumnKey, setDraggedColumnKey] = useState(null);
   const [dragOverColumnKey, setDragOverColumnKey] = useState(null);
+  const [tableDragColumnKey, setTableDragColumnKey] = useState(null);
+  const [tableDragTargetKey, setTableDragTargetKey] = useState(null);
 
   // 🗄️ Database States
   const [classesData, setClassesData] = useState([]);
@@ -293,47 +295,18 @@ export default function Classes() {
   const renderColumnValue = (cls, column) => {
     if (column.key === 'className') {
       return (
-        <div className="cl-class-cell">
-          <span className={`cl-class-icon color-${cls.id % 4}`}>
-            <SvgClassTile />
-          </span>
-          <div>
-            <div className="cl-class-title">{cls.className}</div>
-            <div className="cl-class-sub">Room {cls.room} - {cls.academicYear}</div>
-          </div>
-        </div>
-      );
-    }
-
-    if (column.key === 'teacher') {
-      return (
-        <div className="cl-teacher-cell">
-          <span className={`cl-teacher-avatar color-${cls.id % 5}`}>{getInitials(cls.teacher || 'Not Assigned')}</span>
-          <span>{cls.teacher || 'Not Assigned'}</span>
-        </div>
+        <button className="cl-record-link" type="button" onClick={() => openEditModal(cls)}>
+          {cls.className}
+        </button>
       );
     }
 
     if (column.key === 'students') {
-      return (
-        <div className="cl-progress-cell">
-          <div className="cl-progress-bar">
-            <div className="cl-progress-fill blue" style={{ width: `${Math.min(((cls.students || 0) / 40) * 100, 100)}%` }}></div>
-          </div>
-          <span className="cl-progress-text">{cls.students || 0}/40</span>
-        </div>
-      );
+      return `${cls.students || 0}/40`;
     }
 
     if (column.key === 'attendance') {
-      return (
-        <div className="cl-progress-cell">
-          <div className="cl-progress-bar">
-            <div className={`cl-progress-fill ${cls.attendance > 90 ? 'green' : 'red'}`} style={{ width: `${cls.attendance}%` }}></div>
-          </div>
-          <span className="cl-progress-text">{cls.attendance}%</span>
-        </div>
-      );
+      return `${cls.attendance}%`;
     }
 
     if (column.key === 'avgGrade') return <span className="cl-grade-cell">{cls.avgGrade}</span>;
@@ -366,11 +339,19 @@ export default function Classes() {
   const handleColumnDragStart = (e, key) => {
     e.dataTransfer.setData('text/plain', key);
     e.dataTransfer.effectAllowed = 'move';
+    setTableDragColumnKey(key);
   };
 
   const handleColumnDrop = (e, targetKey) => {
     e.preventDefault();
     moveColumnTo(e.dataTransfer.getData('text/plain'), targetKey);
+    setTableDragColumnKey(null);
+    setTableDragTargetKey(null);
+  };
+
+  const handleColumnDragEnd = () => {
+    setTableDragColumnKey(null);
+    setTableDragTargetKey(null);
   };
 
   const startColumnResize = (e, key) => {
@@ -601,11 +582,16 @@ export default function Classes() {
                 {visibleColumns.map((column) => (
                   <th
                     key={column.key}
-                    className="cl-configurable-th"
+                    className={`cl-configurable-th ${tableDragColumnKey === column.key ? 'is-table-dragging' : ''} ${tableDragTargetKey === column.key && tableDragColumnKey !== column.key ? 'is-table-drag-over' : ''}`}
                     draggable
                     onDragStart={(e) => handleColumnDragStart(e, column.key)}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setTableDragTargetKey(column.key);
+                    }}
+                    onDragLeave={() => setTableDragTargetKey((current) => current === column.key ? null : current)}
                     onDrop={(e) => handleColumnDrop(e, column.key)}
+                    onDragEnd={handleColumnDragEnd}
                     style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
                   >
                     <span className="cl-column-label">{column.label}</span>

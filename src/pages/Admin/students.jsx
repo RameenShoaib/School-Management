@@ -72,6 +72,8 @@ export default function Students() {
   const [draftColumns, setDraftColumns] = useState([]);
   const [draggedColumnKey, setDraggedColumnKey] = useState(null);
   const [dragOverColumnKey, setDragOverColumnKey] = useState(null);
+  const [tableDragColumnKey, setTableDragColumnKey] = useState(null);
+  const [tableDragTargetKey, setTableDragTargetKey] = useState(null);
   const [modalMode, setModalMode] = useState('add');
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
@@ -329,10 +331,21 @@ export default function Students() {
   const renderColumnValue = (record, column) => {
     if (column.key === 'name') {
       return (
-        <div className="st-name-cell">
-          <span className={`st-student-avatar color-${record.id % 6}`}>{getInitials(record.name)}</span>
-          <span className="st-student-name">{record.name}</span>
-        </div>
+        <button className="st-record-link" type="button" onClick={() => openEditModal(record)}>
+          {record.name}
+        </button>
+      );
+    }
+
+    if (['grade', 'section', 'classDisplay'].includes(column.key)) {
+      return (
+        <button
+          className="st-record-link"
+          type="button"
+          onClick={() => Swal.fire('Class details', `Grade: ${record.grade || '-'}\nSection: ${record.section || '-'}`, 'info')}
+        >
+          {getColumnValue(record, column.key) || '-'}
+        </button>
       );
     }
 
@@ -377,12 +390,20 @@ export default function Students() {
   const handleColumnDragStart = (e, key) => {
     e.dataTransfer.setData('text/plain', key);
     e.dataTransfer.effectAllowed = 'move';
+    setTableDragColumnKey(key);
   };
 
   const handleColumnDrop = (e, targetKey) => {
     e.preventDefault();
     const sourceKey = e.dataTransfer.getData('text/plain');
     moveColumnTo(sourceKey, targetKey);
+    setTableDragColumnKey(null);
+    setTableDragTargetKey(null);
+  };
+
+  const handleColumnDragEnd = () => {
+    setTableDragColumnKey(null);
+    setTableDragTargetKey(null);
   };
 
   const startColumnResize = (e, key) => {
@@ -596,11 +617,16 @@ export default function Students() {
                 {visibleColumns.map((column) => (
                   <th
                     key={column.key}
-                    className="st-configurable-th"
+                    className={`st-configurable-th ${tableDragColumnKey === column.key ? 'is-table-dragging' : ''} ${tableDragTargetKey === column.key && tableDragColumnKey !== column.key ? 'is-table-drag-over' : ''}`}
                     draggable
                     onDragStart={(e) => handleColumnDragStart(e, column.key)}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setTableDragTargetKey(column.key);
+                    }}
+                    onDragLeave={() => setTableDragTargetKey((current) => current === column.key ? null : current)}
                     onDrop={(e) => handleColumnDrop(e, column.key)}
+                    onDragEnd={handleColumnDragEnd}
                     style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
                   >
                     <span className="st-column-label">{column.label}</span>
