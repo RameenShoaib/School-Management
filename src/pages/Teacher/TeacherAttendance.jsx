@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import TeacherListView from './TeacherListView';
 import './TeacherModule.css';
 import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { getTeacherHeaderActions, showTeacherPopup } from './teacherHeaderActions';
 
 const AttendancePageIcon = ({ type }) => {
   const paths = {
@@ -124,7 +124,10 @@ export default function TeacherAttendance() {
   const submitAttendance = async () => {
     const selectedStudents = filteredStudents.filter((student) => draftStatus[student.student_id]);
     if (selectedStudents.length === 0) {
-      Swal.fire('No changes', 'Mark at least one student before saving.', 'info');
+      showTeacherPopup({
+        title: 'No changes',
+        text: 'Mark at least one student before saving.'
+      });
       return;
     }
 
@@ -147,14 +150,26 @@ export default function TeacherAttendance() {
       });
       const data = await response.json();
       if (data.success) {
-        Swal.fire('Saved', 'Attendance saved successfully.', 'success');
+        showTeacherPopup({
+          title: 'Saved',
+          text: 'Attendance saved successfully.',
+          icon: 'success'
+        });
         setDraftStatus({});
         fetchData();
       } else {
-        Swal.fire('Error', data.message || 'Could not save attendance.', 'error');
+        showTeacherPopup({
+          title: 'Error',
+          text: data.message || 'Could not save attendance.',
+          icon: 'error'
+        });
       }
     } catch (error) {
-      Swal.fire('Error', 'Server connection failed.', 'error');
+      showTeacherPopup({
+        title: 'Error',
+        text: 'Server connection failed.',
+        icon: 'error'
+      });
     }
   };
 
@@ -193,6 +208,25 @@ export default function TeacherAttendance() {
 
     return values[column.key] || '-';
   };
+  const headerActions = getTeacherHeaderActions({
+    pageName: 'Attendance',
+    exportFileName: 'teacher-attendance.csv',
+    onRefresh: fetchData,
+    exportColumns: [
+      { key: 'student', label: 'Student' },
+      { key: 'rollNo', label: 'Roll no' },
+      { key: 'className', label: 'Class' },
+      { key: 'status', label: 'Current status' },
+      { key: 'date', label: 'Date' }
+    ],
+    exportRows: filteredStudents.map((student) => ({
+      student: `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student',
+      rollNo: student.roll_no || '-',
+      className: `${student.grade || '-'} - Section ${student.section || '-'}`,
+      status: normalizeAttendanceStatus(statusForStudent(student.student_id)),
+      date
+    }))
+  });
 
   return (
     <DashboardLayout userRole="teacher" currentPath="/teacher/attendance" userName={teacherName} userInitials={teacherInitials}>
@@ -207,7 +241,7 @@ export default function TeacherAttendance() {
           </div>
           <button className="tm-att-save-btn" onClick={submitAttendance}><AttendancePageIcon type="save" /> Save attendance</button>
         </div>
-        <Header />
+        <Header {...headerActions} />
 
         <div className="tm-att-toolbar">
           <label className="tm-att-control">

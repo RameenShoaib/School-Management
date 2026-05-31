@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import './TeacherModule.css';
 import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { getTeacherHeaderActions, showTeacherPopup } from './teacherHeaderActions';
 
 const DashboardIcon = ({ type }) => {
   const paths = {
@@ -40,6 +41,18 @@ const getGreeting = () => {
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
+};
+
+const normalizeStatus = (status) => {
+  const value = String(status || '').toLowerCase();
+  if (value === 'p' || value === 'present') return 'present';
+  if (value === 'a' || value === 'absent') return 'absent';
+  if (value === 'l' || value === 'late') return 'late';
+  return 'notMarked';
+};
+
+const goTo = (path) => {
+  window.location.href = path;
 };
 
 export default function TeacherDashboard() {
@@ -94,13 +107,22 @@ export default function TeacherDashboard() {
   );
 
   const assignedStudents = filterByClassKeys(students, classKeys);
+  const assignedStudentIds = new Set(assignedStudents.map((student) => Number(student.student_id)));
   const today = new Date().toISOString().split('T')[0];
-  const todayAttendance = attendance.filter((item) => item.attendance_date?.startsWith(today));
-  const presentToday = todayAttendance.filter((item) => item.status === 'Present').length;
+  const scopedAttendance = attendance.filter((item) => assignedStudentIds.size === 0 || assignedStudentIds.has(Number(item.student_id)));
+  const todayAttendance = scopedAttendance.filter((item) => item.attendance_date?.startsWith(today));
+  const attendanceSummary = todayAttendance.reduce((summary, item) => {
+    const key = normalizeStatus(item.status);
+    return { ...summary, [key]: summary[key] + 1 };
+  }, { present: 0, absent: 0, late: 0, notMarked: Math.max(assignedStudents.length - todayAttendance.length, 0) });
+  const attendanceTotal = attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late + attendanceSummary.notMarked;
+  const attendancePercent = (count) => attendanceTotal ? Math.round((count / attendanceTotal) * 100) : 0;
+  const presentToday = attendanceSummary.present;
   const upcomingExams = exams
     .filter((exam) => !exam.exam_date || new Date(exam.exam_date) >= new Date(today))
     .slice(0, 5);
   const totalAssignedSeats = assignedClasses.reduce((total, item) => total + Number(item.max_capacity || 0), 0);
+  const notificationCount = upcomingExams.length + attendanceSummary.notMarked;
 
   const statCards = [
     {
@@ -116,7 +138,7 @@ export default function TeacherDashboard() {
       value: assignedStudents.length,
       note: 'Across assigned classes',
       icon: 'users',
-      tone: 'green',
+      tone: 'purple',
       spark: 'wave'
     },
     {
@@ -124,7 +146,7 @@ export default function TeacherDashboard() {
       value: presentToday,
       note: 'Marked attendance records',
       icon: 'clipboard',
-      tone: 'amber',
+      tone: 'green',
       spark: 'wave'
     },
     {
@@ -132,10 +154,30 @@ export default function TeacherDashboard() {
       value: upcomingExams.length,
       note: 'Scheduled from today onward',
       icon: 'calendar',
-      tone: 'purple',
+      tone: 'amber',
       spark: 'pulse'
     }
   ];
+  const headerActions = getTeacherHeaderActions({
+    pageName: 'Dashboard',
+    exportFileName: 'teacher-dashboard.csv',
+    exportColumns: [
+      { key: 'label', label: 'Metric' },
+      { key: 'value', label: 'Value' },
+      { key: 'note', label: 'Note' }
+    ],
+    exportRows: statCards.map(({ label, value, note }) => ({ label, value, note }))
+  });
+  const openProfile = () => showTeacherPopup({
+    title: teacherName,
+    html: `
+      <div class="teacher-swal-details">
+        <div class="teacher-swal-row"><span>Role</span><strong>Teacher</strong></div>
+        <div class="teacher-swal-row"><span>Assigned classes</span><strong>${assignedClasses.length}</strong></div>
+        <div class="teacher-swal-row"><span>Students</span><strong>${assignedStudents.length}</strong></div>
+      </div>
+    `
+  });
 
   return (
     <DashboardLayout userRole="teacher" currentPath="/teacher/dashboard" userName={teacherName} userInitials={teacherInitials}>
@@ -146,14 +188,22 @@ export default function TeacherDashboard() {
           <p>{loading ? 'Loading your workspace...' : "Here's what's happening in your classes today."}</p>
         </div>
         <div className="tm-hero-actions">
-          <button className="tm-notification-btn" type="button" aria-label="Notifications">
+          <button
+            className="tm-notification-btn"
+            type="button"
+            aria-label="Notifications"
+            onClick={() => showTeacherPopup({
+              title: 'Notifications',
+              text: notificationCount ? `You have ${notificationCount} dashboard updates to review.` : 'No new notifications right now.'
+            })}
+          >
             <DashboardIcon type="bell" />
-            <span />
+            {notificationCount > 0 && <span />}
           </button>
-          <div className="tm-profile-chip">{teacherInitials}</div>
+          <button className="tm-profile-chip tm-dashboard-profile" type="button" onClick={openProfile}>{teacherInitials}</button>
         </div>
       </div>
-      <Header />
+      <Header {...headerActions} />
 
       <div className="tm-dashboard-stats">
         {statCards.map((card) => (
@@ -178,18 +228,32 @@ export default function TeacherDashboard() {
               <span><DashboardIcon type="class" /></span>
               <h2>My Classes</h2>
             </div>
-            <a href="/teacher/classes">View all <DashboardIcon type="arrow" /></a>
+            <button className="tm-panel-link" type="button" onClick={() => goTo('/teacher/classes')}>View all <DashboardIcon type="arrow" /></button>
           </div>
           <div className="tm-class-list">
             {assignedClasses.length > 0 ? assignedClasses.slice(0, 4).map((item, index) => (
-              <div className="tm-class-card" key={item.class_id}>
+              <button
+                className="tm-class-card"
+                key={item.class_id}
+                type="button"
+                onClick={() => showTeacherPopup({
+                  title: `${item.grade} - Section ${item.section}`,
+                  html: `
+                    <div class="teacher-swal-details">
+                      <div class="teacher-swal-row"><span>Room</span><strong>${item.room_number || 'N/A'}</strong></div>
+                      <div class="teacher-swal-row"><span>Academic year</span><strong>${item.academic_year || 'Current year'}</strong></div>
+                      <div class="teacher-swal-row"><span>Seats</span><strong>${item.max_capacity || 0}</strong></div>
+                    </div>
+                  `
+                })}
+              >
                 <span className={`tm-class-icon color-${index % 4}`}><DashboardIcon type="class" /></span>
                 <div>
                   <strong>{item.grade} - Section {item.section}</strong>
                   <span>Room {item.room_number || 'N/A'} <em>|</em> {item.academic_year || 'Current year'}</span>
                 </div>
                 <b>{item.max_capacity || 0} seats</b>
-              </div>
+              </button>
             )) : <div className="tm-empty">No classes assigned yet.</div>}
           </div>
           <div className="tm-seat-total">
@@ -204,7 +268,7 @@ export default function TeacherDashboard() {
               <span><DashboardIcon type="calendar" /></span>
               <h2>Upcoming Exams</h2>
             </div>
-            <a href="/teacher/exams">View all</a>
+            <button className="tm-panel-link" type="button" onClick={() => goTo('/teacher/exams')}>View all <DashboardIcon type="arrow" /></button>
           </div>
           {upcomingExams.length > 0 ? (
             <div className="tm-exam-list">

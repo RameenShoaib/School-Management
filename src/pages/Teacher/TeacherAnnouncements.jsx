@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import './TeacherModule.css';
 import { API_BASE, findCurrentTeacher, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { getTeacherHeaderActions, showTeacherPopup } from './teacherHeaderActions';
 
 const announcements = [
   {
@@ -83,6 +84,18 @@ export default function TeacherAnnouncements() {
     const matchesType = typeFilter === 'All' || item.type === typeFilter;
     return matchesSearch && matchesType;
   });
+  const headerActions = getTeacherHeaderActions({
+    pageName: 'Announcements',
+    exportFileName: 'teacher-announcements.csv',
+    exportColumns: [
+      { key: 'title', label: 'Title' },
+      { key: 'audience', label: 'Audience' },
+      { key: 'type', label: 'Type' },
+      { key: 'detail', label: 'Detail' },
+      { key: 'date', label: 'Date' }
+    ],
+    exportRows: filtered
+  });
 
   return (
     <DashboardLayout userRole="teacher" currentPath="/teacher/announcement" userName={teacherName} userInitials={teacherInitials}>
@@ -94,7 +107,7 @@ export default function TeacherAnnouncements() {
           </div>
           <div className="tm-profile-chip tm-ann-profile">{teacherInitials}</div>
         </div>
-        <Header />
+        <Header {...headerActions} />
 
         <div className="tm-ann-toolbar">
           <label className="tm-ann-search">
@@ -118,7 +131,17 @@ export default function TeacherAnnouncements() {
               <span><AnnouncementIcon type="megaphone" /></span>
               <h2>Recent announcements</h2>
             </div>
-            <button type="button" className="tm-ann-new-btn"><AnnouncementIcon type="plus" /> New announcement</button>
+            <button
+              type="button"
+              className="tm-ann-new-btn"
+              onClick={() => showTeacherPopup({
+                title: 'New announcement',
+                text: 'Announcement creation is managed from the admin module.',
+                icon: 'info'
+              })}
+            >
+              <AnnouncementIcon type="plus" /> New announcement
+            </button>
           </div>
 
           <div className="tm-ann-list">

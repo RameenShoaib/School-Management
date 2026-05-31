@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import TeacherListView from './TeacherListView';
 import './TeacherModule.css';
 import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { getTeacherHeaderActions, showTeacherPopup } from './teacherHeaderActions';
 
 const ExamPageIcon = ({ type }) => {
   const paths = {
@@ -172,11 +172,10 @@ export default function TeacherExams() {
 
   const handleScheduleSubmit = async () => {
     if (!scheduleForm.examTitle || !scheduleForm.subjectId || !scheduleForm.classId || !scheduleForm.examDate || !scheduleForm.duration || !scheduleForm.totalMarks || !scheduleForm.passingMarks) {
-      Swal.fire({
+      showTeacherPopup({
         icon: 'info',
         title: 'Review details',
-        text: 'Please complete exam title, type, subject, class, date, duration, and marks.',
-        confirmButtonColor: '#1d4ed8'
+        text: 'Please complete exam title, type, subject, class, date, duration, and marks.'
       });
       return;
     }
@@ -207,19 +206,54 @@ export default function TeacherExams() {
       });
       const data = await response.json();
       if (data.success) {
-        Swal.fire('Scheduled', 'Exam scheduled successfully.', 'success');
+        showTeacherPopup({
+          title: 'Scheduled',
+          text: 'Exam scheduled successfully.',
+          icon: 'success'
+        });
         setScheduleForm(initialScheduleForm);
         setIsScheduleOpen(false);
         fetchExams();
       } else {
-        Swal.fire('Error', data.message || 'Could not schedule exam.', 'error');
+        showTeacherPopup({
+          title: 'Error',
+          text: data.message || 'Could not schedule exam.',
+          icon: 'error'
+        });
       }
     } catch (error) {
-      Swal.fire('Error', 'Server connection failed.', 'error');
+      showTeacherPopup({
+        title: 'Error',
+        text: 'Server connection failed.',
+        icon: 'error'
+      });
     } finally {
       setIsSubmittingSchedule(false);
     }
   };
+  const headerActions = getTeacherHeaderActions({
+    pageName: 'Exams',
+    exportFileName: 'teacher-exams.csv',
+    onRefresh: fetchExams,
+    exportColumns: [
+      { key: 'title', label: 'Exam' },
+      { key: 'subject', label: 'Subject' },
+      { key: 'className', label: 'Class' },
+      { key: 'date', label: 'Date' },
+      { key: 'time', label: 'Time' },
+      { key: 'marks', label: 'Marks' },
+      { key: 'status', label: 'Status' }
+    ],
+    exportRows: filteredExams.map((exam) => ({
+      title: exam.exam_title || '-',
+      subject: exam.subject_name || '-',
+      className: `${exam.grade || '-'} ${exam.section ? `- Section ${exam.section}` : ''}`,
+      date: formatExamDate(exam.exam_date),
+      time: exam.exam_time || '10:00 AM',
+      marks: Number(exam.total_marks || 100).toFixed(2),
+      status: exam.status || 'Scheduled'
+    }))
+  });
 
   return (
     <DashboardLayout userRole="teacher" currentPath="/teacher/exams" userName={teacherName} userInitials={teacherInitials}>
@@ -234,7 +268,7 @@ export default function TeacherExams() {
           </div>
           <button className="tm-exm-schedule-btn" type="button" onClick={() => setIsScheduleOpen(true)}><ExamPageIcon type="plus" /> Schedule exam</button>
         </div>
-        <Header />
+        <Header {...headerActions} />
 
         <TeacherListView
           storageKey="edusync.teacher.exams.columnView.v1"

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName, isStudentClassRecord } from './studentAccess';
+import { getStudentHeaderActions } from './studentHeaderActions';
 import './StudentModule.css';
 
 const ReportIcon = ({ type }) => {
@@ -96,6 +97,16 @@ export default function StudentReports() {
       badgeTone: ''
     }
   ];
+  const headerActions = getStudentHeaderActions({
+    pageName: 'My reports',
+    exportFileName: 'student-reports.csv',
+    exportColumns: [
+      { key: 'title', label: 'Summary' },
+      { key: 'detail', label: 'Detail' },
+      { key: 'badge', label: 'Value' }
+    ],
+    exportRows: summaries
+  });
 
   return (
     <DashboardLayout userRole="student" currentPath="/student/reports" userName={studentName} userInitials={initials}>
@@ -105,10 +116,10 @@ export default function StudentReports() {
             <h2>My reports</h2>
             <p>Personal academic, attendance, and fee summary</p>
           </div>
-          <div className="sm-avatar">{initials}</div>
+          <a className="sm-avatar sm-avatar-link" href="/student/profile" aria-label="Open profile">{initials}</a>
         </div>
 
-        <Header />
+        <Header {...headerActions} />
 
         <div className="sm-report-stats">
           {reportStats.map((item) => (

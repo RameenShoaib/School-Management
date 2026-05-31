@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName, isStudentClassRecord } from './studentAccess';
+import { getStudentHeaderActions } from './studentHeaderActions';
 import './StudentModule.css';
 
 const StudentDashIcon = ({ type }) => {
@@ -114,6 +115,16 @@ export default function StudentDashboard() {
     { label: 'Exams', detail: 'View your exam schedule and results', href: '/student/exams', icon: 'exam', tone: 'green' },
     { label: 'Fee management', detail: 'View your fee history', href: '/student/fees', icon: 'wallet', tone: 'orange' }
   ];
+  const headerActions = getStudentHeaderActions({
+    pageName: 'Student dashboard',
+    exportFileName: 'student-dashboard.csv',
+    exportColumns: [
+      { key: 'metric', label: 'Metric' },
+      { key: 'value', label: 'Value' },
+      { key: 'detail', label: 'Detail' }
+    ],
+    exportRows: stats.map((item) => ({ metric: item.label, value: item.value, detail: item.detail }))
+  });
 
   return (
     <DashboardLayout userRole="student" currentPath="/student/dashboard" userName={studentName} userInitials={initials}>
@@ -122,10 +133,10 @@ export default function StudentDashboard() {
           <h2>Student dashboard</h2>
           <p>{loading ? 'Loading your portal...' : `${student?.grade || 'Grade'} - Section ${student?.section || '-'}`}</p>
         </div>
-        <div className="sm-avatar">{initials}</div>
+        <a className="sm-avatar sm-avatar-link" href="/student/profile" aria-label="Open profile">{initials}</a>
       </div>
 
-      <Header />
+      <Header {...headerActions} />
 
       <div className="sm-dashboard-stats">
         {stats.map((item) => (

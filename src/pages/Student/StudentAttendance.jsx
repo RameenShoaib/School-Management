@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName } from './studentAccess';
 import StudentListView from './StudentListView';
+import { getStudentHeaderActions, showStudentDetails } from './studentHeaderActions';
 import './StudentModule.css';
 
 const AttendanceIcon = ({ type }) => {
@@ -86,6 +87,22 @@ export default function StudentAttendance() {
     { key: 'remarks', label: 'Remarks', defaultWidth: 300, visible: true },
     { key: 'markedBy', label: 'Marked by', defaultWidth: 260, visible: true }
   ];
+  const headerActions = getStudentHeaderActions({
+    pageName: 'Attendance',
+    exportFileName: 'student-attendance.csv',
+    exportColumns: [
+      { key: 'dateLabel', label: 'Date' },
+      { key: 'status', label: 'Status' },
+      { key: 'remarks', label: 'Remarks' },
+      { key: 'markedByLabel', label: 'Marked by' }
+    ],
+    exportRows: filteredAttendance.map((item) => ({
+      ...item,
+      dateLabel: item.attendance_date ? new Date(item.attendance_date).toLocaleDateString() : '-',
+      remarks: item.remarks || '-',
+      markedByLabel: getMarkedByName(item.marked_by)
+    }))
+  });
 
   const renderCell = (item, column) => {
     switch (column.key) {
@@ -110,10 +127,10 @@ export default function StudentAttendance() {
             <h2>Attendance</h2>
             <p>Your attendance record and daily status history</p>
           </div>
-          <div className="sm-avatar">{initials}</div>
+          <a className="sm-avatar sm-avatar-link" href="/student/profile" aria-label="Open profile">{initials}</a>
         </div>
 
-        <Header />
+        <Header {...headerActions} />
 
         <div className="sm-attendance-stats">
           <div className="sm-attendance-stat">
@@ -149,7 +166,17 @@ export default function StudentAttendance() {
           actionsHeader=""
           actionsWidth={72}
           renderActions={(item) => (
-            <button className="sm-attendance-action" type="button" aria-label="Attendance options" onClick={() => window.alert(`Attendance: ${item.status || '-'}\nDate: ${item.attendance_date ? new Date(item.attendance_date).toLocaleDateString() : '-'}\nMarked by: ${getMarkedByName(item.marked_by)}`)}>
+            <button
+              className="sm-attendance-action"
+              type="button"
+              aria-label="Attendance options"
+              onClick={() => showStudentDetails('Attendance record', [
+                { label: 'Date', value: item.attendance_date ? new Date(item.attendance_date).toLocaleDateString() : '-' },
+                { label: 'Status', value: item.status || '-' },
+                { label: 'Remarks', value: item.remarks || '-' },
+                { label: 'Marked by', value: getMarkedByName(item.marked_by) }
+              ])}
+            >
               <AttendanceIcon type="dots" />
             </button>
           )}

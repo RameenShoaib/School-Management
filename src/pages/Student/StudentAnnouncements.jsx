@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import StudentListView from './StudentListView';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName } from './studentAccess';
+import { getStudentHeaderActions, showStudentDetails } from './studentHeaderActions';
 import './StudentModule.css';
 
 const AnnouncementIcon = ({ type }) => {
@@ -79,6 +80,18 @@ export default function StudentAnnouncements() {
   ];
 
   const getTone = (type) => type === 'Urgent' ? 'urgent' : type === 'Fee' ? 'fee' : 'event';
+  const headerActions = getStudentHeaderActions({
+    pageName: 'Announcements',
+    exportFileName: 'student-announcements.csv',
+    exportColumns: [
+      { key: 'title', label: 'Announcement' },
+      { key: 'type', label: 'Type' },
+      { key: 'date', label: 'Date' },
+      { key: 'time', label: 'Time' },
+      { key: 'detail', label: 'Detail' }
+    ],
+    exportRows: filtered
+  });
 
   const renderCell = (item, column) => {
     const tone = getTone(item.type);
@@ -110,10 +123,10 @@ export default function StudentAnnouncements() {
             <h2>Announcements</h2>
             <p>Important notices from your school</p>
           </div>
-          <div className="sm-avatar">{initials}</div>
+          <a className="sm-avatar sm-avatar-link" href="/student/profile" aria-label="Open profile">{initials}</a>
         </div>
 
-        <Header />
+        <Header {...headerActions} />
 
         <StudentListView
           storageKey="student-announcements-columns-v2"
@@ -130,7 +143,16 @@ export default function StudentAnnouncements() {
           actionsHeader=""
           actionsWidth={72}
           renderActions={(item) => (
-            <button className="sm-announcement-action" type="button" aria-label="Announcement options" onClick={() => window.alert(`${item.title}\n\n${item.detail}`)}>
+            <button
+              className="sm-announcement-action"
+              type="button"
+              aria-label="Announcement options"
+              onClick={() => showStudentDetails(item.title, [
+                { label: 'Type', value: item.type },
+                { label: 'Date', value: `${item.date} - ${item.time}` },
+                { label: 'Detail', value: item.detail }
+              ])}
+            >
               <AnnouncementIcon type="dots" />
             </button>
           )}

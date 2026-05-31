@@ -4,6 +4,7 @@ import Header from '../../components/Header/header';
 import TeacherListView from './TeacherListView';
 import './TeacherModule.css';
 import { API_BASE, filterAssignedClasses, findCurrentTeacher, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { getTeacherHeaderActions } from './teacherHeaderActions';
 
 const SubjectPageIcon = ({ type }) => {
   const paths = {
@@ -95,6 +96,28 @@ export default function TeacherSubjects() {
     const matchesCategory = categoryFilter === 'All' || (subject.subject_category || 'Core') === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+  const headerActions = getTeacherHeaderActions({
+    pageName: 'Subjects',
+    exportFileName: 'teacher-subjects.csv',
+    exportColumns: [
+      { key: 'name', label: 'Subject' },
+      { key: 'code', label: 'Code' },
+      { key: 'grade', label: 'Grade' },
+      { key: 'category', label: 'Category' },
+      { key: 'weeklyPeriods', label: 'Weekly periods' },
+      { key: 'lab', label: 'Lab' },
+      { key: 'teacher', label: 'Teacher' }
+    ],
+    exportRows: filteredSubjects.map((subject) => ({
+      name: subject.subject_name || '-',
+      code: subject.subject_code || '-',
+      grade: subject.grade_level || '-',
+      category: subject.subject_category || 'Core',
+      weeklyPeriods: subject.weekly_periods || '-',
+      lab: subject.has_lab ? 'Yes' : 'No',
+      teacher: subject.teacher_name || 'No teacher assigned'
+    }))
+  });
 
   const renderSubjectCell = (subject, column) => {
     const category = subject.subject_category || 'Core';
@@ -135,7 +158,7 @@ export default function TeacherSubjects() {
           </div>
           <div className="tm-profile-chip tm-sub-profile">{teacherInitials}</div>
         </div>
-        <Header />
+        <Header {...headerActions} />
 
         <TeacherListView
           storageKey="edusync.teacher.subjects.columnView.v1"

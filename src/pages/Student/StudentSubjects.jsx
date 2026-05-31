@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName } from './studentAccess';
 import StudentListView from './StudentListView';
+import { getStudentHeaderActions, showStudentDetails } from './studentHeaderActions';
 import './StudentModule.css';
 
 const SubjectIcon = ({ type }) => {
@@ -68,6 +69,19 @@ export default function StudentSubjects() {
     { key: 'weeklyPeriods', label: 'Weekly periods', defaultWidth: 170, visible: true },
     { key: 'lab', label: 'Lab', defaultWidth: 120, visible: true }
   ];
+  const headerActions = getStudentHeaderActions({
+    pageName: 'Subjects',
+    exportFileName: 'student-subjects.csv',
+    exportColumns: [
+      { key: 'subject_name', label: 'Subject' },
+      { key: 'subject_code', label: 'Code' },
+      { key: 'subject_category', label: 'Category' },
+      { key: 'teacher_name', label: 'Teacher' },
+      { key: 'weekly_periods', label: 'Weekly periods' },
+      { key: 'labLabel', label: 'Lab' }
+    ],
+    exportRows: filteredSubjects.map((subject) => ({ ...subject, labLabel: subject.has_lab ? 'Yes' : 'No' }))
+  });
 
   const renderCell = (subject, column) => {
     const isMath = subject.subject_name?.toLowerCase().includes('math');
@@ -107,10 +121,10 @@ export default function StudentSubjects() {
             <h2>Subjects</h2>
             <p>Subjects and curriculum assigned to your grade</p>
           </div>
-          <div className="sm-avatar">{initials}</div>
+          <a className="sm-avatar sm-avatar-link" href="/student/profile" aria-label="Open profile">{initials}</a>
         </div>
 
-        <Header />
+        <Header {...headerActions} />
 
         <StudentListView
           storageKey="student-subjects-columns-v2"
@@ -127,7 +141,18 @@ export default function StudentSubjects() {
           actionsHeader=""
           actionsWidth={72}
           renderActions={(subject) => (
-            <button className="sm-subject-action" type="button" aria-label="Subject options" onClick={() => window.alert(`${subject.subject_name || 'Subject'}\nCode: ${subject.subject_code || '-'}\nTeacher: ${subject.teacher_name || '-'}`)}>
+            <button
+              className="sm-subject-action"
+              type="button"
+              aria-label="Subject options"
+              onClick={() => showStudentDetails(subject.subject_name || 'Subject', [
+                { label: 'Code', value: subject.subject_code || '-' },
+                { label: 'Category', value: subject.subject_category || 'Core' },
+                { label: 'Teacher', value: subject.teacher_name || '-' },
+                { label: 'Weekly periods', value: subject.weekly_periods || '-' },
+                { label: 'Lab', value: subject.has_lab ? 'Yes' : 'No' }
+              ])}
+            >
               <SubjectIcon type="dots" />
             </button>
           )}

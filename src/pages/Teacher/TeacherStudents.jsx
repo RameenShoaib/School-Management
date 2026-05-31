@@ -4,6 +4,7 @@ import Header from '../../components/Header/header';
 import TeacherListView from './TeacherListView';
 import './TeacherModule.css';
 import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { getTeacherHeaderActions } from './teacherHeaderActions';
 
 const StudentPageIcon = ({ type }) => {
   const paths = {
@@ -117,6 +118,30 @@ export default function TeacherStudents() {
 
     return values[column.key] || '-';
   };
+  const headerActions = getTeacherHeaderActions({
+    pageName: 'Students',
+    exportFileName: 'teacher-students.csv',
+    exportColumns: [
+      { key: 'name', label: 'Student' },
+      { key: 'rollNo', label: 'Roll no' },
+      { key: 'className', label: 'Class' },
+      { key: 'guardian', label: 'Guardian' },
+      { key: 'feeStatus', label: 'Fee status' },
+      { key: 'status', label: 'Status' },
+      { key: 'email', label: 'Email' },
+      { key: 'phone', label: 'Phone' }
+    ],
+    exportRows: filteredStudents.map((student) => ({
+      name: `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student',
+      rollNo: student.roll_no || '-',
+      className: `${student.grade || '-'} - Section ${student.section || '-'}`,
+      guardian: student.guardian_name || '-',
+      feeStatus: student.fee_status || 'Pending',
+      status: student.status || 'Active',
+      email: student.email || '-',
+      phone: student.phone || '-'
+    }))
+  });
 
   return (
     <DashboardLayout userRole="teacher" currentPath="/teacher/students" userName={teacherName} userInitials={teacherInitials}>
@@ -128,7 +153,7 @@ export default function TeacherStudents() {
           </div>
           <div className="tm-profile-chip tm-stu-profile">{teacherInitials}</div>
         </div>
-        <Header />
+        <Header {...headerActions} />
 
         <TeacherListView
           storageKey="edusync.teacher.students.columnView.v1"

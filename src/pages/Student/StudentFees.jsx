@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName } from './studentAccess';
 import StudentListView from './StudentListView';
+import { getStudentHeaderActions, showStudentDetails } from './studentHeaderActions';
 import './StudentModule.css';
 
 const FeeIcon = ({ type }) => {
@@ -72,6 +73,27 @@ export default function StudentFees() {
     { key: 'method', label: 'Method', defaultWidth: 160, visible: true },
     { key: 'status', label: 'Status', defaultWidth: 150, visible: true }
   ];
+  const headerActions = getStudentHeaderActions({
+    pageName: 'Fee management',
+    exportFileName: 'student-fees.csv',
+    exportColumns: [
+      { key: 'fee_month', label: 'Month' },
+      { key: 'paymentDateLabel', label: 'Payment date' },
+      { key: 'amount_due', label: 'Due' },
+      { key: 'amount_received', label: 'Received' },
+      { key: 'payment_method', label: 'Method' },
+      { key: 'statusLabel', label: 'Status' }
+    ],
+    exportRows: filteredFees.map((item) => {
+      const isPaid = Number(item.amount_received || 0) >= Number(item.amount_due || 0) && Number(item.amount_due || 0) > 0;
+      return {
+        ...item,
+        paymentDateLabel: item.payment_date ? new Date(item.payment_date).toLocaleDateString() : '-',
+        payment_method: item.payment_method || '-',
+        statusLabel: isPaid ? 'Paid' : 'Pending'
+      };
+    })
+  });
 
   const renderCell = (item, column) => {
     const isPaid = Number(item.amount_received || 0) >= Number(item.amount_due || 0) && Number(item.amount_due || 0) > 0;
@@ -101,10 +123,10 @@ export default function StudentFees() {
             <h2>Fee management</h2>
             <p>Fee payment history and current account status</p>
           </div>
-          <div className="sm-avatar">{initials}</div>
+          <a className="sm-avatar sm-avatar-link" href="/student/profile" aria-label="Open profile">{initials}</a>
         </div>
 
-        <Header />
+        <Header {...headerActions} />
 
         <div className="sm-fee-stats">
           <div className="sm-fee-stat">
@@ -140,7 +162,17 @@ export default function StudentFees() {
           actionsHeader=""
           actionsWidth={72}
           renderActions={(item) => (
-            <button className="sm-fee-action" type="button" aria-label="Payment options" onClick={() => window.alert(`${item.fee_month || 'Fee record'}\nDue: PKR ${Number(item.amount_due || 0).toFixed(2)}\nReceived: PKR ${Number(item.amount_received || 0).toFixed(2)}`)}>
+            <button
+              className="sm-fee-action"
+              type="button"
+              aria-label="Payment options"
+              onClick={() => showStudentDetails(item.fee_month || 'Fee record', [
+                { label: 'Payment date', value: item.payment_date ? new Date(item.payment_date).toLocaleDateString() : '-' },
+                { label: 'Due', value: `PKR ${Number(item.amount_due || 0).toFixed(2)}` },
+                { label: 'Received', value: `PKR ${Number(item.amount_received || 0).toFixed(2)}` },
+                { label: 'Method', value: item.payment_method || '-' }
+              ])}
+            >
               <FeeIcon type="dots" />
             </button>
           )}

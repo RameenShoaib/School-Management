@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import './TeacherModule.css';
 import { API_BASE, findCurrentTeacher, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { showTeacherPopup } from './teacherHeaderActions';
 
 const reportFallbacks = [
   { report_id: 'academic-05292026', report_name: 'ACADEMIC Export - 5/29/2026', report_type: 'Academic', format: 'PDF', file_name: 'academic_5_29_2026.pdf', created_at: '2026-05-29T10:30:00' },
@@ -105,7 +105,10 @@ export default function TeacherReports() {
   const handleExportSelected = () => {
     const selected = reportRows.filter((report) => selectedReports.includes(report.report_id));
     if (!selected.length) {
-      Swal.fire('No reports selected', 'Select at least one report card first.', 'info');
+      showTeacherPopup({
+        title: 'No reports selected',
+        text: 'Select at least one report card first.'
+      });
       return;
     }
     selected.forEach(downloadReport);
@@ -125,13 +128,25 @@ export default function TeacherReports() {
       });
       const data = await response.json();
       if (data.success) {
-        Swal.fire('Generated', 'Report generated successfully.', 'success');
+        showTeacherPopup({
+          title: 'Generated',
+          text: 'Report generated successfully.',
+          icon: 'success'
+        });
         fetchReports();
       } else {
-        Swal.fire('Error', data.message || 'Could not generate report.', 'error');
+        showTeacherPopup({
+          title: 'Error',
+          text: data.message || 'Could not generate report.',
+          icon: 'error'
+        });
       }
     } catch (error) {
-      Swal.fire('Error', 'Server connection failed.', 'error');
+      showTeacherPopup({
+        title: 'Error',
+        text: 'Server connection failed.',
+        icon: 'error'
+      });
     }
   };
 
@@ -153,11 +168,19 @@ export default function TeacherReports() {
         </div>
 
         <Header
+          onEdit={() => showTeacherPopup({
+            title: 'Select a report',
+            text: 'Choose a report card before editing report details.'
+          })}
           onRefresh={fetchReports}
           onExport={handleExportSelected}
           onDelete={() => {
             setSelectedReports([]);
-            Swal.fire('Selection cleared', 'Selected report cards have been cleared.', 'success');
+            showTeacherPopup({
+              title: 'Selection cleared',
+              text: 'Selected report cards have been cleared.',
+              icon: 'success'
+            });
           }}
         />
 

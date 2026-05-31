@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminColumnDrawer from '../../components/AdminColumnDrawer';
 import AdminListView from '../../components/AdminListView';
+import { showTeacherPopup } from './teacherHeaderActions';
 
 const TeacherListIcon = ({ type }) => {
   const paths = {
@@ -150,7 +151,19 @@ export default function TeacherListView({
         searchIcon={<TeacherListIcon type="search" />}
         configureIcon={<TeacherListIcon type="columns" />}
         onConfigure={openColumnModal}
-        filterButton={filterButton || <button className="admin-list-filter-btn" type="button" aria-label="Filter"><TeacherListIcon type="filter" /></button>}
+        filterButton={filterButton || (
+          <button
+            className="admin-list-filter-btn"
+            type="button"
+            aria-label="Filter"
+            onClick={() => showTeacherPopup({
+              title: 'Filter options',
+              text: 'Use the search field or configure columns to narrow this list.'
+            })}
+          >
+            <TeacherListIcon type="filter" />
+          </button>
+        )}
         columns={visibleColumns}
         rows={currentRecords}
         getRowId={getRowId}

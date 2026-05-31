@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName } from './studentAccess';
+import { getStudentHeaderActions } from './studentHeaderActions';
 import './StudentModule.css';
 
 const ProfileIcon = ({ type }) => {
@@ -73,6 +74,23 @@ export default function StudentProfile() {
     { label: 'Guardian', value: student?.guardian_name || '-', icon: 'guardian', tone: 'purple' },
     { label: 'Guardian contact', value: student?.guardian_contact || '-', icon: 'phone', tone: 'purple' }
   ];
+  const headerActions = getStudentHeaderActions({
+    pageName: 'My profile',
+    exportFileName: 'student-profile.csv',
+    exportColumns: [
+      { key: 'field', label: 'Field' },
+      { key: 'value', label: 'Value' }
+    ],
+    exportRows: [
+      ...studentInfo.map((item) => ({ field: item.label, value: item.value })),
+      ...guardianInfo.map((item) => ({ field: item.label, value: item.value })),
+      { field: 'Fee status', value: student?.fee_status || 'Pending' },
+      { field: 'Status', value: student?.status || 'Active' },
+      { field: 'Total fees', value: `PKR ${totalFees.toFixed(2)}` },
+      { field: 'Paid amount', value: `PKR ${paidAmount.toFixed(2)}` },
+      { field: 'Due amount', value: `PKR ${dueAmount.toFixed(2)}` }
+    ]
+  });
 
   return (
     <DashboardLayout userRole="student" currentPath="/student/profile" userName={studentName} userInitials={initials}>
@@ -81,10 +99,10 @@ export default function StudentProfile() {
           <h2>My profile</h2>
           <p>Personal, academic, guardian, and fee information</p>
         </div>
-        <div className="sm-avatar">{initials}</div>
+        <a className="sm-avatar sm-avatar-link" href="/student/profile" aria-label="Open profile">{initials}</a>
       </div>
 
-      <Header />
+      <Header {...headerActions} />
 
       {loading ? (
         <section className="sm-panel"><div className="sm-empty">Loading profile...</div></section>

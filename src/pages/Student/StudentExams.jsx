@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName, isStudentClassRecord } from './studentAccess';
 import StudentListView from './StudentListView';
+import { getStudentHeaderActions, showStudentDetails } from './studentHeaderActions';
 import './StudentModule.css';
 
 const ExamIcon = ({ type }) => {
@@ -71,6 +72,24 @@ export default function StudentExams() {
     { key: 'marks', label: 'Marks', defaultWidth: 130, visible: true },
     { key: 'status', label: 'Status', defaultWidth: 150, visible: true }
   ];
+  const headerActions = getStudentHeaderActions({
+    pageName: 'Exams',
+    exportFileName: 'student-exams.csv',
+    exportColumns: [
+      { key: 'exam_title', label: 'Exam' },
+      { key: 'subject_name', label: 'Subject' },
+      { key: 'dateLabel', label: 'Date' },
+      { key: 'timeLabel', label: 'Time' },
+      { key: 'total_marks', label: 'Marks' },
+      { key: 'statusLabel', label: 'Status' }
+    ],
+    exportRows: filteredExams.map((exam) => ({
+      ...exam,
+      dateLabel: exam.exam_date ? new Date(exam.exam_date).toLocaleDateString() : '-',
+      timeLabel: exam.end_time ? `${exam.start_time || '-'} - ${exam.end_time}` : exam.start_time || '-',
+      statusLabel: exam.status === 'Completed' ? 'Completed' : 'Scheduled'
+    }))
+  });
 
   const renderCell = (exam, column) => {
     const subject = (exam.subject_name || '').toLowerCase();
@@ -129,10 +148,10 @@ export default function StudentExams() {
             <h2>Exams</h2>
             <p>Exam schedule and assessment details for your grade</p>
           </div>
-          <div className="sm-avatar">{initials}</div>
+          <a className="sm-avatar sm-avatar-link" href="/student/profile" aria-label="Open profile">{initials}</a>
         </div>
 
-        <Header />
+        <Header {...headerActions} />
 
         <div className="sm-exams-list-shell">
           <StudentListView
@@ -150,7 +169,18 @@ export default function StudentExams() {
             actionsHeader=""
             actionsWidth={72}
             renderActions={(exam) => (
-              <button className="sm-exam-action" type="button" aria-label="Exam options" onClick={() => window.alert(`${exam.exam_title || 'Exam'}\nSubject: ${exam.subject_name || '-'}\nDate: ${exam.exam_date ? new Date(exam.exam_date).toLocaleDateString() : '-'}`)}>
+              <button
+                className="sm-exam-action"
+                type="button"
+                aria-label="Exam options"
+                onClick={() => showStudentDetails(exam.exam_title || 'Exam', [
+                  { label: 'Subject', value: exam.subject_name || '-' },
+                  { label: 'Date', value: exam.exam_date ? new Date(exam.exam_date).toLocaleDateString() : '-' },
+                  { label: 'Time', value: exam.end_time ? `${exam.start_time || '-'} - ${exam.end_time}` : exam.start_time || '-' },
+                  { label: 'Marks', value: exam.total_marks || 100 },
+                  { label: 'Status', value: exam.status === 'Completed' ? 'Completed' : 'Scheduled' }
+                ])}
+              >
                 <ExamIcon type="dots" />
               </button>
             )}

@@ -4,6 +4,7 @@ import Header from '../../components/Header/header';
 import TeacherListView from './TeacherListView';
 import './TeacherModule.css';
 import { API_BASE, filterAssignedClasses, findCurrentTeacher, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { getTeacherHeaderActions } from './teacherHeaderActions';
 
 const ClassPageIcon = ({ type }) => {
   const paths = {
@@ -88,6 +89,28 @@ export default function TeacherClasses() {
     }
     return 'No subjects assigned';
   };
+  const headerActions = getTeacherHeaderActions({
+    pageName: 'Classes',
+    exportFileName: 'teacher-classes.csv',
+    exportColumns: [
+      { key: 'className', label: 'Class' },
+      { key: 'room', label: 'Room' },
+      { key: 'academicYear', label: 'Academic year' },
+      { key: 'subjects', label: 'Subjects' },
+      { key: 'schedule', label: 'Schedule' },
+      { key: 'status', label: 'Status' },
+      { key: 'capacity', label: 'Capacity' }
+    ],
+    exportRows: filteredClasses.map((item) => ({
+      className: `${item.grade || '-'} - Section ${item.section || '-'}`,
+      room: item.room_number || 'N/A',
+      academicYear: item.academic_year || 'Current',
+      subjects: getSubjectText(item),
+      schedule: `${item.start_time || '--'} - ${item.end_time || '--'}`,
+      status: item.status || 'Active',
+      capacity: item.max_capacity || 0
+    }))
+  });
 
   const renderClassCell = (item, column) => {
     const subjectText = getSubjectText(item);
@@ -126,7 +149,7 @@ export default function TeacherClasses() {
           </div>
           <div className="tm-profile-chip tm-cls-profile">{teacherInitials}</div>
         </div>
-        <Header />
+        <Header {...headerActions} />
 
         <TeacherListView
           storageKey="edusync.teacher.classes.columnView.v1"

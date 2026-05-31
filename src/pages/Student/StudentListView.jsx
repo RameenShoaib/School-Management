@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminColumnDrawer from '../../components/AdminColumnDrawer';
 import AdminListView from '../../components/AdminListView';
+import { showStudentPopup } from './studentHeaderActions';
 
 const StudentListIcon = ({ type }) => {
   const paths = {
@@ -74,7 +75,10 @@ export default function StudentListView({
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 7;
   const showFilterMessage = () => {
-    window.alert('Filtering is available through the search box and configurable columns.');
+    showStudentPopup({
+      title: 'Filter options',
+      text: 'Use the search box to filter this list, or configure columns to choose what you want to see.'
+    });
   };
 
   useEffect(() => {
