@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
+import AdminListView from '../../components/AdminListView';
+import AdminColumnDrawer from '../../components/AdminColumnDrawer';
 import './students.css';
 
 /* Icons */
@@ -14,8 +16,27 @@ const SvgEyeOff = () => <svg fill="none" stroke="currentColor" strokeWidth="2" v
 const SvgGrip = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M9 5.5A1.5 1.5 0 1 1 6 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9-13A1.5 1.5 0 1 1 15 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>;
 const IconStudent = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>;
 const IconUser = () => <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>;
-const IconFolder = () => <svg width="24" height="24" fill="#fbbf24" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>;
-const IconInfo = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>;
+const IconLine = ({ type }) => {
+  const paths = {
+    book: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H7a3 3 0 0 0-3 3V5.5Z"/><path d="M4 19a3 3 0 0 1 3-3h13"/><path d="M8 7h8"/></>,
+    calendar: <><path d="M8 2v4M16 2v4"/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/></>,
+    users: <><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M2 21v-2a4 4 0 0 1 3-3.87"/></>,
+    school: <><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/><path d="M9 10h.01M15 10h.01"/></>,
+    phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.78.6 2.63a2 2 0 0 1-.45 2.11L8 9.72a16 16 0 0 0 6.28 6.28l1.26-1.26a2 2 0 0 1 2.11-.45c.85.28 1.73.48 2.63.6A2 2 0 0 1 22 16.92Z"/>,
+    mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>,
+    briefcase: <><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M2 12h20"/></>,
+    tag: <><path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z"/><path d="M7.5 7.5h.01"/></>,
+    file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></>,
+    upload: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></>,
+    note: <><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></>,
+    check: <path d="m20 6-11 11-5-5"/>,
+    plus: <path d="M12 5v14M5 12h14"/>,
+    close: <path d="M18 6 6 18M6 6l12 12"/>,
+    arrowRight: <path d="M5 12h14M13 5l7 7-7 7"/>,
+    arrowLeft: <path d="M19 12H5M11 19l-7-7 7-7"/>,
+  };
+  return <svg className="st-line-icon" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{paths[type] || paths.file}</svg>;
+};
 
 // Pakistan Standard Time Formatter
 const formatDateToPKT = (dateString) => {
@@ -276,19 +297,69 @@ export default function Students() {
   };
   const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+  const focusStudentStep = (stepNumber, fieldName) => {
+    setTimeout(() => {
+      const modalBody = document.querySelector('.st-modal-body-scroll');
+      const targetField = fieldName
+        ? document.querySelector(`.st-modal-wide [name="${fieldName}"]`)
+        : document.querySelector('.st-modal-wide input, .st-modal-wide select, .st-modal-wide textarea');
+
+      modalBody?.scrollTo({ top: 0, behavior: 'smooth' });
+      targetField?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      targetField?.focus?.({ preventScroll: true });
+    }, 120);
+  };
+
+  const showStudentFormNotice = (stepNumber, message, fieldName) => {
+    Swal.fire({
+      title: 'Required fields missing',
+      text: message,
+      icon: 'warning',
+      confirmButtonText: `Go to Step ${stepNumber}`,
+      target: document.querySelector('.st-modal-wide') || document.body,
+      customClass: {
+        container: 'st-swal-container',
+        popup: 'st-swal-popup',
+        icon: 'st-swal-icon',
+        title: 'st-swal-title',
+        htmlContainer: 'st-swal-text',
+        confirmButton: 'st-swal-confirm'
+      },
+      buttonsStyling: false
+    }).then(() => {
+      setStep(stepNumber);
+      focusStudentStep(stepNumber, fieldName);
+    });
+  };
 
   const handleFinalSubmit = async () => {
-    if (!formData.firstName || !formData.lastName || !formData.dob || !formData.gender || !formData.address) {
-      setStep(1); alert("Please fill all required (*) fields in Step 1."); return;
+    const firstMissingStep1 = [
+      ['firstName', formData.firstName],
+      ['lastName', formData.lastName],
+      ['dob', formData.dob],
+      ['gender', formData.gender],
+      ['address', formData.address]
+    ].find(([, value]) => !value)?.[0];
+    if (firstMissingStep1) {
+      showStudentFormNotice(1, "Please fill all required (*) fields in Step 1.", firstMissingStep1); return;
     }
-    if (!formData.grade || !formData.section || !formData.admissionDate) {
-      setStep(2); alert("Please fill all required (*) fields in Step 2."); return;
+    const firstMissingStep2 = [
+      ['grade', formData.grade],
+      ['section', formData.section],
+      ['admissionDate', formData.admissionDate]
+    ].find(([, value]) => !value)?.[0];
+    if (firstMissingStep2) {
+      showStudentFormNotice(2, "Please fill all required (*) fields in Step 2.", firstMissingStep2); return;
     }
-    if (!formData.guardianName || !formData.guardianContact) {
-      setStep(3); alert("Please fill all required (*) fields in Step 3."); return;
+    const firstMissingStep3 = [
+      ['guardianName', formData.guardianName],
+      ['guardianContact', formData.guardianContact]
+    ].find(([, value]) => !value)?.[0];
+    if (firstMissingStep3) {
+      showStudentFormNotice(3, "Please fill all required (*) fields in Step 3.", firstMissingStep3); return;
     }
     if (!formData.monthlyFee) {
-      setStep(4); alert("Please enter the Monthly Fee in Step 4."); return;
+      showStudentFormNotice(4, "Please enter the Monthly Fee in Step 4.", 'monthlyFee'); return;
     }
 
     setIsSubmitting(true);
@@ -299,8 +370,8 @@ export default function Students() {
       const response = await fetch(url, { method: method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
       const data = await response.json();
       if (data.success) { setIsModalOpen(false); fetchStudents(); }
-      else { alert("Error: " + data.message); }
-    } catch (err) { alert("Failed to connect to server."); }
+      else { Swal.fire('Could not save student', data.message || 'Please try again.', 'error'); }
+    } catch (err) { Swal.fire('Connection failed', 'Failed to connect to server.', 'error'); }
     finally { setIsSubmitting(false); }
   };
 
@@ -592,134 +663,67 @@ export default function Students() {
         }}
       />
 
-      <div className="st-table-card">
-        <div className="st-search-area">
-          <div className="st-search-box">
-            <SvgSearch />
-            <input type="text" placeholder="Search by name, roll no..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          </div>
-          <div className="st-view-tools">
-            <button className="st-configure-btn" type="button" onClick={openColumnModal}>
-              <SvgColumns />
-              Configure columns
-            </button>
-            <button className="st-filter-btn" type="button" aria-label="Filter students" onClick={() => Swal.fire('Filter students', 'Search now scans only the columns visible in this view.', 'info')}><SvgFilter /></button>
-          </div>
-        </div>
+      <AdminListView
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search by name, roll no..."
+        searchIcon={<SvgSearch />}
+        configureIcon={<SvgColumns />}
+        onConfigure={openColumnModal}
+        filterButton={<button className="admin-list-filter-btn" type="button" aria-label="Filter students" onClick={() => Swal.fire('Filter students', 'Search now scans only the columns visible in this view.', 'info')}><SvgFilter /></button>}
+        columns={visibleColumns}
+        rows={currentRecords}
+        getRowId={(record) => record.id}
+        renderCell={renderColumnValue}
+        isLoading={isLoading}
+        selectedRows={selectedRows}
+        isAllSelected={isAllSelected}
+        onSelectAll={handleSelectAll}
+        onSelectRow={handleSelectRow}
+        tableDragColumnKey={tableDragColumnKey}
+        tableDragTargetKey={tableDragTargetKey}
+        onColumnDragStart={handleColumnDragStart}
+        onColumnDragOver={(event, key) => {
+          event.preventDefault();
+          setTableDragTargetKey(key);
+        }}
+        onColumnDragLeave={(key) => setTableDragTargetKey((current) => current === key ? null : current)}
+        onColumnDrop={handleColumnDrop}
+        onColumnDragEnd={handleColumnDragEnd}
+        onColumnResizeStart={startColumnResize}
+        paginationLabel={`Showing ${currentRecords.length > 0 ? firstRecordIndex + 1 : 0} to ${Math.min(lastRecordIndex, filteredRecords.length)} of ${filteredRecords.length} students`}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          setSelectedRows([]);
+        }}
+      />
 
-        <div className="st-table-scroll">
-          <table className="st-table" style={{ minWidth: `${visibleColumns.reduce((total, column) => total + column.width, 220) + 190}px` }}>
-            <thead>
-              <tr>
-                <th style={{ width: '40px' }}>
-                  <input type="checkbox" checked={isAllSelected} onChange={handleSelectAll} />
-                </th>
-                {visibleColumns.map((column) => (
-                  <th
-                    key={column.key}
-                    className={`st-configurable-th ${tableDragColumnKey === column.key ? 'is-table-dragging' : ''} ${tableDragTargetKey === column.key && tableDragColumnKey !== column.key ? 'is-table-drag-over' : ''}`}
-                    draggable
-                    onDragStart={(e) => handleColumnDragStart(e, column.key)}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setTableDragTargetKey(column.key);
-                    }}
-                    onDragLeave={() => setTableDragTargetKey((current) => current === column.key ? null : current)}
-                    onDrop={(e) => handleColumnDrop(e, column.key)}
-                    onDragEnd={handleColumnDragEnd}
-                    style={{ width: `${column.width}px`, minWidth: `${column.width}px` }}
-                  >
-                    <span className="st-column-label">{column.label}</span>
-                    <span className="st-column-drag-hint">Drag</span>
-                    <span className="st-resize-handle" onMouseDown={(e) => startColumnResize(e, column.key)} />
-                  </th>
-                ))}
-                <th style={{ width: '150px', minWidth: '150px' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? <tr><td colSpan={visibleColumns.length + 2} style={{ textAlign: 'center', padding: '3rem' }}>Loading data...</td></tr> :
-               currentRecords.length > 0 ? currentRecords.map((record) => (
-                <tr key={record.id} className={selectedRows.includes(record.id) ? 'selected-row' : ''}>
-                  <td>
-                    <input type="checkbox" checked={selectedRows.includes(record.id)} onChange={() => handleSelectRow(record.id)} />
-                  </td>
-                  {visibleColumns.map((column) => (
-                    <td key={column.key} style={{ width: `${column.width}px`, minWidth: `${column.width}px`, maxWidth: `${column.width}px` }}>
-                      <div className="st-cell-content">{renderColumnValue(record, column)}</div>
-                    </td>
-                  ))}
-                  <td>
-                    <div className="st-actions-cell">
-                      <button className="st-view-btn" onClick={() => openEditModal(record)}>View / Edit</button>
-                      <button className="st-more-btn" type="button" aria-label={`More actions for ${record.name}`} onClick={() => Swal.fire(record.name, `Roll no: ${record.rollNo}\nGrade: ${record.grade} - ${record.section}\nGuardian: ${record.guardian}`, 'info')}><SvgMore /></button>
-                    </div>
-                  </td>
-                </tr>
-              )) : <tr><td colSpan={visibleColumns.length + 2} style={{ textAlign: 'center', padding: '3rem' }}>No records found.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="st-pagination-footer">
-          <span className="st-page-info">Showing {currentRecords.length > 0 ? firstRecordIndex + 1 : 0} to {Math.min(lastRecordIndex, filteredRecords.length)} of {filteredRecords.length} students</span>
-          <div className="st-page-buttons">
-            <button className="st-page-btn" onClick={() => { setCurrentPage(prev => Math.max(prev - 1, 1)); setSelectedRows([]); }} disabled={currentPage === 1}>&lt;</button>
-            {[...Array(totalPages)].map((_, index) => (
-              <button key={index + 1} className={`st-page-btn ${currentPage === index + 1 ? 'active' : ''}`} onClick={() => { setCurrentPage(index + 1); setSelectedRows([]); }}>{index + 1}</button>
-            ))}
-            <button className="st-page-btn" onClick={() => { setCurrentPage(prev => Math.min(prev + 1, totalPages)); setSelectedRows([]); }} disabled={currentPage === totalPages || totalPages === 0}>&gt;</button>
-          </div>
-        </div>
-      </div>
-
-      {isColumnModalOpen && (
-        <div className="st-column-overlay">
-          <div className="st-column-modal">
-            <div className="st-column-header">
-              <div>
-                <h2>Configure View</h2>
-                <p>Choose which columns appear in the student list.</p>
-              </div>
-              <button className="st-column-close" type="button" onClick={closeColumnModal} aria-label="Close configure view">x</button>
-            </div>
-            <div className="st-column-search">
-              <SvgSearch />
-              <input type="text" placeholder="Search columns..." value={columnSearchTerm} onChange={(e) => setColumnSearchTerm(e.target.value)} />
-            </div>
-            <div className="st-column-list-header">
-              <span>Columns</span>
-              <button type="button" onClick={sortDraftVisibleFirst}>Visible first ({draftVisibleCount})</button>
-            </div>
-            <div className="st-column-list">
-              {modalColumns.map((column) => (
-                <div
-                  className={`st-column-row ${draggedColumnKey === column.key ? 'is-dragging' : ''} ${dragOverColumnKey === column.key && draggedColumnKey !== column.key ? 'is-drag-over' : ''}`}
-                  key={column.key}
-                  draggable
-                  onDragStart={(e) => handleDraftColumnDragStart(e, column.key)}
-                  onDragOver={(e) => { e.preventDefault(); setDragOverColumnKey(column.key); }}
-                  onDragLeave={() => setDragOverColumnKey((current) => current === column.key ? null : current)}
-                  onDrop={(e) => handleDraftColumnDrop(e, column.key)}
-                  onDragEnd={handleDraftColumnDragEnd}
-                >
-                  <button className={`st-column-visibility ${column.visible ? 'visible' : 'hidden'}`} type="button" onClick={() => handleDraftColumnToggle(column.key)} aria-label={`${column.visible ? 'Hide' : 'Show'} ${column.label}`}>
-                    {column.visible ? <SvgEye /> : <SvgEyeOff />}
-                  </button>
-                  <span className="st-column-row-label">{column.label}</span>
-                  <button className="st-column-grip" type="button" draggable onDragStart={(e) => handleDraftColumnDragStart(e, column.key)} onDragEnd={handleDraftColumnDragEnd} aria-label={`Drag ${column.label}`}>
-                    <SvgGrip />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="st-column-footer">
-              <button className="st-column-cancel" type="button" onClick={closeColumnModal}>Cancel</button>
-              <button className="st-column-apply" type="button" onClick={applyColumnChanges}>Apply Changes</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminColumnDrawer
+        isOpen={isColumnModalOpen}
+        title="Fields"
+        description="Choose which columns appear in the student list."
+        searchTerm={columnSearchTerm}
+        onSearchChange={setColumnSearchTerm}
+        columns={modalColumns}
+        visibleCount={draftVisibleCount}
+        onVisibleFirst={sortDraftVisibleFirst}
+        onClose={closeColumnModal}
+        onApply={applyColumnChanges}
+        onToggleColumn={handleDraftColumnToggle}
+        onDragStart={handleDraftColumnDragStart}
+        onDragOver={(e, key) => { e.preventDefault(); setDragOverColumnKey(key); }}
+        onDragLeave={(key) => setDragOverColumnKey((current) => current === key ? null : current)}
+        onDrop={handleDraftColumnDrop}
+        onDragEnd={handleDraftColumnDragEnd}
+        draggedColumnKey={draggedColumnKey}
+        dragOverColumnKey={dragOverColumnKey}
+        searchIcon={<SvgSearch />}
+        visibleIcon={<SvgEye />}
+        hiddenIcon={<SvgEyeOff />}
+        gripIcon={<SvgGrip />}
+      />
 
       {false && isColumnModalOpen && (
         <div className="st-column-overlay">
@@ -763,18 +767,31 @@ export default function Students() {
         <div className="st-modal-overlay">
           <div className="st-modal-wide">
 
-            <div className="st-modal-header" style={{ borderBottom: 'none' }}>
+            <div className="st-enroll-header">
               <div className="st-modal-title-group">
-                <div className="st-modal-icon"><IconStudent /></div>
+                <div className="st-modal-icon st-enroll-icon"><IconStudent /></div>
                 <div className="st-modal-title">
                   <h2>{modalMode === 'add' ? 'Add New Student' : 'Update Student Profile'}</h2>
                   <p>{modalMode === 'add' ? 'Register a new student into the school system' : `Editing records for ${formData.firstName}`}</p>
                 </div>
               </div>
-              <div className="st-badge-pill">{modalMode === 'add' ? 'New enrollment' : 'Update record'}</div>
+              <div className="st-enroll-header-actions">
+                <button className="st-enroll-new-btn" type="button">{modalMode === 'add' ? 'New enrollment' : 'Update record'}</button>
+                <button className="st-enroll-close" type="button" onClick={() => setIsModalOpen(false)} aria-label="Close"><IconLine type="close" /></button>
+              </div>
             </div>
 
-            <div className="st-stepper" style={{ padding: '0 30px 15px 30px', borderBottom: '1px solid #f1f5f9' }}>
+            <div className="st-stepper st-stepper-modern">
+              <div className={`st-step ${step >= 1 ? 'active' : ''} ${step === 1 ? 'current' : ''}`} onClick={() => setStep(1)}><span className="st-step-circle">{step > 1 ? <IconLine type="check" /> : '1'}</span> Personal info</div>
+              <div className="st-step-line"></div>
+              <div className={`st-step ${step >= 2 ? 'active' : ''} ${step === 2 ? 'current' : ''}`} onClick={() => setStep(2)}><span className="st-step-circle">{step > 2 ? <IconLine type="check" /> : '2'}</span> Academic details</div>
+              <div className="st-step-line"></div>
+              <div className={`st-step ${step >= 3 ? 'active' : ''} ${step === 3 ? 'current' : ''}`} onClick={() => setStep(3)}><span className="st-step-circle">{step > 3 ? <IconLine type="check" /> : '3'}</span> Guardian info</div>
+              <div className="st-step-line"></div>
+              <div className={`st-step ${step >= 4 ? 'active' : ''} ${step === 4 ? 'current' : ''}`} onClick={() => setStep(4)}><span className="st-step-circle">4</span> Fee & documents</div>
+            </div>
+
+            <div className="st-stepper st-stepper-legacy">
               <div className={`st-step ${step >= 1 ? 'active current' : ''}`} onClick={() => setStep(1)} style={{cursor: 'pointer'}}><span className="st-step-circle">{step > 1 ? '✓' : '1'}</span> Personal info</div>
               <div className="st-step-line"></div>
               <div className={`st-step ${step >= 2 ? 'active current' : ''}`} onClick={() => setStep(2)} style={{cursor: 'pointer'}}><span className="st-step-circle">{step > 2 ? '✓' : '2'}</span> Academic details</div>
@@ -787,12 +804,14 @@ export default function Students() {
             <div className="st-modal-body-scroll">
               {step === 1 && (
                 <div className="st-form-card">
-                  <div className="st-section-title-new">Personal Information</div>
-                  <div className="st-photo-row">
-                    <div className="st-avatar-circle"><IconUser /></div>
-                    <div>
-                      <button className="st-upload-btn-new" type="button" onClick={() => Swal.fire('Upload photo', 'Photo upload storage is not connected yet.', 'info')}>Upload photo</button>
-                      <p style={{fontSize:'10px', color:'#94a3b8', margin:'4px 0 0 0'}}>JPG or PNG, max 2 MB</p>
+                  <div className="st-section-heading-row">
+                    <div className="st-section-heading">
+                      <div className="st-section-icon"><IconUser /></div>
+                      <div><h3>Personal Information</h3><p>Basic details about the student</p></div>
+                    </div>
+                    <div className="st-photo-actions">
+                      <button className="st-upload-btn-new" type="button" onClick={() => Swal.fire('Upload photo', 'Photo upload storage is not connected yet.', 'info')}><IconLine type="upload" />Upload photo</button>
+                      <p>JPG or PNG, max 2 MB</p>
                     </div>
                   </div>
                   <div className="st-row-3">
@@ -809,10 +828,14 @@ export default function Students() {
                     <div><label className="st-label-new">CNIC / B-Form number</label><input type="text" name="cnic" value={formData.cnic} onChange={handleInputChange} className="st-input-new" placeholder="XXXXX-XXXXXXX-X" /></div>
                     <div><label className="st-label-new">Religion</label><select name="religion" value={formData.religion} onChange={handleInputChange} className="st-input-new"><option value="">Select</option><option value="Islam">Islam</option><option value="Christianity">Christianity</option><option value="Other">Other</option></select></div>
                   </div>
-                  <div className="st-section-title-new" style={{marginTop:'30px'}}>Contact & Address</div>
+                  <div className="st-section-divider"></div>
+                  <div className="st-section-heading st-section-heading-compact">
+                    <div className="st-section-icon"><IconLine type="phone" /></div>
+                    <div><h3>Contact & Address</h3><p>Student contact and address details</p></div>
+                  </div>
                   <div className="st-row-2">
                     <div><label className="st-label-new">Student email</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} className="st-input-new" placeholder="student@school.edu" /></div>
-                    <div><label className="st-label-new">Phone number</label><input type="text" name="phone" value={formData.phone} onChange={handleInputChange} className="st-input-new" placeholder="+92 3XX XXXXXXX" /></div>
+                    <div><label className="st-label-new">Phone number</label><div className="st-phone-field"><span>+92</span><input type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="3XX XXXXXXX" /></div></div>
                   </div>
                   <div className="st-row-1">
                     <div><label className="st-label-new">Home address <span>*</span></label><input type="text" name="address" value={formData.address} onChange={handleInputChange} className="st-input-new" placeholder="Street, area, city" /></div>
@@ -827,82 +850,107 @@ export default function Students() {
 
               {step === 2 && (
                 <div className="st-form-card">
-                  <div className="st-section-title-new">Academic Details</div>
+                  <div className="st-section-heading">
+                    <div className="st-section-icon"><IconLine type="book" /></div>
+                    <div><h3>Academic Details</h3><p>Enter the student's academic information</p></div>
+                  </div>
                   <div className="st-row-3">
                     <div>
                       <label className="st-label-new">Grade <span>*</span></label>
-                      <select name="grade" value={formData.grade} onChange={handleInputChange} className="st-input-new">
+                      <div className="st-icon-field"><span><IconLine type="book" /></span><select name="grade" value={formData.grade} onChange={handleInputChange} className="st-input-new">
                         <option value="">Select grade</option>
                         {uniqueGrades.length > 0
                           ? uniqueGrades.map((g, i) => <option key={i} value={g}>{g}</option>)
                           : [...Array(10)].map((_, i) => <option key={i} value={`Grade ${i + 1}`}>Grade {i + 1}</option>)
                         }
-                      </select>
+                      </select></div>
                     </div>
                     <div>
                       <label className="st-label-new">Section <span>*</span></label>
-                      <select name="section" value={formData.section} onChange={handleInputChange} className="st-input-new">
+                      <div className="st-icon-field"><span><IconLine type="users" /></span><select name="section" value={formData.section} onChange={handleInputChange} className="st-input-new">
                         <option value="">Select section</option>
                         {dynamicSections.map((sec, i) => <option key={i} value={sec}>{sec}</option>)}
-                      </select>
+                      </select></div>
                     </div>
-                    <div><label className="st-label-new">Roll number</label><input type="text" className="st-input-new" placeholder="Auto-generated" disabled style={{background:'#f1f5f9'}} /></div>
+                    <div><label className="st-label-new">Roll number</label><div className="st-icon-field is-disabled"><span><IconLine type="file" /></span><input type="text" className="st-input-new" placeholder="Auto-generated" disabled /></div></div>
                   </div>
                   <div className="st-row-3">
-                    <div><label className="st-label-new">Admission date <span>*</span></label><input type="date" name="admissionDate" value={formData.admissionDate} onChange={handleInputChange} className="st-input-new" /></div>
-                    <div style={{gridColumn: 'span 2'}}><label className="st-label-new">Previous school (if any)</label><input type="text" name="prevSchool" value={formData.prevSchool} onChange={handleInputChange} className="st-input-new" placeholder="Name of previous school" /></div>
+                    <div><label className="st-label-new">Admission date <span>*</span></label><div className="st-icon-field"><span><IconLine type="calendar" /></span><input type="date" name="admissionDate" value={formData.admissionDate} onChange={handleInputChange} className="st-input-new" /></div></div>
+                    <div className="st-span-2"><label className="st-label-new">Previous school (if any)</label><div className="st-icon-field"><span><IconLine type="school" /></span><input type="text" name="prevSchool" value={formData.prevSchool} onChange={handleInputChange} className="st-input-new" placeholder="Name of previous school" /></div></div>
                   </div>
                 </div>
               )}
 
               {step === 3 && (
                 <div className="st-form-card">
-                  <div className="st-section-title-new">Guardian Information</div>
+                  <div className="st-section-heading">
+                    <div className="st-section-icon"><IconUser /></div>
+                    <div><h3>Guardian Information</h3><p>Enter guardian details</p></div>
+                  </div>
                   <div className="st-row-3">
-                    <div><label className="st-label-new">Guardian name <span>*</span></label><input type="text" name="guardianName" value={formData.guardianName} onChange={handleInputChange} className="st-input-new" placeholder="Full name" /></div>
-                    <div><label className="st-label-new">Relationship</label><select name="guardianRelation" value={formData.guardianRelation} onChange={handleInputChange} className="st-input-new"><option value="">Select</option><option value="Father">Father</option><option value="Mother">Mother</option></select></div>
-                    <div><label className="st-label-new">Occupation</label><input type="text" name="guardianOccupation" value={formData.guardianOccupation} onChange={handleInputChange} className="st-input-new" placeholder="e.g. Engineer" /></div>
+                    <div><label className="st-label-new">Guardian name <span>*</span></label><div className="st-icon-field"><span><IconUser /></span><input type="text" name="guardianName" value={formData.guardianName} onChange={handleInputChange} className="st-input-new" placeholder="Full name" /></div></div>
+                    <div><label className="st-label-new">Relationship <span>*</span></label><div className="st-icon-field"><span><IconLine type="users" /></span><select name="guardianRelation" value={formData.guardianRelation} onChange={handleInputChange} className="st-input-new"><option value="">Select relationship</option><option value="Father">Father</option><option value="Mother">Mother</option></select></div></div>
+                    <div><label className="st-label-new">Occupation</label><div className="st-icon-field"><span><IconLine type="briefcase" /></span><input type="text" name="guardianOccupation" value={formData.guardianOccupation} onChange={handleInputChange} className="st-input-new" placeholder="e.g. Engineer" /></div></div>
                   </div>
                   <div className="st-row-2">
-                    <div><label className="st-label-new">Guardian contact <span>*</span></label><input type="text" name="guardianContact" value={formData.guardianContact} onChange={handleInputChange} className="st-input-new" placeholder="+92 3XX XXXXXXX" /></div>
-                    <div><label className="st-label-new">Guardian email</label><input type="email" name="guardianEmail" value={formData.guardianEmail} onChange={handleInputChange} className="st-input-new" placeholder="guardian@email.com" /></div>
+                    <div><label className="st-label-new">Guardian contact <span>*</span></label><div className="st-icon-field"><span><IconLine type="phone" /></span><input type="text" name="guardianContact" value={formData.guardianContact} onChange={handleInputChange} className="st-input-new" placeholder="+92 3XX XXXXXXX" /></div></div>
+                    <div><label className="st-label-new">Guardian email</label><div className="st-icon-field"><span><IconLine type="mail" /></span><input type="email" name="guardianEmail" value={formData.guardianEmail} onChange={handleInputChange} className="st-input-new" placeholder="guardian@email.com" /></div></div>
                   </div>
                 </div>
               )}
 
               {step === 4 && (
                 <div className="st-form-card">
-                  <div className="st-section-title-new">Fee & Documents</div>
-                  <div className="st-row-2">
-                    <div><label className="st-label-new">Monthly fee (PKR) <span>*</span></label><input type="number" name="monthlyFee" value={formData.monthlyFee} onChange={handleInputChange} className="st-input-new" placeholder="e.g. 4500" /></div>
-                    <div><label className="st-label-new">Fee waiver / discount</label><select name="feeDiscount" value={formData.feeDiscount} onChange={handleInputChange} className="st-input-new"><option value="">No discount</option><option value="10%">10% Sibling discount</option></select></div>
+                  <div className="st-section-heading">
+                    <div className="st-section-icon"><IconLine type="file" /></div>
+                    <div><h3>Fee & Documents</h3><p>Provide fee information and upload required documents</p></div>
                   </div>
-                  <div className="st-alert-box" style={{marginTop: '20px', marginBottom: '20px'}}>
-                    <IconInfo />
+                  <div className="st-row-2">
+                    <div><label className="st-label-new">Monthly fee (PKR) <span>*</span></label><div className="st-icon-field"><span className="st-currency-prefix">Rs.</span><input type="number" name="monthlyFee" value={formData.monthlyFee} onChange={handleInputChange} className="st-input-new" placeholder="e.g. 4500" /></div></div>
+                    <div><label className="st-label-new">Fee waiver / discount</label><div className="st-icon-field"><span><IconLine type="tag" /></span><select name="feeDiscount" value={formData.feeDiscount} onChange={handleInputChange} className="st-input-new"><option value="">No discount</option><option value="10%">10% Sibling discount</option></select></div></div>
+                  </div>
+                  <div className="st-alert-box">
+                    <span><IconLine type="check" /></span>
                     <p>Upload at least the birth certificate and guardian CNIC to complete enrollment.</p>
                   </div>
                   <div className="st-row-2">
                     <div>
                       <label className="st-label-new">Documents to upload</label>
-                      <div className="st-upload-area" style={{padding:'30px', textAlign:'center', border:'2px dashed #cbd5e1', borderRadius:'8px', background:'#f8fafc', cursor:'pointer'}}>
-                        <IconFolder />
-                        <p style={{fontSize:'13px', margin:'10px 0 5px 0', color:'#334155'}}><b>Click to upload</b> documents</p>
-                        <p style={{fontSize:'11px', color:'#94a3b8', margin:0}}>Birth cert, CNIC, transfer cert - PDF, JPG</p>
+                      <div className="st-upload-area">
+                        <div className="st-upload-cloud"><IconLine type="upload" /></div>
+                        <p><b>Click to upload</b> documents</p>
+                        <small>Birth cert, CNIC, transfer cert - PDF, JPG</small>
+                        <button type="button" className="st-choose-file-btn"><IconLine type="upload" />Choose files</button>
                       </div>
                     </div>
                     <div>
                       <label className="st-label-new">Additional notes</label>
-                      <textarea name="notes" value={formData.notes} onChange={handleInputChange} className="st-input-new" placeholder="Any special requirements, medical conditions..." style={{height: '140px', resize: 'none'}}></textarea>
+                      <div className="st-icon-field st-textarea-field"><span><IconLine type="note" /></span><textarea name="notes" value={formData.notes} onChange={handleInputChange} className="st-input-new" placeholder="Any special requirements, medical conditions..."></textarea></div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="st-modal-footer" style={{ borderTop: '1px solid #f1f5f9', background: 'white', padding: '20px 30px' }}>
-              <div className="st-req-text" style={{ fontSize: '11px', color: '#94a3b8' }}>* Required fields - Step {step} of 4</div>
+            <div className="st-modal-footer st-modal-footer-modern">
+              <div className="st-req-text"><span>*</span> Required fields <em></em> Step {step} of 4</div>
               <div className="st-footer-actions">
-                <button className="st-btn-discard" style={{ background:'white', border:'1px solid #cbd5e1', padding:'10px 20px', borderRadius:'8px', fontWeight:600, color:'#475569', cursor:'pointer' }} onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button className="st-btn-discard" type="button" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                {step > 1 && <button className="st-btn-draft" type="button" onClick={prevStep}><IconLine type="arrowLeft" />Back</button>}
+                {step < 4 ? (
+                  <button className="st-btn-publish" type="button" onClick={nextStep}>Save & continue <IconLine type="arrowRight" /></button>
+                ) : (
+                  <button className="st-btn-publish" type="button" onClick={handleFinalSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? "Processing..." : modalMode === 'add' ? "Submit Registration" : "Update Records"} <IconLine type="check" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="st-modal-footer st-modal-footer-legacy">
+              <div className="st-req-text"><span>*</span> Required fields <em></em> Step {step} of 4</div>
+              <div className="st-footer-actions">
+                <button className="st-btn-discard" type="button" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 {step > 1 && <button className="st-btn-draft" style={{ background:'white', border:'1px solid #cbd5e1', padding:'10px 20px', borderRadius:'8px', fontWeight:600, color:'#475569', cursor:'pointer', marginLeft:'10px' }} onClick={prevStep}>← Back</button>}
                 {step < 4 ? (
                   <button className="st-btn-publish" style={{ background:'#2563eb', border:'none', padding:'10px 20px', borderRadius:'8px', fontWeight:600, color:'white', cursor:'pointer', marginLeft:'10px' }} onClick={nextStep}>Save & continue →</button>

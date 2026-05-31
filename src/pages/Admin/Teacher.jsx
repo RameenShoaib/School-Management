@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2'; // 👉 SweetAlert2 import kiya gaya hai
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
+import AdminListView from '../../components/AdminListView';
+import AdminColumnDrawer from '../../components/AdminColumnDrawer';
 import './Teacher.css';
 
 /* Icons */
@@ -13,6 +15,20 @@ const SvgEyeOff = () => <svg fill="none" stroke="currentColor" strokeWidth="2" v
 const SvgGrip = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M9 5.5A1.5 1.5 0 1 1 6 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9-13A1.5 1.5 0 1 1 15 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>;
 const IconTeacher = () => <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>;
 const IconUser = () => <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>;
+const TeacherLineIcon = ({ type }) => {
+  const paths = {
+    close: <path d="M18 6 6 18M6 6l12 12"/>,
+    plus: <path d="M12 5v14M5 12h14"/>,
+    upload: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></>,
+    user: <><path d="M20 21v-2a4 4 0 0 0-8 0v2"/><circle cx="16" cy="7" r="4"/><path d="M8 21v-2a4 4 0 0 1 3-3.87"/><path d="M8 11a4 4 0 1 1 0-8"/></>,
+    briefcase: <><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M2 12h20"/></>,
+    phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.78.6 2.63a2 2 0 0 1-.45 2.11L8 9.72a16 16 0 0 0 6.28 6.28l1.26-1.26a2 2 0 0 1 2.11-.45c.85.28 1.73.48 2.63.6A2 2 0 0 1 22 16.92Z"/>,
+    mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>,
+    calendar: <><path d="M8 2v4M16 2v4"/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/></>,
+    check: <path d="m20 6-11 11-5-5"/>,
+  };
+  return <svg className="tc-line-icon" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{paths[type] || paths.user}</svg>;
+};
 
 // Helpers
 const formatDateToPKT = (dateString) => {
@@ -192,6 +208,37 @@ export default function Teacher() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const showTeacherFormNotice = (fieldName) => {
+    Swal.fire({
+      title: 'Required fields missing',
+      text: 'Please fill all required (*) fields before adding the teacher.',
+      icon: 'warning',
+      confirmButtonText: 'Review form',
+      customClass: {
+        container: 'tc-swal-container',
+        popup: 'tc-swal-popup',
+        icon: 'tc-swal-icon',
+        title: 'tc-swal-title',
+        htmlContainer: 'tc-swal-text',
+        confirmButton: 'tc-swal-confirm'
+      },
+      buttonsStyling: false
+    }).then(() => {
+      setTimeout(() => {
+        const field = document.querySelector(`.tc-modal-wide [name="${fieldName}"]`);
+        const scrollParent = document.querySelector('.tc-modal-body-scroll');
+        field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (scrollParent && field) {
+          scrollParent.scrollTo({
+            top: Math.max(field.offsetTop - scrollParent.clientHeight / 2, 0),
+            behavior: 'smooth'
+          });
+        }
+        field?.focus?.();
+      }, 80);
+    });
+  };
+
   const openAddModal = () => {
     setModalMode('add');
     setFormData(initialFormState);
@@ -220,7 +267,8 @@ export default function Teacher() {
 
   const handleFinalSubmit = async () => {
     if (!formData.firstName || !formData.lastName || !formData.designation || !formData.email) {
-      alert("Please fill all required (*) fields (Name, Designation, and Email).");
+      const firstMissingField = !formData.firstName ? 'firstName' : !formData.lastName ? 'lastName' : !formData.designation ? 'designation' : 'email';
+      showTeacherFormNotice(firstMissingField);
       return;
     }
 
@@ -240,11 +288,11 @@ export default function Teacher() {
         setIsModalOpen(false); 
         fetchTeachers(); 
       } else {
-        alert("Error: " + data.message);
+        Swal.fire('Could not save teacher', data.message || 'Please try again.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to connect to server.");
+      Swal.fire('Connection failed', 'Failed to connect to server.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -513,6 +561,50 @@ export default function Teacher() {
    }}
  />
 
+      <AdminListView
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search by name, subject, employee ID..."
+        searchIcon={<SvgSearch />}
+        configureIcon={<SvgColumns />}
+        onConfigure={openColumnModal}
+        filterButton={['All', 'Active', 'On leave'].map(filter => (
+          <button key={filter} className={`tc-filter-pill ${activeFilter === filter ? 'active' : ''}`} onClick={() => setActiveFilter(filter)}>
+            {filter}
+          </button>
+        ))}
+        columns={visibleColumns}
+        rows={currentRecords}
+        getRowId={(teacher) => teacher.id}
+        renderCell={renderColumnValue}
+        isLoading={isLoading}
+        selectedRows={selectedRows}
+        isAllSelected={isAllSelected}
+        onSelectAll={handleSelectAll}
+        onSelectRow={handleSelectRow}
+        tableDragColumnKey={tableDragColumnKey}
+        tableDragTargetKey={tableDragTargetKey}
+        onColumnDragStart={handleColumnDragStart}
+        onColumnDragOver={(event, key) => {
+          event.preventDefault();
+          setTableDragTargetKey(key);
+        }}
+        onColumnDragLeave={(key) => setTableDragTargetKey((current) => current === key ? null : current)}
+        onColumnDrop={handleColumnDrop}
+        onColumnDragEnd={handleColumnDragEnd}
+        onColumnResizeStart={startColumnResize}
+        loadingMessage="Loading teachers from database..."
+        emptyMessage={error || 'No teachers found.'}
+        paginationLabel={`Showing ${filteredTeachers.length > 0 ? firstRecordIndex + 1 : 0} to ${Math.min(lastRecordIndex, filteredTeachers.length)} of ${filteredTeachers.length} teachers`}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          setSelectedRows([]);
+        }}
+      />
+
+      {localStorage.getItem('edusync.showLegacyList') === 'true' && (
       <div className="tc-table-card">
         <div className="tc-controls-row">
           <div className="tc-search-box">
@@ -616,56 +708,34 @@ export default function Teacher() {
           </div>
         </div>
       </div>
-
-      {isColumnModalOpen && (
-        <div className="tc-column-overlay">
-          <div className="tc-column-modal">
-            <div className="tc-column-header">
-              <div>
-                <h2>Configure View</h2>
-                <p>Choose which columns appear in the teachers list.</p>
-              </div>
-              <button className="tc-column-close" type="button" onClick={closeColumnModal} aria-label="Close configure view">x</button>
-            </div>
-            <div className="tc-column-search">
-              <SvgSearch />
-              <input type="text" placeholder="Search columns..." value={columnSearchTerm} onChange={(e) => setColumnSearchTerm(e.target.value)} />
-            </div>
-            <div className="tc-column-list-header">
-              <span>Columns</span>
-              <button type="button" onClick={sortDraftVisibleFirst}>Visible first ({draftVisibleCount})</button>
-            </div>
-            <div className="tc-column-list">
-              {modalColumns.map((column) => (
-                <div
-                  className={`tc-column-row ${draggedColumnKey === column.key ? 'is-dragging' : ''} ${dragOverColumnKey === column.key && draggedColumnKey !== column.key ? 'is-drag-over' : ''}`}
-                  key={column.key}
-                  draggable
-                  onDragStart={(e) => handleDraftColumnDragStart(e, column.key)}
-                  onDragOver={(e) => { e.preventDefault(); setDragOverColumnKey(column.key); }}
-                  onDragLeave={() => setDragOverColumnKey((current) => current === column.key ? null : current)}
-                  onDrop={(e) => handleDraftColumnDrop(e, column.key)}
-                  onDragEnd={handleDraftColumnDragEnd}
-                >
-                  <button className={`tc-column-visibility ${column.visible ? 'visible' : 'hidden'}`} type="button" onClick={() => handleDraftColumnToggle(column.key)} aria-label={`${column.visible ? 'Hide' : 'Show'} ${column.label}`}>
-                    {column.visible ? <SvgEye /> : <SvgEyeOff />}
-                  </button>
-                  <span className="tc-column-row-label">{column.label}</span>
-                  <button className="tc-column-grip" type="button" draggable onDragStart={(e) => handleDraftColumnDragStart(e, column.key)} onDragEnd={handleDraftColumnDragEnd} aria-label={`Drag ${column.label}`}>
-                    <SvgGrip />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="tc-column-footer">
-              <button className="tc-column-cancel" type="button" onClick={closeColumnModal}>Cancel</button>
-              <button className="tc-column-apply" type="button" onClick={applyColumnChanges}>Apply Changes</button>
-            </div>
-          </div>
-        </div>
       )}
 
-      {false && isColumnModalOpen && (
+      <AdminColumnDrawer
+        isOpen={isColumnModalOpen}
+        title="Fields"
+        description="Choose which columns appear in the teachers list."
+        searchTerm={columnSearchTerm}
+        onSearchChange={setColumnSearchTerm}
+        columns={modalColumns}
+        visibleCount={draftVisibleCount}
+        onVisibleFirst={sortDraftVisibleFirst}
+        onClose={closeColumnModal}
+        onApply={applyColumnChanges}
+        onToggleColumn={handleDraftColumnToggle}
+        onDragStart={handleDraftColumnDragStart}
+        onDragOver={(e, key) => { e.preventDefault(); setDragOverColumnKey(key); }}
+        onDragLeave={(key) => setDragOverColumnKey((current) => current === key ? null : current)}
+        onDrop={handleDraftColumnDrop}
+        onDragEnd={handleDraftColumnDragEnd}
+        draggedColumnKey={draggedColumnKey}
+        dragOverColumnKey={dragOverColumnKey}
+        searchIcon={<SvgSearch />}
+        visibleIcon={<SvgEye />}
+        hiddenIcon={<SvgEyeOff />}
+        gripIcon={<SvgGrip />}
+      />
+
+      {localStorage.getItem('edusync.showLegacyColumnModal') === 'true' && isColumnModalOpen && (
         <div className="tc-column-overlay">
           <div className="tc-column-modal">
             <div className="tc-column-header">
@@ -703,59 +773,74 @@ export default function Teacher() {
         <div className="tc-modal-overlay">
           <div className="tc-modal-wide">
             
-            <div className="tc-modal-header" style={{ borderBottom: 'none' }}>
+            <div className="tc-modal-header tc-enroll-header">
               <div className="tc-modal-title-group">
-                <div className="tc-modal-icon"><IconTeacher /></div>
+                <div className="tc-modal-icon tc-enroll-icon"><IconTeacher /></div>
                 <div className="tc-modal-title">
                   <h2>{modalMode === 'add' ? 'Add New Teacher' : 'Update Teacher Profile'}</h2>
                   <p>{modalMode === 'add' ? 'Register a new staff member into EduSync' : `Editing records for ${formData.firstName}`}</p>
                 </div>
               </div>
-              <div className="tc-badge-pill">{modalMode === 'add' ? 'New staff' : 'Update record'}</div>
+              <div className="tc-enroll-header-actions">
+                <button className="tc-enroll-new-btn" type="button">{modalMode === 'add' ? 'New staff' : 'Update record'}</button>
+                <button className="tc-enroll-close" type="button" onClick={() => setIsModalOpen(false)} aria-label="Close"><TeacherLineIcon type="close" /></button>
+              </div>
             </div>
 
             <div className="tc-modal-body-scroll">
               <div className="tc-form-card">
-                <div className="tc-section-title-new">Personal Information</div>
+                <div className="tc-section-heading">
+                  <div className="tc-section-icon"><IconUser /></div>
+                  <div>
+                    <h3>PERSONAL INFORMATION</h3>
+                    <p>Basic personal details of the teacher</p>
+                  </div>
+                </div>
                 <div className="tc-photo-row">
                   <div className="tc-avatar-circle"><IconUser /></div>
-                  <div>
-                    <button className="tc-upload-btn-new" type="button" onClick={() => Swal.fire('Upload photo', 'Photo upload storage is not connected yet.', 'info')}>Upload photo</button>
-                    <p style={{fontSize:'10px', color:'#94a3b8', margin:'4px 0 0 0'}}>JPG or PNG, max 2 MB</p>
+                  <div className="tc-photo-actions">
+                    <button className="tc-upload-btn-new" type="button" onClick={() => Swal.fire('Upload photo', 'Photo upload storage is not connected yet.', 'info')}><TeacherLineIcon type="upload" />Upload photo</button>
+                    <p>JPG or PNG, max 2 MB</p>
                   </div>
                 </div>
                 <div className="tc-row-3">
                   <div><label className="tc-label-new">First name <span>*</span></label><input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className="tc-input-new" placeholder="e.g. Fatima" /></div>
                   <div><label className="tc-label-new">Last name <span>*</span></label><input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className="tc-input-new" placeholder="e.g. Noor" /></div>
-                  <div><label className="tc-label-new">Gender <span>*</span></label><select name="gender" value={formData.gender} onChange={handleInputChange} className="tc-input-new"><option value="">Select</option><option value="Female">Female</option><option value="Male">Male</option></select></div>
+                  <div><label className="tc-label-new">Gender <span>*</span></label><select name="gender" value={formData.gender} onChange={handleInputChange} className="tc-input-new"><option value="">Select gender</option><option value="Female">Female</option><option value="Male">Male</option></select></div>
                 </div>
                 <div className="tc-row-3">
                   <div><label className="tc-label-new">Date of birth</label><input type="date" name="dob" value={formData.dob} onChange={handleInputChange} className="tc-input-new" /></div>
                   <div><label className="tc-label-new">CNIC number</label><input type="text" name="cnic" value={formData.cnic} onChange={handleInputChange} className="tc-input-new" placeholder="XXXXX-XXXXXXX-X" /></div>
-                  <div><label className="tc-label-new">Phone number <span>*</span></label><input type="text" name="phone" value={formData.phone} onChange={handleInputChange} className="tc-input-new" placeholder="📞 +92 xxx xxxxxxx" /></div>
+                  <div><label className="tc-label-new">Phone number <span>*</span></label><div className="tc-icon-field"><span><TeacherLineIcon type="phone" /></span><input type="text" name="phone" value={formData.phone} onChange={handleInputChange} className="tc-input-new" placeholder="+92 xxx xxxxxxxxx" /></div></div>
                 </div>
               </div>
 
               <div className="tc-form-card">
-                <div className="tc-section-title-new">Professional Details</div>
+                <div className="tc-section-heading">
+                  <div className="tc-section-icon"><TeacherLineIcon type="briefcase" /></div>
+                  <div>
+                    <h3>PROFESSIONAL DETAILS</h3>
+                    <p>Employment and professional information</p>
+                  </div>
+                </div>
                 <div className="tc-row-3">
                   <div><label className="tc-label-new">Employee ID</label><input type="text" className="tc-input-new" placeholder="Auto-generated" disabled /></div>
-                  <div><label className="tc-label-new">Designation <span>*</span></label><select name="designation" value={formData.designation} onChange={handleInputChange} className="tc-input-new"><option value="">Select</option><option value="Senior Teacher">Senior Teacher</option><option value="Junior Teacher">Junior Teacher</option><option value="Guest Lecturer">Guest Lecturer</option></select></div>
+                  <div><label className="tc-label-new">Designation <span>*</span></label><select name="designation" value={formData.designation} onChange={handleInputChange} className="tc-input-new"><option value="">Select designation</option><option value="Senior Teacher">Senior Teacher</option><option value="Junior Teacher">Junior Teacher</option><option value="Guest Lecturer">Guest Lecturer</option></select></div>
                   <div><label className="tc-label-new">Employment type</label><select name="empType" value={formData.empType} onChange={handleInputChange} className="tc-input-new"><option value="Full time">Full time</option><option value="Part time">Part time</option></select></div>
                 </div>
                 <div className="tc-row-2">
-                  <div><label className="tc-label-new">Work email <span>*</span></label><input type="email" name="email" value={formData.email} onChange={handleInputChange} className="tc-input-new" placeholder="✉️ teacher@school.edu" /></div>
-                  <div><label className="tc-label-new">Joining date <span>*</span></label><input type="date" name="joiningDate" value={formData.joiningDate} onChange={handleInputChange} className="tc-input-new" /></div>
+                  <div><label className="tc-label-new">Work email <span>*</span></label><div className="tc-icon-field"><span><TeacherLineIcon type="mail" /></span><input type="email" name="email" value={formData.email} onChange={handleInputChange} className="tc-input-new" placeholder="teacher@school.edu" /></div></div>
+                  <div><label className="tc-label-new">Joining date <span>*</span></label><div className="tc-icon-field"><span><TeacherLineIcon type="calendar" /></span><input type="date" name="joiningDate" value={formData.joiningDate} onChange={handleInputChange} className="tc-input-new" /></div></div>
                 </div>
               </div>
             </div>
 
-            <div className="tc-modal-footer" style={{ borderTop: '1px solid #f1f5f9', background: 'white', padding: '20px 30px' }}>
-              <div className="tc-req-text" style={{ fontSize: '11px', color: '#94a3b8' }}>* Required fields</div>
+            <div className="tc-modal-footer">
+              <div className="tc-req-text"><span>*</span> Required fields</div>
               <div className="tc-footer-actions">
-                <button className="tc-btn-discard" style={{ background:'white', border:'1px solid #cbd5e1', padding:'10px 20px', borderRadius:'8px', fontWeight:600, color:'#475569', cursor:'pointer' }} onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button className="tc-btn-publish" style={{ background:'#2563eb', border:'none', padding:'10px 20px', borderRadius:'8px', fontWeight:600, color:'white', cursor:'pointer', marginLeft:'10px' }} onClick={handleFinalSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? "Processing..." : modalMode === 'add' ? "Add teacher ✓" : "Update Records ✓"}
+                <button className="tc-btn-discard" type="button" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button className="tc-btn-publish" type="button" onClick={handleFinalSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? "Processing..." : modalMode === 'add' ? "Add teacher" : "Update Records"} <TeacherLineIcon type="check" />
                 </button>
               </div>
             </div>

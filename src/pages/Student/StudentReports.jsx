@@ -1,7 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
+import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName, isStudentClassRecord } from './studentAccess';
 import './StudentModule.css';
+
+const ReportIcon = ({ type }) => {
+  const paths = {
+    calendar: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M9 15l2 2 4-4" /></>,
+    wallet: <><path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4z" /><path d="M4 7V5a2 2 0 0 1 2-2h10M16 13h4" /></>,
+    document: <><path d="M6 2h9l5 5v15H6z" /><path d="M14 2v6h6M9 13h6M9 17h6" /></>,
+    class: <><path d="M3 10 12 5l9 5-9 5-9-5Z" /><path d="M6 12v5c2 2 10 2 12 0v-5" /></>
+  };
+
+  return (
+    <svg className="sm-report-icon-svg" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      {paths[type]}
+    </svg>
+  );
+};
 
 export default function StudentReports() {
   const [student, setStudent] = useState(null);
@@ -47,49 +63,90 @@ export default function StudentReports() {
   const present = attendance.filter((item) => item.status === 'Present').length;
   const attendancePercent = attendance.length > 0 ? Math.round((present / attendance.length) * 100) : 0;
   const totalPaid = fees.reduce((sum, item) => sum + Number(item.amount_received || 0), 0);
+  const reportStats = [
+    { label: 'Attendance report', value: `${attendancePercent}%`, detail: `${attendance.length} marked days`, icon: 'calendar', tone: 'blue' },
+    { label: 'Fee report', value: totalPaid, detail: 'PKR paid', icon: 'wallet', tone: 'green' },
+    { label: 'Exam report', value: exams.length, detail: 'Scheduled for your class', icon: 'document', tone: 'purple' },
+    { label: 'Class', value: student?.grade || '-', detail: `Section ${student?.section || '-'}`, icon: 'class', tone: 'orange' }
+  ];
+
+  const summaries = [
+    {
+      title: 'Attendance summary',
+      detail: `${present} present days out of ${attendance.length} records`,
+      badge: `${attendancePercent}%`,
+      icon: 'calendar',
+      tone: 'blue',
+      badgeTone: ''
+    },
+    {
+      title: 'Fee payment summary',
+      detail: `${fees.length} payment records connected to your profile`,
+      badge: `PKR ${totalPaid}`,
+      icon: 'wallet',
+      tone: 'green',
+      badgeTone: 'green'
+    },
+    {
+      title: 'Exam schedule summary',
+      detail: `${exams.length} exams found for your grade and section`,
+      badge: 'View only',
+      icon: 'document',
+      tone: 'purple',
+      badgeTone: ''
+    }
+  ];
 
   return (
     <DashboardLayout userRole="student" currentPath="/student/reports" userName={studentName} userInitials={initials}>
-      <div className="sm-page-header">
-        <div>
-          <h2>My reports</h2>
-          <p>Personal academic, attendance, and fee summary</p>
-        </div>
-        <div className="sm-avatar">{initials}</div>
-      </div>
-
-      <div className="sm-stats-grid">
-        <div className="sm-stat-card"><span>Attendance report</span><strong>{attendancePercent}%</strong><small>{attendance.length} marked days</small></div>
-        <div className="sm-stat-card"><span>Fee report</span><strong>{totalPaid}</strong><small>PKR paid</small></div>
-        <div className="sm-stat-card"><span>Exam report</span><strong>{exams.length}</strong><small>Scheduled for your class</small></div>
-        <div className="sm-stat-card"><span>Class</span><strong>{student?.grade || '-'}</strong><small>Section {student?.section || '-'}</small></div>
-      </div>
-
-      <section className="sm-panel">
-        <div className="sm-panel-header">
-          <h3>Available summaries</h3>
-        </div>
-        {loading ? (
-          <div className="sm-empty">Loading reports...</div>
-        ) : student ? (
-          <div className="sm-list">
-            <div className="sm-list-row">
-              <div><strong>Attendance summary</strong><span>{present} present days out of {attendance.length} records</span></div>
-              <span className="sm-pill">{attendancePercent}%</span>
-            </div>
-            <div className="sm-list-row">
-              <div><strong>Fee payment summary</strong><span>{fees.length} payment records connected to your profile</span></div>
-              <span className="sm-pill green">PKR {totalPaid}</span>
-            </div>
-            <div className="sm-list-row">
-              <div><strong>Exam schedule summary</strong><span>{exams.length} exams found for your grade and section</span></div>
-              <span className="sm-pill">View only</span>
-            </div>
+      <div className="student-reports-page">
+        <div className="sm-page-header">
+          <div>
+            <h2>My reports</h2>
+            <p>Personal academic, attendance, and fee summary</p>
           </div>
-        ) : (
-          <div className="sm-empty">No student profile is linked with this login account.</div>
-        )}
-      </section>
+          <div className="sm-avatar">{initials}</div>
+        </div>
+
+        <Header />
+
+        <div className="sm-report-stats">
+          {reportStats.map((item) => (
+            <div className="sm-report-stat" key={item.label}>
+              <span className={`sm-report-stat-icon ${item.tone}`}><ReportIcon type={item.icon} /></span>
+              <div>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+                <small>{item.detail}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <section className="sm-report-panel">
+          <div className="sm-report-panel-header">
+            <h3>Available summaries</h3>
+          </div>
+          {loading ? (
+            <div className="sm-empty">Loading reports...</div>
+          ) : student ? (
+            <div className="sm-report-summary-list">
+              {summaries.map((item) => (
+                <div className="sm-report-summary-row" key={item.title}>
+                  <span className={`sm-report-summary-icon ${item.tone}`}><ReportIcon type={item.icon} /></span>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>{item.detail}</span>
+                  </div>
+                  <span className={`sm-pill ${item.badgeTone}`}>{item.badge}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="sm-empty">No student profile is linked with this login account.</div>
+          )}
+        </section>
+      </div>
     </DashboardLayout>
   );
 }

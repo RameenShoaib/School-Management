@@ -1,20 +1,45 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
+import Header from '../../components/Header/header';
 import './TeacherModule.css';
+import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
 
-const API_BASE = 'http://localhost:5000/api';
+const DashboardIcon = ({ type }) => {
+  const paths = {
+    cap: <><path d="m22 10-10-5-10 5 10 5 10-5Z" /><path d="M6 12v5c3 2 9 2 12 0v-5" /></>,
+    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+    clipboard: <><path d="M9 5h6" /><path d="M9 3h6v4H9z" /><rect x="5" y="5" width="14" height="16" rx="2" /><path d="m9 14 2 2 4-5" /></>,
+    calendar: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></>,
+    class: <><path d="M4 6h16v12H4z" /><path d="M8 10h8M8 14h5" /></>,
+    bell: <><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></>,
+    seats: <><path d="M7 13V9a5 5 0 0 1 10 0v4" /><path d="M5 13h14v5H5z" /><path d="M8 18v3M16 18v3" /></>,
+    arrow: <path d="M5 12h14M13 5l7 7-7 7" />
+  };
 
-const getStoredUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem('user')) || null;
-  } catch {
-    return null;
-  }
+  return (
+    <svg className="tm-line-icon" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      {paths[type]}
+    </svg>
+  );
 };
 
-const teacherNameFromRecord = (teacher) => {
-  if (!teacher) return 'Teacher';
-  return `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || teacher.email || 'Teacher';
+const EmptyExamIllustration = () => (
+  <svg className="tm-empty-illustration" viewBox="0 0 260 180" fill="none" aria-hidden="true">
+    <circle cx="132" cy="94" r="72" fill="#eff6ff" />
+    <path d="M91 47h72c7 0 12 5 12 12v82c0 7-5 12-12 12H91c-7 0-12-5-12-12V59c0-7 5-12 12-12Z" fill="#ffffff" stroke="#1d4ed8" strokeWidth="5" />
+    <path d="M107 75h42M107 99h44M107 123h32" stroke="#93c5fd" strokeWidth="8" strokeLinecap="round" />
+    <path d="m91 76 7 7 11-15M91 100l7 7 11-15M91 124l7 7 11-15" stroke="#1d4ed8" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="177" cy="126" r="29" fill="#dbeafe" stroke="#1d4ed8" strokeWidth="5" />
+    <path d="m198 147 26 26" stroke="#1d4ed8" strokeWidth="8" strokeLinecap="round" />
+    <path d="M62 128c-11-17-10-32 2-46M208 55l5 9 9 5-9 5-5 9-5-9-9-5 9-5 5-9ZM55 72l3 6 6 3-6 3-3 6-3-6-6-3 6-3 3-6Z" stroke="#bfdbfe" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 };
 
 export default function TeacherDashboard() {
@@ -26,7 +51,8 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
 
   const user = getStoredUser();
-  const teacherName = teacherNameFromRecord(teacher);
+  const teacherName = getTeacherName(teacher);
+  const teacherInitials = getInitials(teacherName);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -41,11 +67,7 @@ export default function TeacherDashboard() {
         ]);
 
         const teachers = teachersRes.success ? teachersRes.data : [];
-        const matchedTeacher =
-          teachers.find((item) => Number(item.user_id) === Number(user?.id)) ||
-          teachers.find((item) => item.email?.toLowerCase() === user?.email?.toLowerCase()) ||
-          teachers[0] ||
-          null;
+        const matchedTeacher = findCurrentTeacher(teachers, user);
 
         setTeacher(matchedTeacher);
         setClasses(classesRes.success ? classesRes.data : []);
@@ -63,97 +85,149 @@ export default function TeacherDashboard() {
   }, [user?.email, user?.id]);
 
   const assignedClasses = useMemo(() => {
-    if (!teacherName || teacherName === 'Teacher') return classes;
-    return classes.filter((item) => {
-      const mainTeacher = item.teacher_name?.toLowerCase();
-      const coTeacher = item.co_teacher?.toLowerCase();
-      const target = teacherName.toLowerCase();
-      return mainTeacher === target || coTeacher === target;
-    });
+    return filterAssignedClasses(classes, teacherName);
   }, [classes, teacherName]);
 
   const classKeys = useMemo(
-    () => new Set(assignedClasses.map((item) => `${item.grade}-${item.section}`)),
+    () => new Set(assignedClasses.map(getClassKey)),
     [assignedClasses]
   );
 
-  const assignedStudents = students.filter((student) => classKeys.has(`${student.grade}-${student.section}`));
+  const assignedStudents = filterByClassKeys(students, classKeys);
   const today = new Date().toISOString().split('T')[0];
   const todayAttendance = attendance.filter((item) => item.attendance_date?.startsWith(today));
   const presentToday = todayAttendance.filter((item) => item.status === 'Present').length;
   const upcomingExams = exams
     .filter((exam) => !exam.exam_date || new Date(exam.exam_date) >= new Date(today))
     .slice(0, 5);
+  const totalAssignedSeats = assignedClasses.reduce((total, item) => total + Number(item.max_capacity || 0), 0);
+
+  const statCards = [
+    {
+      label: 'Assigned Classes',
+      value: assignedClasses.length,
+      note: 'Homeroom or co-teacher',
+      icon: 'cap',
+      tone: 'blue',
+      spark: 'bars'
+    },
+    {
+      label: 'My Students',
+      value: assignedStudents.length,
+      note: 'Across assigned classes',
+      icon: 'users',
+      tone: 'green',
+      spark: 'wave'
+    },
+    {
+      label: 'Present Today',
+      value: presentToday,
+      note: 'Marked attendance records',
+      icon: 'clipboard',
+      tone: 'amber',
+      spark: 'wave'
+    },
+    {
+      label: 'Upcoming Exams',
+      value: upcomingExams.length,
+      note: 'Scheduled from today onward',
+      icon: 'calendar',
+      tone: 'purple',
+      spark: 'pulse'
+    }
+  ];
 
   return (
-    <DashboardLayout userRole="teacher" currentPath="/teacher/dashboard" userName={teacherName} userInitials="TR">
-      <div className="tm-page-header">
+    <DashboardLayout userRole="teacher" currentPath="/teacher/dashboard" userName={teacherName} userInitials={teacherInitials}>
+      <div className="tm-dashboard-shell">
+      <div className="tm-dashboard-hero">
         <div>
-          <h2>Teacher dashboard</h2>
-          <p>{loading ? 'Loading your workspace...' : `Welcome back, ${teacherName}`}</p>
+          <h1>{getGreeting()}, {teacherName}!</h1>
+          <p>{loading ? 'Loading your workspace...' : "Here's what's happening in your classes today."}</p>
         </div>
-        <div className="tm-avatar">TR</div>
-      </div>
-
-      <div className="tm-stats-grid">
-        <div className="tm-stat-card">
-          <span>Assigned classes</span>
-          <strong>{assignedClasses.length}</strong>
-          <small>Homeroom or co-teacher</small>
-        </div>
-        <div className="tm-stat-card">
-          <span>My students</span>
-          <strong>{assignedStudents.length}</strong>
-          <small>Across assigned classes</small>
-        </div>
-        <div className="tm-stat-card">
-          <span>Present today</span>
-          <strong>{presentToday}</strong>
-          <small>Marked attendance records</small>
-        </div>
-        <div className="tm-stat-card">
-          <span>Upcoming exams</span>
-          <strong>{upcomingExams.length}</strong>
-          <small>Scheduled from today onward</small>
+        <div className="tm-hero-actions">
+          <button className="tm-notification-btn" type="button" aria-label="Notifications">
+            <DashboardIcon type="bell" />
+            <span />
+          </button>
+          <div className="tm-profile-chip">{teacherInitials}</div>
         </div>
       </div>
+      <Header />
 
-      <div className="tm-two-col">
-        <section className="tm-panel">
-          <div className="tm-panel-header">
-            <h3>My classes</h3>
-            <a href="/teacher/classes">View all</a>
+      <div className="tm-dashboard-stats">
+        {statCards.map((card) => (
+          <article className={`tm-dashboard-stat ${card.tone}`} key={card.label}>
+            <div className="tm-stat-icon"><DashboardIcon type={card.icon} /></div>
+            <div className="tm-stat-copy">
+              <span>{card.label}</span>
+              <strong>{card.value}</strong>
+              <small>{card.note}</small>
+            </div>
+            <div className={`tm-stat-spark ${card.spark}`} aria-hidden="true">
+              <i /><i /><i /><i />
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="tm-dashboard-grid">
+        <section className="tm-dashboard-panel tm-classes-panel">
+          <div className="tm-dashboard-panel-header">
+            <div className="tm-panel-title">
+              <span><DashboardIcon type="class" /></span>
+              <h2>My Classes</h2>
+            </div>
+            <a href="/teacher/classes">View all <DashboardIcon type="arrow" /></a>
           </div>
-          <div className="tm-list">
-            {assignedClasses.length > 0 ? assignedClasses.slice(0, 5).map((item) => (
-              <div className="tm-list-row" key={item.class_id}>
+          <div className="tm-class-list">
+            {assignedClasses.length > 0 ? assignedClasses.slice(0, 4).map((item, index) => (
+              <div className="tm-class-card" key={item.class_id}>
+                <span className={`tm-class-icon color-${index % 4}`}><DashboardIcon type="class" /></span>
                 <div>
                   <strong>{item.grade} - Section {item.section}</strong>
-                  <span>Room {item.room_number || 'N/A'} | {item.academic_year || 'Current year'}</span>
+                  <span>Room {item.room_number || 'N/A'} <em>|</em> {item.academic_year || 'Current year'}</span>
                 </div>
-                <span className="tm-pill">{item.max_capacity || 0} seats</span>
+                <b>{item.max_capacity || 0} seats</b>
               </div>
             )) : <div className="tm-empty">No classes assigned yet.</div>}
           </div>
+          <div className="tm-seat-total">
+            <span><DashboardIcon type="seats" /> Total Assigned Seats</span>
+            <strong>{totalAssignedSeats} seats</strong>
+          </div>
         </section>
 
-        <section className="tm-panel">
-          <div className="tm-panel-header">
-            <h3>Upcoming exams</h3>
+        <section className="tm-dashboard-panel tm-exams-panel">
+          <div className="tm-dashboard-panel-header">
+            <div className="tm-panel-title">
+              <span><DashboardIcon type="calendar" /></span>
+              <h2>Upcoming Exams</h2>
+            </div>
             <a href="/teacher/exams">View all</a>
           </div>
-          <div className="tm-list">
-            {upcomingExams.length > 0 ? upcomingExams.map((exam) => (
-              <div className="tm-list-row" key={exam.exam_id}>
-                <div>
-                  <strong>{exam.exam_title}</strong>
-                  <span>{exam.subject_name || 'Subject'} | {exam.grade || 'Class'} {exam.section || ''}</span>
+          {upcomingExams.length > 0 ? (
+            <div className="tm-exam-list">
+              {upcomingExams.map((exam) => (
+                <div className="tm-exam-card" key={exam.exam_id}>
+                  <span><DashboardIcon type="calendar" /></span>
+                  <div>
+                    <strong>{exam.exam_title}</strong>
+                    <p>{exam.subject_name || 'Subject'} | {exam.grade || 'Class'} {exam.section || ''}</p>
+                  </div>
+                  <b>{exam.exam_date ? new Date(exam.exam_date).toLocaleDateString() : 'Unscheduled'}</b>
                 </div>
-                <span className="tm-pill">{exam.exam_date ? new Date(exam.exam_date).toLocaleDateString() : 'Unscheduled'}</span>
-              </div>
-            )) : <div className="tm-empty">No upcoming exams found.</div>}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="tm-empty-exams">
+              <EmptyExamIllustration />
+              <h3>No upcoming exams found</h3>
+              <p>You don't have any exams scheduled from today onward.</p>
+            </div>
+          )}
         </section>
+      </div>
       </div>
     </DashboardLayout>
   );

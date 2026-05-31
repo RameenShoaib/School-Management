@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2'; // 👉 SweetAlert2 import kiya gaya hai
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
+import AdminListView from '../../components/AdminListView';
+import AdminColumnDrawer from '../../components/AdminColumnDrawer';
 import './Classes.css';
 
 /* Icons */
@@ -14,6 +16,13 @@ const SvgMore = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 
 const SvgEye = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>;
 const SvgEyeOff = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="m3 3 18 18"/><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"/><path d="M9.9 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.1 6.8C3.5 8.7 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.2-1"/></svg>;
 const SvgGrip = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M9 5.5A1.5 1.5 0 1 1 6 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9-13A1.5 1.5 0 1 1 15 5.5a1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>;
+const ClassLineIcon = ({ type }) => {
+  const paths = {
+    close: <path d="M18 6 6 18M6 6l12 12"/>,
+    check: <path d="m20 6-11 11-5-5"/>,
+  };
+  return <svg className="cl-line-icon" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{paths[type] || paths.check}</svg>;
+};
 
 // Helper function to safely parse null/undefined
 const val = (v) => (v !== null && v !== undefined) ? v : '';
@@ -254,10 +263,34 @@ export default function Classes() {
 
   const handleInputChange = (e) => { setFormData({ ...formData, [e.target.name]: e.target.value }); };
   const handleSubjectToggle = (subject) => { setSelectedSubjects(prev => prev.includes(subject) ? prev.filter(s => s !== subject) : [...prev, subject]); };
+  const showClassFormNotice = () => {
+    Swal.fire({
+      title: 'Setup required',
+      text: 'Please fill all required (*) fields before creating the class.',
+      icon: 'warning',
+      confirmButtonText: 'Review form',
+      customClass: {
+        container: 'cl-swal-container',
+        popup: 'cl-swal-popup',
+        icon: 'cl-swal-icon',
+        title: 'cl-swal-title',
+        htmlContainer: 'cl-swal-text',
+        confirmButton: 'cl-swal-confirm'
+      },
+      buttonsStyling: false
+    }).then(() => {
+      setTimeout(() => {
+        const modalBody = document.querySelector('.cl-modal-body');
+        modalBody?.scrollTo({ top: 0, behavior: 'smooth' });
+        const firstField = document.querySelector('.cl-modal [name="grade"]');
+        firstField?.focus?.();
+      }, 80);
+    });
+  };
 
   const handleFinalSubmit = async () => {
     if (!formData.grade || !formData.teacher || !formData.maxCapacity) {
-      alert("Please fill all required (*) fields.");
+      showClassFormNotice();
       return;
     }
 
@@ -270,8 +303,8 @@ export default function Classes() {
       const response = await fetch(url, { method: method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (data.success) { setIsModalOpen(false); fetchClasses(); } 
-      else { alert("Error: " + data.message); }
-    } catch (err) { alert("Failed to connect to server."); } 
+      else { Swal.fire('Could not save class', data.message || 'Please try again.', 'error'); }
+    } catch (err) { Swal.fire('Connection failed', 'Failed to connect to server.', 'error'); } 
     finally { setIsSubmitting(false); }
   };
 
@@ -310,7 +343,10 @@ export default function Classes() {
     }
 
     if (column.key === 'avgGrade') return <span className="cl-grade-cell">{cls.avgGrade}</span>;
-    if (column.key === 'status') return <span className={`cl-status-pill ${cls.statusClass}`}>{cls.status}</span>;
+    if (column.key === 'status') {
+      const label = cls.statusClass === 'cl-status-active' ? 'Active' : cls.status;
+      return <span className={`cl-status-pill ${cls.statusClass}`}><span className="cl-status-check">✓</span>{label}</span>;
+    }
     return getColumnValue(cls, column.key) || '-';
   };
 
@@ -540,6 +576,55 @@ export default function Classes() {
         }}
       />
 
+      <AdminListView
+        searchTerm={searchTerm}
+        onSearchChange={(value) => {
+          setSearchTerm(value);
+          setSelectedRows([]);
+        }}
+        searchPlaceholder="Search by class name, teacher..."
+        searchIcon={<SvgSearch />}
+        configureIcon={<SvgColumns />}
+        onConfigure={openColumnModal}
+        filterButton={(
+          <>
+            <select className="cl-filter-select"><option>All grades</option></select>
+            <select className="cl-filter-select"><option>All sections</option></select>
+            <select className="cl-filter-select"><option>All statuses</option></select>
+          </>
+        )}
+        columns={visibleColumns}
+        rows={currentRecords}
+        getRowId={(cls) => cls.id}
+        renderCell={renderColumnValue}
+        isLoading={isLoading}
+        selectedRows={selectedRows}
+        isAllSelected={isAllSelected}
+        onSelectAll={handleSelectAll}
+        onSelectRow={handleSelectRow}
+        tableDragColumnKey={tableDragColumnKey}
+        tableDragTargetKey={tableDragTargetKey}
+        onColumnDragStart={handleColumnDragStart}
+        onColumnDragOver={(event, key) => {
+          event.preventDefault();
+          setTableDragTargetKey(key);
+        }}
+        onColumnDragLeave={(key) => setTableDragTargetKey((current) => current === key ? null : current)}
+        onColumnDrop={handleColumnDrop}
+        onColumnDragEnd={handleColumnDragEnd}
+        onColumnResizeStart={startColumnResize}
+        loadingMessage="Loading classes..."
+        emptyMessage="No classes found."
+        paginationLabel={`Showing ${currentRecords.length > 0 ? firstRecordIndex + 1 : 0} to ${Math.min(lastRecordIndex, filteredRecords.length)} of ${filteredRecords.length} classes`}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          setSelectedRows([]);
+        }}
+      />
+
+      {localStorage.getItem('edusync.showLegacyList') === 'true' && (
       <div className="cl-table-card">
         
         {/* Filters Row */}
@@ -652,56 +737,34 @@ export default function Classes() {
         </div>
 
       </div>
-
-      {isColumnModalOpen && (
-        <div className="cl-column-overlay">
-          <div className="cl-column-modal">
-            <div className="cl-column-header">
-              <div>
-                <h2>Configure View</h2>
-                <p>Choose which columns appear in the classes list.</p>
-              </div>
-              <button className="cl-column-close" type="button" onClick={closeColumnModal} aria-label="Close configure view">x</button>
-            </div>
-            <div className="cl-column-search">
-              <SvgSearch />
-              <input type="text" placeholder="Search columns..." value={columnSearchTerm} onChange={(e) => setColumnSearchTerm(e.target.value)} />
-            </div>
-            <div className="cl-column-list-header">
-              <span>Columns</span>
-              <button type="button" onClick={sortDraftVisibleFirst}>Visible first ({draftVisibleCount})</button>
-            </div>
-            <div className="cl-column-list">
-              {modalColumns.map((column) => (
-                <div
-                  className={`cl-column-row ${draggedColumnKey === column.key ? 'is-dragging' : ''} ${dragOverColumnKey === column.key && draggedColumnKey !== column.key ? 'is-drag-over' : ''}`}
-                  key={column.key}
-                  draggable
-                  onDragStart={(e) => handleDraftColumnDragStart(e, column.key)}
-                  onDragOver={(e) => { e.preventDefault(); setDragOverColumnKey(column.key); }}
-                  onDragLeave={() => setDragOverColumnKey((current) => current === column.key ? null : current)}
-                  onDrop={(e) => handleDraftColumnDrop(e, column.key)}
-                  onDragEnd={handleDraftColumnDragEnd}
-                >
-                  <button className={`cl-column-visibility ${column.visible ? 'visible' : 'hidden'}`} type="button" onClick={() => handleDraftColumnToggle(column.key)} aria-label={`${column.visible ? 'Hide' : 'Show'} ${column.label}`}>
-                    {column.visible ? <SvgEye /> : <SvgEyeOff />}
-                  </button>
-                  <span className="cl-column-row-label">{column.label}</span>
-                  <button className="cl-column-grip" type="button" draggable onDragStart={(e) => handleDraftColumnDragStart(e, column.key)} onDragEnd={handleDraftColumnDragEnd} aria-label={`Drag ${column.label}`}>
-                    <SvgGrip />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="cl-column-footer">
-              <button className="cl-column-cancel" type="button" onClick={closeColumnModal}>Cancel</button>
-              <button className="cl-column-apply" type="button" onClick={applyColumnChanges}>Apply Changes</button>
-            </div>
-          </div>
-        </div>
       )}
 
-      {false && isColumnModalOpen && (
+      <AdminColumnDrawer
+        isOpen={isColumnModalOpen}
+        title="Fields"
+        description="Choose which columns appear in the classes list."
+        searchTerm={columnSearchTerm}
+        onSearchChange={setColumnSearchTerm}
+        columns={modalColumns}
+        visibleCount={draftVisibleCount}
+        onVisibleFirst={sortDraftVisibleFirst}
+        onClose={closeColumnModal}
+        onApply={applyColumnChanges}
+        onToggleColumn={handleDraftColumnToggle}
+        onDragStart={handleDraftColumnDragStart}
+        onDragOver={(e, key) => { e.preventDefault(); setDragOverColumnKey(key); }}
+        onDragLeave={(key) => setDragOverColumnKey((current) => current === key ? null : current)}
+        onDrop={handleDraftColumnDrop}
+        onDragEnd={handleDraftColumnDragEnd}
+        draggedColumnKey={draggedColumnKey}
+        dragOverColumnKey={dragOverColumnKey}
+        searchIcon={<SvgSearch />}
+        visibleIcon={<SvgEye />}
+        hiddenIcon={<SvgEyeOff />}
+        gripIcon={<SvgGrip />}
+      />
+
+      {localStorage.getItem('edusync.showLegacyColumnModal') === 'true' && isColumnModalOpen && (
         <div className="cl-column-overlay">
           <div className="cl-column-modal">
             <div className="cl-column-header">
@@ -747,11 +810,14 @@ export default function Classes() {
                   <p>{modalMode === 'add' ? 'Create a new class and assign a teacher and subjects' : `Editing settings for ${formData.grade}`}</p>
                 </div>
               </div>
-              <div className="cl-badge-pill">{modalMode === 'add' ? 'Setup required' : 'Update record'}</div>
+              <div className="cl-header-actions">
+                <div className="cl-badge-pill">{modalMode === 'add' ? 'Setup required' : 'Update record'}</div>
+                <button className="cl-modal-close" type="button" onClick={() => setIsModalOpen(false)} aria-label="Close"><ClassLineIcon type="close" /></button>
+              </div>
             </div>
 
             <div className="cl-modal-body">
-              <div>
+              <div className="cl-modal-card cl-class-details-card">
                 <div className="cl-section-title">Class Details</div>
                 <div className="cl-form-row-3">
                   <div className="cl-form-group">
@@ -798,7 +864,7 @@ export default function Classes() {
                 </div>
               </div>
 
-              <div style={{ marginTop: '24px' }}>
+              <div className="cl-modal-card cl-teacher-card">
                 <div className="cl-section-title">Teacher Assignment</div>
                 <div className="cl-form-row-2">
                   
@@ -831,7 +897,7 @@ export default function Classes() {
                 </div>
               </div>
 
-              <div style={{ marginTop: '24px' }}>
+              <div className="cl-modal-card cl-subject-card">
                 <div className="cl-section-title">Subject & Timetable Assignment</div>
                 <div className="cl-alert-box" style={{ marginBottom: '16px' }}>
                   <IconInfo />
@@ -862,7 +928,7 @@ export default function Classes() {
                 </div>
               </div>
 
-              <div style={{ marginTop: '24px' }}>
+              <div className="cl-modal-card cl-settings-card">
                 <div className="cl-section-title">Class Settings</div>
                 <div className="cl-switch-card">
                   <div className="cl-switch-row">
@@ -895,7 +961,7 @@ export default function Classes() {
               <div className="cl-footer-actions">
                 <button className="cl-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button className="cl-btn-publish" onClick={handleFinalSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? 'Processing...' : modalMode === 'add' ? 'Create class' : 'Update class'}
+                  {isSubmitting ? 'Processing...' : modalMode === 'add' ? 'Create class' : 'Update class'} <ClassLineIcon type="check" />
                 </button>
               </div>
             </div>
