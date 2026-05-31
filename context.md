@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-EduSync is a school management system built as a React single-page app with a separate Express/PostgreSQL backend. The app is currently focused on admin workflows: managing students, teachers, classes, subjects, attendance, exams, fees, announcements, and reports.
+EduSync is a school management system built as a React single-page app with a separate Express/PostgreSQL backend. The app now has active admin, teacher, and student areas. The admin module is the most complete area and covers students, teachers, classes, subjects, attendance, exams, fees, announcements, and reports. Teacher and student modules have been added and are being expanded into role-specific experiences.
 
 The frontend is a Vite React app in `src/`. The backend lives in `backend/` and exposes REST endpoints on `http://localhost:5000/api/...`. Data is stored in PostgreSQL, apparently Neon, using `pg` and a `DATABASE_URL` environment variable.
 
@@ -47,11 +47,12 @@ PORT=5000
 - `src/App.jsx`: route definitions.
 - `src/components/DashboardLayout.jsx`: shared dashboard shell.
 - `src/components/Sidebar/Sidebar.jsx`: role-aware navigation/sidebar.
+- `src/components/ProtectedRoute.jsx`: route guard for role-based access control.
 - `src/components/Header/header.jsx`: reusable command bar with Edit, Refresh, Delete, Export buttons.
 - `src/pages/Auth/Login.jsx`: login page and role selector.
 - `src/pages/Admin/`: main admin modules.
-- `src/pages/Teacher/TeacherDashboard.jsx`: teacher dashboard mock/static view.
-- `src/pages/Student/StudentDashboard.jsx`: student dashboard mock/static view.
+- `src/pages/Teacher/`: teacher module pages.
+- `src/pages/Student/`: student module pages.
 - `src/pages/parent/ParentDashboard.jsx`: currently empty.
 - `backend/server.js`: Express routes and table initialization.
 - `backend/db.js`: PostgreSQL pool setup.
@@ -75,7 +76,7 @@ Defined in `src/App.jsx`:
 - `/reports`: reports.
 - `*`: redirects to `/`.
 
-There is a dropdown link in the admin dashboard for `/parent/dashboard`, but `App.jsx` does not currently define that route.
+Routes are now guarded by role through `ProtectedRoute.jsx`, so users should not be able to access another role's pages by changing the URL.
 
 ## Shared Layout And Navigation
 
@@ -86,9 +87,11 @@ Most dashboard pages render inside `DashboardLayout`, which creates a fixed side
 - Overview: Dashboard, Announcements.
 - Management: Students, Teachers, Classes, Subjects.
 - Operations: Attendance, Exams, Fee management, Reports.
-- System: Settings.
+- System section is currently hidden/removed from the admin sidebar.
 
 Logout uses SweetAlert2 confirmation, clears `localStorage.user` and `localStorage.token`, then navigates to `/`.
+
+The Settings entry has been removed from the admin sidebar.
 
 The shared `Header` component is a command/action bar. Pages pass handlers like `onRefresh`, `onDelete`, and `onExport`. If handlers are not passed, the buttons still render but do nothing.
 
@@ -108,11 +111,12 @@ Payload:
 
 The backend checks the `users` table by email, compares `password_hash` directly to the provided password, checks role, then returns a redirect URL.
 
-Current auth notes:
+Current auth/RBA notes:
 
 - Passwords are plain string comparisons, not hashed verification.
-- Login stores only `user` in localStorage; no real token flow is implemented.
-- Routes are not protected. Any route can be opened directly.
+- Login stores user data in localStorage. Token flow is still minimal.
+- Frontend route protection is implemented with `ProtectedRoute.jsx`.
+- The sidebar and page routes are role-aware for admin, teacher, and student access.
 
 ## Admin Pages
 
@@ -134,7 +138,7 @@ It uses `DashboardLayout` and `Header`.
 
 File: `src/pages/Admin/Announcement.jsx`
 
-Currently uses mock announcement data only. Features:
+Admin announcement UI has been redesigned to match the newer admin visual language. It currently uses mock announcement data only. Features:
 
 - Search and category filters.
 - Stats cards.
@@ -163,6 +167,17 @@ Connected to backend. Features:
   - Fee and documents.
 - Add uses `POST /api/students`.
 - Edit uses `PUT /api/students/:id`.
+- Configure Columns feature:
+  - add/remove visible columns.
+  - reorder columns through the configure modal.
+  - reorder visible table headers directly with drag/drop.
+  - resize columns directly from the list view by dragging the column edge.
+  - quick search scans currently visible columns.
+- Student list UI uses the preferred clean list view:
+  - simple table surface.
+  - primary Name is clickable.
+  - relationship-style columns such as Grade/Section are clickable where supported.
+  - normal fields remain plain text.
 
 Student creation also creates a linked `users` row with default password `Student@123`.
 
@@ -182,6 +197,8 @@ Connected to backend. Features:
 - Add/Edit teacher modal.
 - Add uses `POST /api/teachers`.
 - Edit uses `PUT /api/teachers/:id`.
+- Configure Columns is implemented with the same modal and direct list-view reorder/resize behavior used in Students.
+- Teacher list UI has been simplified to the same clean list direction as Students, with primary name as the clickable record link.
 
 Teacher creation also creates a linked `users` row with default password `Teacher@123`.
 
@@ -207,6 +224,8 @@ Connected to backend. Features:
   - settings toggles: attendance tracking, gradebook, portal access.
 - Add uses `POST /api/classes`.
 - Edit uses `PUT /api/classes/:id`.
+- Configure Columns is implemented with the same modal and direct list-view reorder/resize behavior used in Students.
+- Classes list UI has been simplified toward the same clean list direction as Students.
 
 Some table values are still generated placeholders, such as random attendance percentage and average grade.
 
@@ -218,14 +237,15 @@ Connected to backend. Features:
 
 - Fetches subjects from `/api/subjects`.
 - Fetches classes from `/api/classes` to populate grade levels.
-- Stats for total/core/elective/unassigned.
 - Checkbox selection.
 - CSV export for selected rows.
 - Bulk delete via `/api/subjects/bulk-delete`.
-- Add subject modal.
+- Add/Edit subject modal.
 - Add uses `POST /api/subjects`.
-
-There is no subject edit flow yet.
+- Edit uses `PUT /api/subjects/:id`.
+- The previous stats cards and average-score side panel have been removed.
+- Configure Columns is implemented with the same modal and direct list-view reorder/resize behavior used in Students.
+- Subjects currently keeps the previous compact list UI after recent rollback requests.
 
 ### Attendance
 
@@ -234,15 +254,17 @@ File: `src/pages/Admin/Attendance.jsx`
 Connected to backend. Features:
 
 - Fetches students, teachers, and attendance records.
-- Stats for present, absent, late, holiday/leave.
-- Dynamic attendance by grade for today.
-- Dynamic weekly trend for last 5 days.
 - Filter table by grade, section, and start date.
-- Shows a 5-day attendance window.
+- Shows a 5-day attendance window using normalized local date keys to avoid timezone/date display mismatches.
 - Pagination, 7 students per page.
 - Checkbox selection.
 - CSV export for selected rows.
 - Bulk clear attendance via `/api/attendance/bulk-delete`.
+- Simplified hierarchy view:
+  - students render as parent rows.
+  - arrow button expands/collapses child attendance detail.
+  - student name opens the attendance marking/edit form.
+  - child panel shows selected week, roll number, total marked, absent, late, holiday, recent attendance, remarks, and marked-by teacher name.
 - Mark attendance modal:
   - date, grade, section, period, marked by teacher.
   - status toggles: P, A, L, H.
@@ -307,7 +329,11 @@ The backend also has `/api/reports/download-pdf/:id`, but the frontend currently
 
 ## Teacher, Student, And Parent Pages
 
-`TeacherDashboard.jsx` and `StudentDashboard.jsx` are currently mock/static dashboard-style tables. They use `DashboardLayout` with `userRole="admin"` even though they represent teacher/student dashboards.
+Teacher and student module folders now contain role-specific pages rather than only a single dashboard mock.
+
+Teacher module includes teacher-facing dashboard and management-style pages such as announcements.
+
+Student module includes student-facing dashboard and pages such as announcements, subjects, attendance, exams, fees, and reports. Student data is scoped so a logged-in student sees their own relevant information. Student attendance resolves the `marked_by` teacher ID into the teacher name where available.
 
 `ParentDashboard.jsx` exists but is empty, and no parent route is defined in `App.jsx`.
 
@@ -348,6 +374,7 @@ Subjects:
 
 - `GET /api/subjects`
 - `POST /api/subjects`
+- `PUT /api/subjects/:id`
 - `POST /api/subjects/bulk-delete`
 
 Attendance:
@@ -380,7 +407,7 @@ Reports:
 The backend initializes some tables in `initDatabase()`:
 
 - `classes`
-- `subjects_table`
+- `subjects`
 - `attendance`
 - `exams`
 
@@ -430,17 +457,17 @@ Reports:
 
 ## Known Issues And Risks
 
-- The project folder is not currently a Git repository.
+- The project is now being pushed to GitHub branches during development. Recent branches included UI/configure-column work.
 - There are mojibake/encoding artifacts in many files, for example `ðŸ‘‰`, `âœ“`, `â€”`. This likely came from emoji/special characters being saved or displayed with the wrong encoding.
 - `backend/server.js` uses CommonJS `require`, while the root frontend package uses `"type": "module"`. Backend has its own `package.json`, so this should work if run from `backend/`.
 - Backend table initialization is incomplete. It creates only some tables. Existing database must already contain `users`, `students`, `teachers`, `fee_payments`, and `generated_reports`.
 - Class routes use a `settings` column, but `CREATE TABLE classes` does not create `settings`.
 - Exam routes use `subject_id`, `class_id`, `room_number`, and `weightage_percent`, but the `CREATE TABLE exams` statement currently creates different columns like `subject`, `grade`, `sections`, `exam_rooms`, and `weightage`. This mismatch can break scheduling/fetching exams unless the actual DB schema has already been changed manually.
 - Login compares plain text passwords against `password_hash`. Real password hashing is not implemented.
-- There is no route protection or auth guard on the frontend.
+- Frontend route protection exists, but backend authorization checks should still be reviewed because true security must be enforced server-side as well.
 - Many frontend API URLs are hardcoded to `http://localhost:5000`.
 - Announcements are mock-only and have no backend persistence.
-- Teacher and student dashboards are mock/static and still pass admin role to the layout.
+- Teacher and student modules exist, but some pages may still need deeper backend integration and polishing.
 - Parent dashboard is empty and not registered in routing.
 - Some UI values are placeholder/random, especially classes attendance and average grade.
 - File upload controls in student/teacher/announcement/class forms are visual only and do not upload files.
@@ -469,16 +496,27 @@ Reports:
   - delete confirmation with SweetAlert2
   - modal for create/edit
 
+## Recent UI And Feature Decisions
+
+- Admin module UI has gone through a major pass for announcements, students, teachers, classes, subjects, attendance, exams, fees, and reports.
+- Configure Columns has been added to Students, Teachers, Classes, and Subjects.
+- The configure modal uses a D365-style "Configure View" pattern with visible/hidden toggles and drag ordering.
+- Direct list-view column resize and reorder are supported on configurable admin lists.
+- Student list is the preferred reference for the clean list style.
+- Subjects was briefly adjusted to add a matching footer/fixed-height list area, then rolled back at the user's request to preserve the previous compact list UI.
+- Attendance was simplified from chart-heavy dashboard content into a parent-child accordion list.
+- Attendance date handling now normalizes DB dates before comparing them to selected week dates.
+
 ## Suggested Next Steps
 
 1. Fix backend schema mismatches for `classes.settings` and exams columns.
 2. Add missing table initialization or migrations for `users`, `students`, `teachers`, `fee_payments`, and `generated_reports`.
 3. Move hardcoded API base URL into an environment variable, for example `VITE_API_URL`.
-4. Add frontend route guards based on the logged-in user role.
-5. Replace plain password checks with hashed passwords.
-6. Connect announcements to backend CRUD endpoints.
-7. Convert teacher/student dashboards from mock data to role-specific backend data.
-8. Add parent dashboard route and implementation, or remove the link until ready.
-9. Clean encoding artifacts and replace broken emoji/symbol text with ASCII or valid UTF-8.
-10. Add a small migration/seed script for local development.
-
+4. Audit frontend route guards for every admin/teacher/student route.
+5. Add backend-side authorization checks for every role-scoped endpoint.
+6. Replace plain password checks with hashed passwords.
+7. Connect announcements to backend CRUD endpoints.
+8. Continue converting teacher/student pages from partial/mock data to role-specific backend data.
+9. Add parent dashboard route and implementation, or remove the link until ready.
+10. Clean encoding artifacts and replace broken emoji/symbol text with ASCII or valid UTF-8.
+11. Add a small migration/seed script for local development.

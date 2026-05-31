@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
+import AdminListView from '../../components/AdminListView';
 import './exam.css';
 
 /* SVG Icons */
@@ -11,6 +12,20 @@ const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M1
 const SvgExamTile = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 4h8"/><path d="M9 2h6v4H9z"/><path d="M6 4h-.5A2.5 2.5 0 0 0 3 6.5v12A2.5 2.5 0 0 0 5.5 21h13a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 18.5 4H18"/><path d="M8 12h8M8 16h5"/></svg>;
 const SvgDate = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>;
 const SvgMore = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2Zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Z"/></svg>;
+const ExamLineIcon = ({ type }) => {
+  const paths = {
+    close: <path d="M18 6 6 18M6 6l12 12" />,
+    check: <path d="m5 12 4 4L19 6" />,
+    bell: <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7M13.73 21a2 2 0 0 1-3.46 0" />,
+    message: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" />
+  };
+
+  return (
+    <svg className="ex-line-icon" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      {paths[type]}
+    </svg>
+  );
+};
 
 export default function Exams() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -221,10 +236,36 @@ export default function Exams() {
     setIsModalOpen(true);
   };
 
+  const focusExamForm = () => {
+    setTimeout(() => {
+      const modalBody = document.querySelector('.ex-modal-body');
+      const firstField = document.querySelector('.ex-modal [name="examTitle"]');
+      modalBody?.scrollTo({ top: 0, behavior: 'smooth' });
+      firstField?.focus?.({ preventScroll: true });
+    }, 120);
+  };
+
+  const showExamFormNotice = () => {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Required details missing',
+      text: 'Please complete the exam title, subject, class, and date before scheduling.',
+      confirmButtonText: 'Review form',
+      buttonsStyling: false,
+      customClass: {
+        container: 'ex-swal-container',
+        popup: 'ex-swal-popup',
+        title: 'ex-swal-title',
+        htmlContainer: 'ex-swal-text',
+        confirmButton: 'ex-swal-confirm'
+      }
+    }).then(focusExamForm);
+  };
+
   // Schedule Exam
   const handleScheduleExam = async () => {
     if (!formData.examTitle || !formData.subjectId || !formData.classId || !formData.examDate) {
-      Swal.fire('Required', 'Please select a Subject, Class, and Date.', 'warning');
+      showExamFormNotice();
       return;
     }
 
@@ -287,6 +328,38 @@ export default function Exams() {
 
   const isAllSelected = currentExams.length > 0 && currentExams.every(exam => selectedRows.includes(exam.exam_id));
 
+  const examColumns = [
+    { key: 'icon', label: '', width: 70 },
+    { key: 'id', label: 'ID', width: 90 },
+    { key: 'title', label: 'Exam Title', width: 220 },
+    { key: 'type', label: 'Type', width: 150 },
+    { key: 'subject', label: 'Subject', width: 160 },
+    { key: 'class', label: 'Class', width: 140 },
+    { key: 'date', label: 'Date', width: 210 },
+    { key: 'invigilator', label: 'Invigilator', width: 150 },
+    { key: 'status', label: 'Status', width: 130 }
+  ];
+
+  const renderExamCell = (exam, column) => {
+    if (column.key === 'icon') return <span className={`ex-row-icon color-${exam.exam_id % 4}`}><SvgExamTile /></span>;
+    if (column.key === 'id') return exam.exam_id;
+    if (column.key === 'title') return <span className="ex-title-cell">{exam.exam_title}</span>;
+    if (column.key === 'type') return <span className={`ex-type-pill color-${exam.exam_id % 4}`}>{exam.exam_type}</span>;
+    if (column.key === 'subject') return exam.subject_name || '-';
+    if (column.key === 'class') return `${exam.grade || '-'} ${exam.section ? `(${exam.section})` : ''}`;
+    if (column.key === 'date') {
+      return (
+        <span className="ex-date-cell">
+          <SvgDate />
+          {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '-'}
+        </span>
+      );
+    }
+    if (column.key === 'invigilator') return exam.invigilator_first_name || 'N/A';
+    if (column.key === 'status') return <span className="ex-pill pass">{exam.status || 'Scheduled'}</span>;
+    return '-';
+  };
+
   return (
     <DashboardLayout userRole="admin" currentPath="/exams" userName="System Admin" userInitials="SA">
       <div className="ex-page-header">
@@ -315,7 +388,39 @@ export default function Exams() {
         }}
       />
 
-      <div className="ex-table-card">
+      <AdminListView
+        searchTerm={searchTerm}
+        onSearchChange={(value) => {
+          setSearchTerm(value);
+          setCurrentPage(1);
+          setSelectedRows([]);
+        }}
+        searchPlaceholder="Search by title or subject..."
+        searchIcon={<SvgSearch />}
+        showConfigure={false}
+        columns={examColumns}
+        rows={currentExams}
+        getRowId={(exam) => exam.exam_id}
+        renderCell={renderExamCell}
+        selectedRows={selectedRows}
+        isAllSelected={isAllSelected}
+        onSelectAll={handleSelectAll}
+        onSelectRow={handleSelectRow}
+        renderActions={(exam) => (
+          <button className="ex-more-btn" type="button" aria-label="More exam actions" onClick={() => Swal.fire(exam.exam_title, `Type: ${exam.exam_type || '-'}\nSubject: ${exam.subject_name || '-'}\nStatus: ${exam.status || 'Scheduled'}`, 'info')}>
+            <SvgMore />
+          </button>
+        )}
+        actionsHeader=""
+        actionsWidth={70}
+        emptyMessage="No examinations found in the database."
+        paginationLabel={`Showing ${filteredExams.length > 0 ? indexOfFirstRecord + 1 : 0} to ${Math.min(indexOfLastRecord, filteredExams.length)} of ${filteredExams.length} records`}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={paginate}
+      />
+
+      {false && <div className="ex-table-card">
         <div className="ex-search-area">
           <div className="ex-search-box">
             <SvgSearch />
@@ -398,7 +503,7 @@ export default function Exams() {
             <button className="att-page-btn" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages || totalPages === 0}>&gt;</button>
           </div>
         </div>
-      </div>
+      </div>}
 
       {isModalOpen && (
         <div className="ex-modal-overlay">
@@ -411,10 +516,15 @@ export default function Exams() {
                   <p>Assign subject, class, and date for the exam</p>
                 </div>
               </div>
+              <button className="ex-modal-close" type="button" onClick={() => setIsModalOpen(false)} aria-label="Close exam form">
+                <ExamLineIcon type="close" />
+              </button>
             </div>
 
             <div className="ex-modal-body">
               <div className="ex-section-title">📘 EXAM DETAILS</div>
+              <div className="ex-modal-card ex-details-card">
+              <div className="ex-section-title"><SvgExamTile /> EXAM DETAILS</div>
               <div className="ex-form-row-2">
                 <div className="ex-form-group">
                   <label>Exam title <span>*</span></label>
@@ -467,6 +577,8 @@ export default function Exams() {
                   </select>
                 </div>
               </div>
+              </div>
+              <div className="ex-modal-card ex-config-card">
               <div className="ex-section-title"><IconSettings /> CONFIGURATION</div>
               <div className="ex-form-row-4">
                 <div className="ex-form-group">
@@ -491,20 +603,22 @@ export default function Exams() {
               </div>
               <div className="ex-switch-list">
                 <div className="ex-switch-row">
-                  <div className="ex-switch-label"><h4>Notify students</h4></div>
+                  <div className="ex-switch-copy"><ExamLineIcon type="bell" /><div className="ex-switch-label"><h4>Notify students</h4><p>Send notifications to students about this exam</p></div></div>
                   <div className={`ex-toggle ${formData.notifyPortal ? 'on' : ''}`} onClick={() => handleToggle('notifyPortal')}></div>
                 </div>
                 <div className="ex-switch-row">
-                  <div className="ex-switch-label"><h4>Send SMS</h4></div>
+                  <div className="ex-switch-copy"><ExamLineIcon type="message" /><div className="ex-switch-label"><h4>Send SMS</h4><p>Send SMS alerts to students</p></div></div>
                   <div className={`ex-toggle ${formData.sendSms ? 'on' : ''}`} onClick={() => handleToggle('sendSms')}></div>
                 </div>
               </div>
+              </div>
             </div>
             <div className="ex-modal-footer">
+              <div className="ex-req-text"><span>*</span> Required fields</div>
               <div className="ex-footer-actions">
                 <button className="ex-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button className="ex-btn-publish" onClick={handleScheduleExam} disabled={isLoading}>
-                  {isLoading ? 'Wait...' : (modalMode === 'edit' ? 'Update Exam' : 'Schedule Exam')}
+                  <IconCalendar /> {isLoading ? 'Wait...' : (modalMode === 'edit' ? 'Update Exam' : 'Schedule Exam')}
                 </button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/DashboardLayout'; 
 import Header from '../../components/Header/header'; 
+import AdminListView from '../../components/AdminListView';
 import Swal from 'sweetalert2'; 
 import './Attendance.css';
 
@@ -21,6 +22,20 @@ const SvgUsersMini = () => <svg fill="none" stroke="currentColor" strokeWidth="2
 const SvgTrend = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 18h16"/><path d="m6 14 4-4 3 3 5-6"/><path d="M17 7h1v1"/></svg>;
 const SvgList = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 7h11M9 12h11M9 17h11"/><path d="M4 7h.01M4 12h.01M4 17h.01"/></svg>;
 const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.471 6.471 0 0 0 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0A4.5 4.5 0 1 1 14 9.5 4.505 4.505 0 0 1 9.5 14Z"/></svg>;
+const AttendanceLineIcon = ({ type }) => {
+  const paths = {
+    close: <path d="M18 6 6 18M6 6l12 12" />,
+    check: <path d="m5 12 4 4L19 6" />,
+    absent: <path d="M18 6 6 18M6 6l12 12" />,
+    remark: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" />
+  };
+
+  return (
+    <svg className="att-line-icon" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      {paths[type]}
+    </svg>
+  );
+};
 
 const getMonday = (d) => {
   d = new Date(d);
@@ -37,12 +52,24 @@ export default function Attendance() {
   // Checkbox State
   const [selectedRows, setSelectedRows] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedStudentId, setExpandedStudentId] = useState(null);
   
   // 👉 NEW: Pagination State Added
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 7; 
 
-  const todayDateString = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const getDateKey = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value).split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const [tableFilters, setTableFilters] = useState({
     grade: '', 
@@ -133,7 +160,7 @@ export default function Attendance() {
           // ✅ FIX: Database se delete hone ke baad frontend state ko bhi filter karein
           setAttendanceRecords(prev => 
             prev.filter(rec => 
-              !(selectedRows.includes(rec.student_id) && dateRange.includes(rec.attendance_date.split('T')[0]))
+              !(selectedRows.includes(rec.student_id) && dateRange.includes(getDateKey(rec.attendance_date)))
             )
           );
 
@@ -150,7 +177,7 @@ export default function Attendance() {
   };
   
 
-  const todaysAttendance = attendanceRecords.filter(a => a.attendance_date.startsWith(todayDateString));
+  const todaysAttendance = attendanceRecords.filter(a => getDateKey(a.attendance_date) === todayDateString);
   const totalPresent = todaysAttendance.filter(a => a.status === 'Present').length;
   const totalAbsent = todaysAttendance.filter(a => a.status === 'Absent').length;
   const totalLate = todaysAttendance.filter(a => a.status === 'Late').length;
@@ -185,7 +212,7 @@ export default function Attendance() {
     const dateStr = d.toISOString().split('T')[0];
     const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
 
-    const dayRecords = attendanceRecords.filter(a => a.attendance_date.startsWith(dateStr));
+    const dayRecords = attendanceRecords.filter(a => getDateKey(a.attendance_date) === dateStr);
     const totalD = dayRecords.length;
     const presentD = dayRecords.filter(a => a.status === 'Present').length;
     const p = totalD > 0 ? Math.round((presentD / totalD) * 100) : 0;
@@ -232,8 +259,55 @@ export default function Attendance() {
   });
 
   const getStatusForSpecificDate = (studentId, dateStr) => {
-    const record = attendanceRecords.find(a => a.student_id === studentId && a.attendance_date.startsWith(dateStr));
+    const record = attendanceRecords.find(a => a.student_id === studentId && getDateKey(a.attendance_date) === dateStr);
     return record ? record.status.charAt(0) : null;
+  };
+
+  const normalizeStatusKey = (status) => {
+    const key = (status || '').charAt(0).toUpperCase();
+    return key || null;
+  };
+
+  const getStatusLabel = (status) => {
+    const key = normalizeStatusKey(status);
+    return { P: 'Present', A: 'Absent', L: 'Late', H: 'Holiday' }[key] || status || 'Not marked';
+  };
+
+  const getTeacherName = (value) => {
+    if (!value) return '-';
+    const teacher = dbTeachers.find(t => String(t.teacher_id) === String(value) || String(t.id) === String(value));
+    return teacher ? `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() : value;
+  };
+
+  const formatAttendanceDate = (value) => {
+    if (!value) return '-';
+    return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const getStudentAttendanceSummary = (studentId) => {
+    const records = attendanceRecords
+      .filter(a => a.student_id === studentId)
+      .sort((a, b) => new Date(b.attendance_date) - new Date(a.attendance_date));
+
+    const countByStatus = (key) => records.filter(record => normalizeStatusKey(record.status) === key).length;
+    const week = displayDates.map((dateItem) => {
+      const record = records.find(a => getDateKey(a.attendance_date) === dateItem.fullDateStr);
+      return {
+        ...dateItem,
+        record,
+        status: record ? normalizeStatusKey(record.status) : null
+      };
+    });
+
+    return {
+      records,
+      week,
+      latest: records[0],
+      present: countByStatus('P'),
+      absent: countByStatus('A'),
+      late: countByStatus('L'),
+      holiday: countByStatus('H')
+    };
   };
 
   // Checkbox Handlers
@@ -250,6 +324,151 @@ export default function Attendance() {
   };
 
   const isAllSelected = currentRecords.length > 0 && selectedRows.length === currentRecords.length;
+
+  const attendanceColumns = [
+    { key: 'expand', label: '', width: 56 },
+    { key: 'student', label: 'Student', width: 220 },
+    { key: 'grade', label: 'Grade', width: 120 },
+    { key: 'section', label: 'Section', width: 120 },
+    { key: 'week', label: 'Visible week', width: 260 },
+    { key: 'latest', label: 'Latest status', width: 150 },
+    { key: 'present', label: 'Present', width: 120 }
+  ];
+
+  const renderAttendanceCell = (student, column) => {
+    const summary = getStudentAttendanceSummary(student.student_id);
+    const latestStatusKey = normalizeStatusKey(summary.latest?.status);
+    const expanded = expandedStudentId === student.student_id;
+
+    if (column.key === 'expand') {
+      return (
+        <button
+          type="button"
+          className="att-expand-btn"
+          onClick={() => setExpandedStudentId(expanded ? null : student.student_id)}
+          aria-expanded={expanded}
+          aria-label={`${expanded ? 'Collapse' : 'Expand'} ${student.name}`}
+        >
+          <span>{expanded ? 'v' : '>'}</span>
+        </button>
+      );
+    }
+    if (column.key === 'student') {
+      return (
+        <button
+          type="button"
+          className="att-student-link"
+          onClick={() => {
+            setSelectedRows([student.student_id]);
+            setModalConfig(prev => ({
+              ...prev,
+              grade: student.grade || prev.grade,
+              section: student.section || prev.section
+            }));
+            setIsModalOpen(true);
+          }}
+        >
+          {student.name}
+        </button>
+      );
+    }
+    if (column.key === 'grade') return student.grade || '-';
+    if (column.key === 'section') return student.section ? `Sec ${student.section}` : '-';
+    if (column.key === 'week') {
+      return (
+        <div className="att-week-dots">
+          {summary.week.map((item) => (
+            <span
+              key={item.fullDateStr}
+              className={`att-status-dot ${item.status ? item.status.toLowerCase() : 'empty'}`}
+              title={`${item.displayStr}: ${getStatusLabel(item.status)}`}
+            >
+              {item.status || '-'}
+            </span>
+          ))}
+        </div>
+      );
+    }
+    if (column.key === 'latest') {
+      return (
+        <span className={`att-status-text ${latestStatusKey ? latestStatusKey.toLowerCase() : 'empty'}`}>
+          {summary.latest ? getStatusLabel(summary.latest.status) : 'Not marked'}
+        </span>
+      );
+    }
+    if (column.key === 'present') return `${summary.present}/${summary.records.length || 0}`;
+    return '-';
+  };
+
+  const renderAttendanceExpandedRow = (student) => {
+    const summary = getStudentAttendanceSummary(student.student_id);
+
+    return (
+      <div className="att-child-panel">
+        <div className="att-detail-grid">
+          <div>
+            <span>Roll no</span>
+            <strong>{student.roll || '-'}</strong>
+          </div>
+          <div>
+            <span>Total marked</span>
+            <strong>{summary.records.length}</strong>
+          </div>
+          <div>
+            <span>Absent</span>
+            <strong>{summary.absent}</strong>
+          </div>
+          <div>
+            <span>Late</span>
+            <strong>{summary.late}</strong>
+          </div>
+          <div>
+            <span>Holiday</span>
+            <strong>{summary.holiday}</strong>
+          </div>
+        </div>
+
+        <div className="att-child-sections">
+          <section className="att-child-section">
+            <h4>Selected week</h4>
+            <div className="att-week-list">
+              {summary.week.map((item) => (
+                <div className="att-week-item" key={item.fullDateStr}>
+                  <span>{item.displayStr}</span>
+                  <strong className={`att-status-text ${item.status ? item.status.toLowerCase() : 'empty'}`}>
+                    {getStatusLabel(item.status)}
+                  </strong>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="att-child-section">
+            <h4>Recent attendance</h4>
+            {summary.records.length > 0 ? (
+              <div className="att-recent-list">
+                {summary.records.slice(0, 5).map((record) => {
+                  const statusKey = normalizeStatusKey(record.status);
+                  return (
+                    <div className="att-recent-item" key={`${record.student_id}-${record.attendance_date}`}>
+                      <span>{formatAttendanceDate(record.attendance_date)}</span>
+                      <strong className={`att-status-text ${statusKey ? statusKey.toLowerCase() : 'empty'}`}>
+                        {getStatusLabel(record.status)}
+                      </strong>
+                      <span>{record.remarks || '-'}</span>
+                      <span>{getTeacherName(record.marked_by)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="att-empty-state compact">No attendance marked yet for this student.</div>
+            )}
+          </section>
+        </div>
+      </div>
+    );
+  };
 
   // Export Logic
   const handleExport = () => {
@@ -307,9 +526,35 @@ export default function Attendance() {
     }));
   };
 
+  const focusAttendanceForm = () => {
+    setTimeout(() => {
+      const modalBody = document.querySelector('.att-modal-body');
+      const markedByField = document.querySelector('.att-modal [name="markedBy"]');
+      modalBody?.scrollTo({ top: 0, behavior: 'smooth' });
+      markedByField?.focus?.({ preventScroll: true });
+    }, 120);
+  };
+
+  const showAttendanceFormNotice = () => {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Marked by required',
+      text: 'Please select a teacher in the Marked by field before submitting attendance.',
+      confirmButtonText: 'Review form',
+      buttonsStyling: false,
+      customClass: {
+        container: 'att-swal-container',
+        popup: 'att-swal-popup',
+        title: 'att-swal-title',
+        htmlContainer: 'att-swal-text',
+        confirmButton: 'att-swal-confirm'
+      }
+    }).then(focusAttendanceForm);
+  };
+
   const submitAttendance = async () => {
     if (!modalConfig.markedBy) {
-      Swal.fire('Wait!', 'Please select a teacher in "Marked by" field.', 'warning');
+      showAttendanceFormNotice();
       return;
     }
     if (modalStudents.length === 0) {
@@ -368,39 +613,12 @@ export default function Attendance() {
 
       <div className="att-page-wrapper">
 
-        <div className="att-stats-row">
-          <div className="att-stat-card green"><span className="att-stat-icon"><SvgGroup /></span><div><span className="att-stat-title">Present today</span><span className="att-stat-value">{totalPresent}</span><span className="att-stat-sub green">{presentPercent}% attendance</span></div></div>
-          <div className="att-stat-card red"><span className="att-stat-icon"><SvgAbsent /></span><div><span className="att-stat-title">Absent</span><span className="att-stat-value">{totalAbsent}</span><span className="att-stat-sub red">{absentPercent}% absent</span></div></div>
-          <div className="att-stat-card yellow"><span className="att-stat-icon"><SvgClock /></span><div><span className="att-stat-title">Late arrivals</span><span className="att-stat-value">{totalLate}</span><span className="att-stat-sub yellow">{totalMarked > 0 ? ((totalLate/totalMarked)*100).toFixed(1) : 0}% late</span></div></div>
-          <div className="att-stat-card blue"><span className="att-stat-icon"><SvgLeave /></span><div><span className="att-stat-title">On holiday / leave</span><span className="att-stat-value">{totalHoliday}</span><span className="att-stat-sub blue">Data submitted</span></div></div>
-        </div>
-
-        <div className="att-charts-row">
-          <div className="att-chart-card">
-            <h3><span className="att-card-title-icon"><SvgUsersMini /></span>Attendance by grade - today</h3>
-            {dynamicGradeChart.length > 0 ? dynamicGradeChart.map((item, i) => (
-              <div className="att-bar-row" key={i}>
-                <span className="att-bar-label">{item.g}</span>
-                <div className="att-bar-track"><div className={`att-bar-fill ${item.c}`} style={{width: `${item.p}%`}}></div></div>
-                <span className="att-bar-percent">{item.p}%</span>
-              </div>
-            )) : <p style={{fontSize: '12px', color: '#94a3b8'}}>No students found in DB.</p>}
-          </div>
-          <div className="att-chart-card">
-            <h3><span className="att-card-title-icon"><SvgTrend /></span>Weekly trend (last 5 days)</h3>
-            {dynamicWeeklyTrend.map((item, i) => (
-              <div className="att-bar-row" key={i}>
-                <span className="att-bar-label">{item.d}</span>
-                <div className="att-bar-track"><div className={`att-bar-fill ${item.c}`} style={{width: `${item.p}%`}}></div></div>
-                <span className="att-bar-percent">{item.p}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="att-table-card">
           <div className="att-table-header">
-            <h3><span className="att-card-title-icon"><SvgList /></span>Detailed Attendance Record</h3>
+            <div>
+              <h3>Attendance records</h3>
+              <p>Expand a student to review week status, recent marks, remarks, and teacher details.</p>
+            </div>
             <div className="att-table-controls">
               <label className="att-search-box">
                 <SvgSearch />
@@ -437,7 +655,175 @@ export default function Attendance() {
             </div>
           </div>
 
-          <div className="att-table-scroll">
+          <AdminListView
+            showToolbar={false}
+            showConfigure={false}
+            columns={attendanceColumns}
+            rows={currentRecords}
+            getRowId={(student) => student.student_id}
+            renderCell={renderAttendanceCell}
+            selectedRows={selectedRows}
+            isAllSelected={isAllSelected}
+            onSelectAll={handleSelectAll}
+            onSelectRow={handleSelectRow}
+            isRowExpanded={(student) => expandedStudentId === student.student_id}
+            renderExpandedRow={renderAttendanceExpandedRow}
+            emptyMessage="No students found matching these filters."
+            paginationLabel={`Showing ${displayedStudents.length > 0 ? indexOfFirstRecord + 1 : 0} to ${Math.min(indexOfLastRecord, displayedStudents.length)} of ${displayedStudents.length} records`}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={paginate}
+          />
+
+          {false && <>
+          <div className="att-table-scroll att-accordion-scroll">
+            <div className="att-accordion-list">
+              <div className="att-list-head">
+                <span className="att-head-select">
+                  <input type="checkbox" checked={isAllSelected} onChange={handleSelectAll} aria-label="Select all students" />
+                </span>
+                <span>Student</span>
+                <span>Grade</span>
+                <span>Section</span>
+                <span>Visible week</span>
+                <span>Latest status</span>
+                <span>Present</span>
+              </div>
+
+              {currentRecords.length > 0 ? currentRecords.map((student) => {
+                const summary = getStudentAttendanceSummary(student.student_id);
+                const expanded = expandedStudentId === student.student_id;
+                const latestStatusKey = normalizeStatusKey(summary.latest?.status);
+
+                return (
+                  <div className={`att-accordion-item ${expanded ? 'open' : ''}`} key={student.student_id}>
+                    <div className="att-accordion-row">
+                      <div className="att-row-select">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(student.student_id)}
+                          onChange={() => handleSelectRow(student.student_id)}
+                          aria-label={`Select ${student.name}`}
+                        />
+                        <button
+                          type="button"
+                          className="att-expand-btn"
+                          onClick={() => setExpandedStudentId(expanded ? null : student.student_id)}
+                          aria-expanded={expanded}
+                          aria-label={`${expanded ? 'Collapse' : 'Expand'} ${student.name}`}
+                        >
+                          <span>{expanded ? 'v' : '>'}</span>
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="att-student-link"
+                        onClick={() => {
+                          setSelectedRows([student.student_id]);
+                          setModalConfig(prev => ({
+                            ...prev,
+                            grade: student.grade || prev.grade,
+                            section: student.section || prev.section
+                          }));
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        {student.name}
+                      </button>
+                      <span>{student.grade || '-'}</span>
+                      <span>{student.section ? `Sec ${student.section}` : '-'}</span>
+                      <div className="att-week-dots">
+                        {summary.week.map((item) => (
+                          <span
+                            key={item.fullDateStr}
+                            className={`att-status-dot ${item.status ? item.status.toLowerCase() : 'empty'}`}
+                            title={`${item.displayStr}: ${getStatusLabel(item.status)}`}
+                          >
+                            {item.status || '-'}
+                          </span>
+                        ))}
+                      </div>
+                      <span className={`att-status-text ${latestStatusKey ? latestStatusKey.toLowerCase() : 'empty'}`}>
+                        {summary.latest ? getStatusLabel(summary.latest.status) : 'Not marked'}
+                      </span>
+                      <span>{summary.present}/{summary.records.length || 0}</span>
+                    </div>
+
+                    {expanded && (
+                      <div className="att-child-panel">
+                        <div className="att-detail-grid">
+                          <div>
+                            <span>Roll no</span>
+                            <strong>{student.roll || '-'}</strong>
+                          </div>
+                          <div>
+                            <span>Total marked</span>
+                            <strong>{summary.records.length}</strong>
+                          </div>
+                          <div>
+                            <span>Absent</span>
+                            <strong>{summary.absent}</strong>
+                          </div>
+                          <div>
+                            <span>Late</span>
+                            <strong>{summary.late}</strong>
+                          </div>
+                          <div>
+                            <span>Holiday</span>
+                            <strong>{summary.holiday}</strong>
+                          </div>
+                        </div>
+
+                        <div className="att-child-sections">
+                          <section className="att-child-section">
+                            <h4>Selected week</h4>
+                            <div className="att-week-list">
+                              {summary.week.map((item) => (
+                                <div className="att-week-item" key={item.fullDateStr}>
+                                  <span>{item.displayStr}</span>
+                                  <strong className={`att-status-text ${item.status ? item.status.toLowerCase() : 'empty'}`}>
+                                    {getStatusLabel(item.status)}
+                                  </strong>
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="att-child-section">
+                            <h4>Recent attendance</h4>
+                            {summary.records.length > 0 ? (
+                              <div className="att-recent-list">
+                                {summary.records.slice(0, 5).map((record) => {
+                                  const statusKey = normalizeStatusKey(record.status);
+                                  return (
+                                    <div className="att-recent-item" key={`${record.student_id}-${record.attendance_date}`}>
+                                      <span>{formatAttendanceDate(record.attendance_date)}</span>
+                                      <strong className={`att-status-text ${statusKey ? statusKey.toLowerCase() : 'empty'}`}>
+                                        {getStatusLabel(record.status)}
+                                      </strong>
+                                      <span>{record.remarks || '-'}</span>
+                                      <span>{getTeacherName(record.marked_by)}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="att-empty-state compact">No attendance marked yet for this student.</div>
+                            )}
+                          </section>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }) : (
+                <div className="att-empty-state">No students found matching these filters.</div>
+              )}
+            </div>
+          </div>
+
+          {false && <div className="att-table-scroll">
             <table className="att-table">
               <thead>
                 <tr>
@@ -503,7 +889,7 @@ export default function Attendance() {
                 )) : <tr><td colSpan="9" style={{textAlign: 'center', padding: '40px', color: '#94a3b8'}}>No students found matching these filters.</td></tr>}
               </tbody>
             </table>
-          </div>
+          </div>}
 
           {/* 👉 NEW: Pagination Footer Row Added */}
           <div className="att-pagination-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', backgroundColor: '#ffffff', borderTop: '1px solid #f1f5f9' }}>
@@ -516,6 +902,7 @@ export default function Attendance() {
               <button className="att-page-btn" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages || totalPages === 0}>&gt;</button>
             </div>
           </div>
+          </>}
 
           <div className="att-legend-row">
             <div className="att-legend-item"><span className="att-status-circle P">P</span> Present</div>
@@ -536,10 +923,13 @@ export default function Attendance() {
                     <p>Neon Database Sync Mode</p>
                   </div>
                 </div>
+                <button className="att-modal-close" type="button" onClick={() => setIsModalOpen(false)} aria-label="Close mark attendance form">
+                  <AttendanceLineIcon type="close" />
+                </button>
               </div>
 
               <div className="att-modal-body">
-                <div>
+                <div className="att-modal-card att-session-card">
                   <div className="att-section-title"><IconSettings /> SESSION CONFIGURATION</div>
                   <div className="att-form-row-3">
                     <div className="att-form-group">
@@ -568,7 +958,7 @@ export default function Attendance() {
                     </div>
                     <div className="att-form-group">
                       <label>Marked by</label>
-                      <select className="att-input" value={modalConfig.markedBy} onChange={(e) => setModalConfig({...modalConfig, markedBy: e.target.value})}>
+                      <select name="markedBy" className="att-input" value={modalConfig.markedBy} onChange={(e) => setModalConfig({...modalConfig, markedBy: e.target.value})}>
                         <option value="">Select Teacher</option>
                         {dbTeachers.map(t => <option key={t.teacher_id} value={t.teacher_id}>{t.first_name} {t.last_name}</option>)}
                       </select>
@@ -576,11 +966,11 @@ export default function Attendance() {
                   </div>
                 </div>
 
-                <div>
+                <div className="att-modal-card att-bulk-card">
                   <div className="att-section-title"><IconKey /> BULK ACTIONS</div>
                   <div className="att-bulk-btns">
-                    <button className="att-btn-bulk-p" onClick={() => markAll('P')}>✓ Mark all present</button>
-                    <button className="att-btn-bulk-a" onClick={() => markAll('A')}>X Mark all absent</button>
+                    <button className="att-btn-bulk-p" onClick={() => markAll('P')}><AttendanceLineIcon type="check" /> Mark all present</button>
+                    <button className="att-btn-bulk-a" onClick={() => markAll('A')}><AttendanceLineIcon type="absent" /> Mark all absent</button>
                   </div>
 
                   <table className="att-modal-table" style={{marginTop: '15px'}}>
@@ -590,7 +980,14 @@ export default function Attendance() {
                     <tbody>
                       {modalStudents.length > 0 ? modalStudents.map((stu) => (
                         <tr key={stu.student_id}>
-                          <td style={{ fontWeight: 600 }}>{stu.name}</td>
+                          <td>
+                            <div className="att-student-modal-cell">
+                              <span className="att-student-modal-avatar">
+                                {stu.name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase()}
+                              </span>
+                              <span>{stu.name}</span>
+                            </div>
+                          </td>
                           <td>{stu.roll}</td>
                           <td>
                             <div className="att-toggles">
@@ -601,11 +998,14 @@ export default function Attendance() {
                             </div>
                           </td>
                           <td>
-                            <input type="text" className="att-remark-input" placeholder="Note..." 
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setDbStudents(prev => prev.map(s => s.student_id === stu.student_id ? {...s, remarks: val} : s));
-                              }} />
+                            <div className="att-remark-field">
+                              <AttendanceLineIcon type="remark" />
+                              <input type="text" className="att-remark-input" placeholder="Write remark..."
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setDbStudents(prev => prev.map(s => s.student_id === stu.student_id ? {...s, remarks: val} : s));
+                                }} />
+                            </div>
                           </td>
                         </tr>
                       )) : <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>No students found for this Grade and Section.</td></tr>}
@@ -615,8 +1015,11 @@ export default function Attendance() {
               </div>
 
               <div className="att-modal-footer">
-                <button className="att-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button className="att-btn-publish" onClick={submitAttendance}>Submit attendance</button>
+                <div className="att-required-note"><span>*</span> Required fields</div>
+                <div className="att-footer-actions">
+                  <button className="att-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                  <button className="att-btn-publish" onClick={submitAttendance}>Submit attendance <AttendanceLineIcon type="check" /></button>
+                </div>
               </div>
             </div>
           </div>

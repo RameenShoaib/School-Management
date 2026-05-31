@@ -408,19 +408,24 @@
 }
 
 .ex-btn-primary {
-  background: linear-gradient(135deg, #263df5 0%, #5b45ee 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb 0%, #3730e8 100%);
   border-radius: 999px;
-  padding: 13px 24px;
+  min-height: 42px;
+  padding: 0 24px;
   font-size: 14px;
   font-weight: 700;
-  box-shadow: 0 12px 24px rgba(38, 61, 245, 0.22);
+  line-height: 1;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ex-btn-primary:hover {
-  background: linear-gradient(135deg, #263df5 0%, #5b45ee 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3730e8 100%);
   transform: translateY(-1px);
-  box-shadow: 0 16px 30px rgba(38, 61, 245, 0.28);
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.28);
 }
 
 .ex-avatar {
@@ -643,9 +648,9 @@
 }
 
 .att-page-btn.active {
-  background: linear-gradient(135deg, #263df5, #5b45ee);
-  border-color: #263df5;
-  box-shadow: 0 8px 18px rgba(38, 61, 245, 0.28);
+  background: linear-gradient(135deg, #2563eb, #3730e8);
+  border-color: #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
 }
 
 @media (max-width: 1300px) {
@@ -673,5 +678,383 @@
 
   .ex-table {
     min-width: 900px;
+  }
+}
+
+/* Polished schedule exam form */
+.ex-line-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.ex-modal-overlay {
+  z-index: 12000;
+  padding: 8px;
+  background: rgba(7, 19, 55, 0.48);
+}
+
+.ex-modal {
+  width: min(1280px, calc(100vw - 12px));
+  max-width: none;
+  height: min(92vh, 760px);
+  max-height: none;
+  border: 1px solid #cbd6e6;
+  border-radius: 12px;
+  box-shadow: 0 24px 70px rgba(7, 19, 55, 0.22);
+}
+
+.ex-modal-header {
+  padding: 26px 34px 22px;
+  border-bottom: 0;
+}
+
+.ex-modal-title-group {
+  gap: 22px;
+}
+
+.ex-modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 13px;
+  color: #5b2df5;
+  background: linear-gradient(135deg, #f0e9ff 0%, #eef4ff 100%);
+}
+
+.ex-modal-icon svg {
+  width: 34px;
+  height: 34px;
+}
+
+.ex-modal-title h2 {
+  font-size: 28px;
+  line-height: 1.1;
+  color: #071337;
+}
+
+.ex-modal-title p {
+  margin-top: 8px;
+  font-size: 16px;
+  color: #53668f;
+}
+
+.ex-modal-close {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #cbd6e6;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #071337;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.ex-modal-close:hover {
+  border-color: #2563eb;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.14);
+  transform: translateY(-1px);
+}
+
+.ex-modal-close .ex-line-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.ex-modal-body {
+  padding: 14px 34px 22px;
+  gap: 20px;
+  scrollbar-width: thin;
+}
+
+.ex-modal-body::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+}
+
+.ex-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.ex-modal-body > .ex-section-title {
+  display: none;
+}
+
+.ex-modal-card {
+  border: 1px solid #d7e0ec;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(7, 19, 55, 0.04);
+}
+
+.ex-section-title {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  align-items: center;
+  column-gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 0;
+  border-bottom: 0;
+  color:#1d4ed8;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.ex-section-title > svg {
+  grid-row: 1 / span 2;
+  width: 22px;
+  height: 22px;
+  padding: 12px;
+  color: #1d4ed8;
+  background: #edf4ff;
+  border-radius: 8px;
+  box-sizing: content-box;
+}
+
+.ex-section-title::after {
+  grid-column: 2;
+  margin-top: 8px;
+  color: #53668f;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ex-details-card .ex-section-title::after {
+  content: "Provide basic information about the exam";
+}
+
+.ex-config-card .ex-section-title::after {
+  content: "Set marks and other preferences";
+}
+
+.ex-form-row-2,
+.ex-form-row-3,
+.ex-form-row-4 {
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.ex-form-row-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ex-form-group {
+  gap: 10px;
+}
+
+.ex-form-group label {
+  color: #26344f;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ex-input {
+  min-height: 54px;
+  padding: 0 18px;
+  border-color: #b8c5d9;
+  border-radius: 7px;
+  color: #071337;
+  font-size: 17px;
+}
+
+.ex-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.ex-switch-list {
+  background: #f8fbff;
+  border-color: #d7e0ec;
+  border-radius: 7px;
+  padding: 0 20px;
+}
+
+.ex-switch-row {
+  min-height: 74px;
+  padding: 14px 0;
+}
+
+.ex-switch-copy {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.ex-switch-copy > .ex-line-icon {
+  width: 22px;
+  height: 22px;
+  padding: 10px;
+  color: #4029f2;
+  background: #f0edff;
+  border-radius: 8px;
+  box-sizing: content-box;
+}
+
+.ex-switch-label h4 {
+  font-size: 16px;
+  color: #071337;
+}
+
+.ex-switch-label p {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #53668f;
+}
+
+.ex-toggle {
+  width: 50px;
+  height: 28px;
+}
+
+.ex-toggle::after {
+  width: 24px;
+  height: 24px;
+}
+
+.ex-toggle.on::after {
+  transform: translateX(22px);
+}
+
+.ex-modal-footer {
+  min-height: 94px;
+  padding: 20px 34px;
+  justify-content: space-between;
+  background: #ffffff;
+}
+
+.ex-req-text {
+  display: block;
+  color: #6b7894;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ex-req-text span {
+  color: #ff1f4f;
+  font-weight: 800;
+}
+
+.ex-footer-actions {
+  gap: 18px;
+}
+
+.ex-btn-discard,
+.ex-btn-publish {
+  min-width: 118px;
+  height: 50px;
+  padding: 0 24px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.ex-btn-discard {
+  color: #34425e;
+}
+
+.ex-btn-publish {
+  min-width: 196px;
+  background: linear-gradient(135deg, #2563eb 0%, #3730e8 100%);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22);
+}
+
+.ex-btn-publish:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #3129c9 100%);
+}
+
+.ex-btn-publish svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ex-swal-container {
+  z-index: 20000 !important;
+}
+
+.ex-swal-popup {
+  width: min(430px, calc(100vw - 32px));
+  border-radius: 18px;
+  padding: 28px 28px 26px;
+  border: 1px solid #dbe4f0;
+  box-shadow: 0 24px 70px rgba(7, 19, 55, 0.28);
+}
+
+.ex-swal-title {
+  color: #071337;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.ex-swal-text {
+  color: #516083;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.ex-swal-confirm {
+  min-width: 140px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb 0%, #3730e8 100%);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 980px) {
+  .ex-modal {
+    width: calc(100vw - 8px);
+    height: calc(100vh - 8px);
+  }
+
+  .ex-modal-header,
+  .ex-modal-body,
+  .ex-modal-footer {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .ex-form-row-2,
+  .ex-form-row-3,
+  .ex-form-row-4 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .ex-modal-title h2 {
+    font-size: 23px;
+  }
+
+  .ex-modal-title p,
+  .ex-form-group label,
+  .ex-switch-label p {
+    font-size: 13px;
+  }
+
+  .ex-input {
+    min-height: 46px;
+    font-size: 14px;
+  }
+
+  .ex-modal-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ex-footer-actions {
+    justify-content: flex-end;
   }
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
+import AdminListView from '../../components/AdminListView';
 import './FeeManagement.css';
 
 const IconSearch = ({ className }) => <svg className={className} width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>;
@@ -9,6 +10,22 @@ const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M1
 const SvgFeeDoc = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v5h4"/><path d="M10 12h5M10 16h4"/></svg>;
 const SvgDate = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>;
 const SvgMore = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2Zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Z"/></svg>;
+const FeeLineIcon = ({ type }) => {
+  const paths = {
+    close: <path d="M18 6 6 18M6 6l12 12" />,
+    search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
+    wallet: <path d="M20 7H5a2 2 0 0 0 0 4h15v8H5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h15v4ZM16 14h.01" />,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>,
+    card: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18" /></>,
+    save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" /><path d="M17 21v-8H7v8M7 3v5h8" /></>
+  };
+
+  return (
+    <svg className="fm-line-icon" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      {paths[type]}
+    </svg>
+  );
+};
 
 export default function FeeManagement() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -212,10 +229,36 @@ export default function FeeManagement() {
     setIsModalOpen(true);
   };
 
+  const focusFeeForm = () => {
+    setTimeout(() => {
+      const modalBody = document.querySelector('.fm-modal-body');
+      const searchField = document.querySelector('.fm-modal [name="studentSearch"]');
+      modalBody?.scrollTo({ top: 0, behavior: 'smooth' });
+      searchField?.focus?.({ preventScroll: true });
+    }, 120);
+  };
+
+  const showFeeFormNotice = () => {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Student required',
+      text: 'Please find and select a student before saving this payment.',
+      confirmButtonText: 'Review form',
+      buttonsStyling: false,
+      customClass: {
+        container: 'fm-swal-container',
+        popup: 'fm-swal-popup',
+        title: 'fm-swal-title',
+        htmlContainer: 'fm-swal-text',
+        confirmButton: 'fm-swal-confirm'
+      }
+    }).then(focusFeeForm);
+  };
+
   const handleRecordPayment = async (e) => {
     if (e) e.preventDefault();
     if (!selectedStudent) {
-      Swal.fire('Selection Required', 'Please find and select a student first.', 'warning');
+      showFeeFormNotice();
       return;
     }
     setLoading(true);
@@ -295,6 +338,42 @@ export default function FeeManagement() {
 
   const isAllSelected = currentRecords.length > 0 && currentRecords.every(r => selectedRows.includes(r.payment_id));
 
+  const feeColumns = [
+    { key: 'fee', label: 'Fee Name', width: 260 },
+    { key: 'grade', label: 'Grade', width: 120 },
+    { key: 'amount', label: 'Amount (PKR)', width: 150 },
+    { key: 'date', label: 'Due Date', width: 210 },
+    { key: 'method', label: 'Method', width: 140 },
+    { key: 'status', label: 'Status', width: 120 }
+  ];
+
+  const renderFeeCell = (record, column) => {
+    if (column.key === 'fee') {
+      return (
+        <div className="fm-fee-cell">
+          <span className={`fm-fee-icon color-${record.payment_id % 4}`}><SvgFeeDoc /></span>
+          <div>
+            <span className="fm-fee-name">{getFeeName(record)}</span>
+            <span className="fm-fee-sub">{getFeeSub(record)}</span>
+          </div>
+        </div>
+      );
+    }
+    if (column.key === 'grade') return <span className={`fm-grade-pill color-${record.payment_id % 4}`}>{record.grade || '-'}</span>;
+    if (column.key === 'amount') return formatAmount(record.amount_received);
+    if (column.key === 'date') {
+      return (
+        <span className="fm-date-cell">
+          <SvgDate />
+          {record.payment_date ? new Date(record.payment_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '-'}
+        </span>
+      );
+    }
+    if (column.key === 'method') return record.payment_method || '-';
+    if (column.key === 'status') return <span className="fm-pill paid">Active</span>;
+    return '-';
+  };
+
   return (
     <DashboardLayout userRole="admin" currentPath="/fees" userName="System Admin" userInitials="SA">
       <div className="fm-page-header">
@@ -321,7 +400,42 @@ export default function FeeManagement() {
         }}
       />
 
-      <div className="fm-table-card">
+      <AdminListView
+        searchTerm={searchTerm}
+        onSearchChange={(value) => {
+          setSearchTerm(value);
+          setCurrentPage(1);
+          setSelectedRows([]);
+        }}
+        searchPlaceholder="Search fee structures..."
+        searchIcon={<SvgSearch />}
+        showConfigure={false}
+        columns={feeColumns}
+        rows={currentRecords}
+        getRowId={(record) => record.payment_id}
+        renderCell={renderFeeCell}
+        selectedRows={selectedRows}
+        isAllSelected={isAllSelected}
+        onSelectAll={handleSelectAll}
+        onSelectRow={handleSelectRow}
+        renderActions={(record) => (
+          <button className="fm-more-btn" type="button" aria-label="More fee actions" onClick={() => Swal.fire(getFeeName(record), `Student: ${record.first_name || ''} ${record.last_name || ''}\nAmount: ${formatAmount(record.amount_received)}\nMethod: ${record.payment_method || '-'}`, 'info')}>
+            <SvgMore />
+          </button>
+        )}
+        actionsHeader=""
+        actionsWidth={70}
+        emptyMessage="No fee records found."
+        paginationLabel={`Showing ${currentRecords.length > 0 ? indexOfFirstRecord + 1 : 0} to ${Math.min(indexOfLastRecord, filteredRecords.length)} of ${filteredRecords.length} records`}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          setSelectedRows([]);
+        }}
+      />
+
+      {false && <div className="fm-table-card">
         <div className="fm-search-area">
           <div className="fm-search-box">
             <SvgSearch />
@@ -405,62 +519,113 @@ export default function FeeManagement() {
             <button className="fm-page-btn" onClick={() => { setCurrentPage(prev => Math.min(prev + 1, totalPages)); setSelectedRows([]); }} disabled={currentPage === totalPages || totalPages === 0}>&gt;</button>
           </div>
         </div>
-      </div>
+      </div>}
 
       {isModalOpen && (
         <div className="fm-modal-overlay">
           <div className="fm-modal">
             <div className="fm-modal-header">
-                <h2>{modalMode === 'edit' ? 'Update Fee Payment' : 'Record Fee Payment'}</h2>
-            </div>
-            <div className="fm-modal-body">
-              <div className="fm-section-title"><IconSearch /> 1. SEARCH STUDENT</div>
-              <input
-                type="text"
-                className="fm-input"
-                placeholder="Search by Name or Roll No..."
-                value={studentSearch}
-                onChange={(e) => handleStudentSearch(e.target.value)}
-              />
-              {selectedStudent && (
-                <div className="fm-student-card" style={{marginTop: '10px', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0'}}>
-                    <strong>{selectedStudent.first_name} {selectedStudent.last_name}</strong>
-                    <p style={{margin: 0, fontSize: '12px', color: '#64748b'}}>Grade {selectedStudent.grade} | Roll: {selectedStudent.roll_no}</p>
-                </div>
-              )}
-              <div className="fm-section-title" style={{marginTop: '20px'}}>2. PAYMENT INFO</div>
-              <div className="fm-form-row-2">
-                <div className="fm-form-group">
-                  <label>Fee Month</label>
-                  <select name="feeMonth" value={formData.feeMonth} onChange={handleInputChange} className="fm-input">
-                    <option>April 2026</option>
-                    <option>May 2026</option>
-                  </select>
-                </div>
-                <div className="fm-form-group">
-                  <label>Amount Received (PKR)</label>
-                  <input type="number" name="amountReceived" value={formData.amountReceived} onChange={handleInputChange} className="fm-input" />
+              <div className="fm-modal-title-group">
+                <div className="fm-modal-icon"><FeeLineIcon type="wallet" /></div>
+                <div className="fm-modal-title">
+                  <h2>{modalMode === 'edit' ? 'Update Fee Payment' : 'Record Fee Payment'}</h2>
+                  <p>Record and save fee payment details for the student</p>
                 </div>
               </div>
-              <div className="fm-form-row-2">
-                <div className="fm-form-group">
-                  <label>Payment Method</label>
-                  <select name="paymentMethod" value={formData.paymentMethod} onChange={handleInputChange} className="fm-input">
-                    <option>Cash</option>
-                    <option>Bank Transfer</option>
-                    <option>Online</option>
-                  </select>
+              <button className="fm-modal-close" type="button" onClick={() => setIsModalOpen(false)} aria-label="Close fee payment form">
+                <FeeLineIcon type="close" />
+              </button>
+            </div>
+            <div className="fm-modal-body">
+              <div className="fm-modal-card fm-search-card">
+                <div className="fm-section-heading">
+                  <span className="fm-step-badge">1</span>
+                  <div>
+                    <div className="fm-section-title">SEARCH STUDENT</div>
+                    <p className="fm-section-subtitle">Find and select the student to record the payment</p>
+                  </div>
                 </div>
-                <div className="fm-form-group">
-                  <label>Transaction ID</label>
-                  <input type="text" name="transactionId" value={formData.transactionId} onChange={handleInputChange} className="fm-input" placeholder="Optional" />
+                <div className="fm-search-input-shell">
+                  <FeeLineIcon type="search" />
+                  <input
+                    type="text"
+                    name="studentSearch"
+                    className="fm-input"
+                    placeholder="Search by Name or Roll No..."
+                    value={studentSearch}
+                    onChange={(e) => handleStudentSearch(e.target.value)}
+                  />
+                </div>
+                {selectedStudent && (
+                  <div className="fm-student-card">
+                    <div className="fm-stu-info">
+                      <span className="fm-stu-avatar">{`${selectedStudent.first_name?.[0] || ''}${selectedStudent.last_name?.[0] || ''}`.toUpperCase()}</span>
+                      <div className="fm-stu-details">
+                        <h4>{selectedStudent.first_name} {selectedStudent.last_name}</h4>
+                        <p>Grade {selectedStudent.grade} | Roll: {selectedStudent.roll_no}</p>
+                      </div>
+                    </div>
+                    <div className="fm-stu-fee-info">
+                      <h4>{formatAmount(formData.amountReceived)}</h4>
+                      <p>Selected student</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="fm-modal-card fm-payment-card">
+                <div className="fm-section-heading">
+                  <span className="fm-step-badge">2</span>
+                  <div>
+                    <div className="fm-section-title">PAYMENT INFO</div>
+                    <p className="fm-section-subtitle">Enter payment details below</p>
+                  </div>
+                </div>
+                <div className="fm-form-row-2">
+                  <div className="fm-form-group">
+                    <label>Fee Month <span>*</span></label>
+                    <div className="fm-input-shell">
+                      <FeeLineIcon type="calendar" />
+                      <select name="feeMonth" value={formData.feeMonth} onChange={handleInputChange} className="fm-input">
+                        <option>April 2026</option>
+                        <option>May 2026</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="fm-form-group">
+                    <label>Amount Received (PKR) <span>*</span></label>
+                    <div className="fm-input-shell">
+                      <span className="fm-currency-chip">Rs</span>
+                      <input type="number" name="amountReceived" value={formData.amountReceived} onChange={handleInputChange} className="fm-input" />
+                    </div>
+                  </div>
+                </div>
+                <div className="fm-form-row-2">
+                  <div className="fm-form-group">
+                    <label>Payment Method <span>*</span></label>
+                    <div className="fm-input-shell">
+                      <FeeLineIcon type="card" />
+                      <select name="paymentMethod" value={formData.paymentMethod} onChange={handleInputChange} className="fm-input">
+                        <option>Cash</option>
+                        <option>Bank Transfer</option>
+                        <option>Online</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="fm-form-group">
+                    <label>Transaction ID</label>
+                    <div className="fm-input-shell">
+                      <span className="fm-hash-chip">#</span>
+                      <input type="text" name="transactionId" value={formData.transactionId} onChange={handleInputChange} className="fm-input" placeholder="Optional" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
             <div className="fm-modal-footer">
               <button className="fm-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
               <button className="fm-btn-publish" onClick={handleRecordPayment} disabled={loading}>
-                {loading ? 'Processing...' : (modalMode === 'edit' ? 'Update Payment' : 'Save Payment')}
+                <FeeLineIcon type="save" /> {loading ? 'Processing...' : (modalMode === 'edit' ? 'Update Payment' : 'Save Payment')}
               </button>
             </div>
           </div>

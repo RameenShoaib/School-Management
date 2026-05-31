@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // 👈 useNavigate import kiya
 import Swal from 'sweetalert2'; // 👈 SweetAlert2 import kiya
 import './Sidebar.css';
+import { clearAuthStorage } from '../../utils/authStorage';
 
 /* Professional SVG Icons */
 const SvgDashboard = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>;
@@ -65,12 +66,8 @@ const Sidebar = ({ userRole = 'admin', currentPath = '/admin/dashboard', userNam
       }
     }).then((result) => {
       if (result.isConfirmed) {
-        // Yahan local storage clear kar rahe hain (agar auth token use kar rahe hain)
-        localStorage.removeItem('user'); 
-        localStorage.removeItem('token'); 
-        
-        // Seedha login page par redirect
-        navigate('/'); 
+        clearAuthStorage();
+        navigate('/', { replace: true, state: { loggedOut: true } });
       }
     });
   };

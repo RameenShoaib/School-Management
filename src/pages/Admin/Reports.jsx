@@ -12,36 +12,6 @@ const SvgDownload = () => (
   </svg>
 );
 
-const SvgSchool = () => (
-  <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6M9 10h.01M15 10h.01" />
-  </svg>
-);
-
-const SvgUsers = () => (
-  <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-  </svg>
-);
-
-const SvgClass = () => (
-  <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M4 5h16v11H4zM8 21h8M12 16v5" />
-  </svg>
-);
-
-const SvgWallet = () => (
-  <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M3 7h18v14H3zM3 7l3-4h12l3 4M16 14h3" />
-  </svg>
-);
-
-const SvgReportList = () => (
-  <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M8 3h8l2 2v16H6V5l2-2zM9 12h6M9 16h6M9 8h3" />
-  </svg>
-);
-
 const SvgFilePdf = () => (
   <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M14 2H6v20h12V6l-4-4zM14 2v4h4" />
@@ -54,6 +24,23 @@ const SvgFileExcel = () => (
     <path d="M14 2H6v20h12V6l-4-4zM14 2v4h4M9 11l5 6M14 11l-5 6" />
   </svg>
 );
+
+const ReportLineIcon = ({ type }) => {
+  const paths = {
+    close: <path d="M18 6 6 18M6 6l12 12" />,
+    report: <><path d="M14 2H6v20h12V6l-4-4Z" /><path d="M14 2v4h4M9 17v-5M12 17v-8M15 17v-3" /></>,
+    list: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
+    file: <><path d="M14 2H6v20h12V6l-4-4Z" /><path d="M14 2v4h4M9 14h6M9 18h4" /></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>,
+    info: <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></>
+  };
+
+  return (
+    <svg className="rep-line-icon" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      {paths[type]}
+    </svg>
+  );
+};
 
 export default function Reports() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -151,10 +138,6 @@ export default function Reports() {
     return new Date(report.created_at).toLocaleDateString();
   };
 
-  const handleSelectAllReports = (e) => {
-    setSelectedReports(e.target.checked ? recentReports.map((report) => report.report_id) : []);
-  };
-
   const handleSelectReport = (reportId) => {
     setSelectedReports((prev) => (
       prev.includes(reportId) ? prev.filter((id) => id !== reportId) : [...prev, reportId]
@@ -207,9 +190,19 @@ export default function Reports() {
     }
   };
 
-  const snapshotIcons = [<SvgUsers />, <SvgClass />, <SvgWallet />];
-  const snapshotClasses = ['purple', 'green', 'orange'];
-  const isAllReportsSelected = recentReports.length > 0 && recentReports.every((report) => selectedReports.includes(report.report_id));
+  const templateReports = [
+    { report_id: 'template-attendance', report_name: 'Attendance Summary', report_type: 'attendance', format: 'PDF', created_at: new Date().toISOString() },
+    { report_id: 'template-fees', report_name: 'Fee Collection', report_type: 'fees', format: 'Excel', created_at: new Date().toISOString() },
+    { report_id: 'template-academic', report_name: 'Academic Progress', report_type: 'academic', format: 'PDF', created_at: new Date().toISOString() },
+    { report_id: 'template-classes', report_name: 'Class Capacity', report_type: 'classes', format: 'PDF', created_at: new Date().toISOString() },
+    { report_id: 'template-students', report_name: 'Student Directory', report_type: 'students', format: 'Excel', created_at: new Date().toISOString() },
+    { report_id: 'template-teachers', report_name: 'Teacher Workload', report_type: 'teachers', format: 'PDF', created_at: new Date().toISOString() },
+    { report_id: 'template-subjects', report_name: 'Subject Coverage', report_type: 'subjects', format: 'PDF', created_at: new Date().toISOString() },
+    { report_id: 'template-snapshot', report_name: 'School Snapshot', report_type: 'overview', format: 'PDF', created_at: new Date().toISOString() }
+  ];
+  const displayReports = recentReports.length > 0 ? recentReports : templateReports;
+  const filteredCards = displayReports;
+  const reportAccentClasses = ['pink', 'green', 'blue', 'orange', 'purple', 'cyan', 'rose', 'indigo'];
 
   return (
     <DashboardLayout userRole="admin" currentPath="/reports" userName="System Admin" userInitials="SA">
@@ -239,103 +232,124 @@ export default function Reports() {
         onExport={handleExportReports}
       />
 
-      <div className="rep-dashboard-grid">
-        <section className="rep-panel">
-          <div className="rep-panel-title">
-            <span className="rep-panel-icon"><SvgSchool /></span>
-            <h3>School Snapshot</h3>
-          </div>
-
-          <div className="rep-snapshot-list">
-            {snapshot.length === 0 && <div className="rep-empty">No snapshot data found.</div>}
-            {snapshot.map((item, index) => (
-              <div className="rep-snapshot-row" key={`${item.label}-${index}`}>
-                <span className={`rep-snapshot-icon ${snapshotClasses[index % snapshotClasses.length]}`}>
-                  {snapshotIcons[index % snapshotIcons.length]}
-                </span>
-                <div className="rep-snapshot-main">
-                  <div className="rep-snapshot-text">
-                    <span>{item.label}</span>
-                    <strong>{item.val}</strong>
-                  </div>
-                  <div className="rep-progress-track">
-                    <div className="rep-progress-fill" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rep-panel">
-          <div className="rep-panel-title">
-            <span className="rep-panel-icon"><SvgReportList /></span>
-            <h3>Recent Reports</h3>
-            <input className="rep-select-all" type="checkbox" checked={isAllReportsSelected} onChange={handleSelectAllReports} />
-          </div>
-
-          <div className="rep-recent-list-modern">
-            {recentReports.length === 0 && <div className="rep-empty">No recent reports yet.</div>}
-            {recentReports.map((report) => {
-              const format = getFormat(report);
-              const isExcel = format.toLowerCase().includes('excel');
-              return (
-                <div className="rep-recent-row" key={report.report_id}>
-                  <input className="rep-row-checkbox" type="checkbox" checked={selectedReports.includes(report.report_id)} onChange={() => handleSelectReport(report.report_id)} />
-                  <span className={`rep-file-icon ${isExcel ? 'excel' : 'pdf'}`}>
+      <section className="rep-board">
+        <div className="rep-card-grid">
+          {filteredCards.map((report, index) => {
+            const format = getFormat(report);
+            const isExcel = format.toLowerCase().includes('excel');
+            const isRealReport = typeof report.report_id === 'number';
+            const selected = selectedReports.includes(report.report_id);
+            return (
+              <article className={`rep-report-card ${selected ? 'selected' : ''}`} key={report.report_id}>
+                <div className="rep-card-top">
+                  <span className={`rep-report-icon ${reportAccentClasses[index % reportAccentClasses.length]}`}>
                     {isExcel ? <SvgFileExcel /> : <SvgFilePdf />}
                   </span>
-                  <div className="rep-recent-copy">
-                    <strong>{report.report_name}</strong>
-                    <span>{format} - {getReportDate(report)}</span>
+                  {isRealReport && (
+                    <input
+                      className="rep-card-check"
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => handleSelectReport(report.report_id)}
+                      aria-label={`Select ${report.report_name}`}
+                    />
+                  )}
+                </div>
+                <div className="rep-card-copy">
+                  <h4>{report.report_name}</h4>
+                  <p>{report.report_type || 'Report'} report</p>
+                </div>
+                <div className="rep-card-meta">
+                  <span>{format}</span>
+                  <span>{getReportDate(report)}</span>
+                </div>
+                <div className="rep-card-footer">
+                  <div className="rep-card-users">
+                    <span />
+                    <span />
+                    <span />
                   </div>
                   <button
-                    className="rep-download-btn"
-                    onClick={() => (isExcel ? downloadCSV(report) : generatePDF(report))}
+                    className="rep-card-link"
+                    type="button"
+                    onClick={() => {
+                      if (isRealReport) {
+                        isExcel ? downloadCSV(report) : generatePDF(report);
+                      } else {
+                        setSelectedType(report.report_type || 'attendance');
+                        setExportFormat(format);
+                        setIsModalOpen(true);
+                      }
+                    }}
                   >
-                    <SvgDownload />
-                    Download
+                    {isRealReport ? 'Download' : 'Create'}
                   </button>
                 </div>
-              );
-            })}
-          </div>
-        </section>
-      </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       {isModalOpen && (
         <div className="rep-modal-overlay">
           <div className="rep-modal rep-generate-modal">
             <div className="rep-modal-header">
-              <div className="rep-modal-title">
-                <h2>Generate Report</h2>
-                <p>Create a fresh school data export.</p>
+              <div className="rep-modal-title-group">
+                <div className="rep-modal-icon"><ReportLineIcon type="report" /></div>
+                <div className="rep-modal-title">
+                  <h2>Generate Report</h2>
+                  <p>Create a fresh school data export.</p>
+                </div>
               </div>
+              <button className="rep-modal-close" type="button" onClick={() => setIsModalOpen(false)} aria-label="Close report form">
+                <ReportLineIcon type="close" />
+              </button>
             </div>
             <div className="rep-modal-body">
-              <div className="rep-form-group">
-                <label>Select Type</label>
-                <select className="rep-input" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
-                  <option value="attendance">Attendance</option>
-                  <option value="fees">Fees</option>
-                  <option value="academic">Academic</option>
-                </select>
+              <div className="rep-modal-card">
+                <div className="rep-option-block">
+                  <span className="rep-option-icon"><ReportLineIcon type="list" /></span>
+                  <div className="rep-option-content">
+                    <h3>Report Type</h3>
+                    <p>Select the type of report you want to generate.</p>
+                    <div className="rep-select-shell">
+                      <ReportLineIcon type="calendar" />
+                      <select className="rep-input" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
+                        <option value="attendance">Attendance</option>
+                        <option value="fees">Fees</option>
+                        <option value="academic">Academic</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rep-option-block">
+                  <span className="rep-option-icon"><ReportLineIcon type="file" /></span>
+                  <div className="rep-option-content">
+                    <h3>Export Format</h3>
+                    <p>Choose the format for your exported report.</p>
+                    <div className="rep-select-shell">
+                      <ReportLineIcon type="file" />
+                      <select className="rep-input" value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}>
+                        <option value="PDF">PDF Document</option>
+                        <option value="Excel">Excel Sheet</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="rep-form-group">
-                <label>Export Format</label>
-                <select className="rep-input" value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}>
-                  <option value="PDF">PDF Document</option>
-                  <option value="Excel">Excel Sheet</option>
-                </select>
+              <div className="rep-info-banner">
+                <ReportLineIcon type="info" />
+                <span>Reports are saved to recent exports.</span>
               </div>
             </div>
             <div className="rep-modal-footer">
-              <span className="rep-req-text">Reports are saved to recent exports.</span>
               <div className="rep-footer-actions">
                 <button className="rep-btn-discard" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button className="rep-btn-publish" onClick={handleGenerate} disabled={loading}>
-                  {loading ? 'Wait...' : 'Generate'}
+                  <SvgDownload /> {loading ? 'Wait...' : 'Generate Report'}
                 </button>
               </div>
             </div>
