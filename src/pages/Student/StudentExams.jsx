@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName, isStudentClassRecord } from './studentAccess';
@@ -28,7 +28,7 @@ export default function StudentExams() {
   const [exams, setExams] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const user = getStoredUser();
+  const user = useMemo(() => getStoredUser(), []);
   const studentName = getStudentName(student);
   const initials = getStudentInitials(student);
 
@@ -52,7 +52,7 @@ export default function StudentExams() {
     };
 
     fetchExams();
-  }, [user?.email, user?.id]);
+  }, [user]);
 
   const filteredExams = exams.filter((exam) => {
     const query = searchTerm.toLowerCase();

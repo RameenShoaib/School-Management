@@ -783,6 +783,41 @@
   height: 20px;
 }
 
+.sm-voucher-download {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 13px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sm-voucher-download:hover {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+  box-shadow: 0 8px 16px rgba(29, 78, 216, 0.16);
+}
+
+.sm-voucher-download .sm-fee-icon-svg {
+  width: 15px;
+  height: 15px;
+}
+
+.sm-muted-inline {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .sm-report-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -85,11 +85,6 @@ export default function StudentListView({
     localStorage.setItem(storageKey, JSON.stringify(columns.map(({ key, visible, width, order }) => ({ key, visible, width, order }))));
   }, [columns, storageKey]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-    setSelectedRows([]);
-  }, [searchTerm, rows.length]);
-
   const visibleColumns = useMemo(
     () => [...columns].sort((a, b) => a.order - b.order).filter((column) => column.visible),
     [columns]
@@ -100,7 +95,8 @@ export default function StudentListView({
   }, [columnSearchTerm, draftColumns]);
   const draftVisibleCount = draftColumns.filter((column) => column.visible).length;
   const totalPages = Math.max(1, Math.ceil(rows.length / recordsPerPage));
-  const firstRecordIndex = (currentPage - 1) * recordsPerPage;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const firstRecordIndex = (safeCurrentPage - 1) * recordsPerPage;
   const currentRecords = rows.slice(firstRecordIndex, firstRecordIndex + recordsPerPage);
   const currentIds = currentRecords.map(getRowId);
   const isAllSelected = currentIds.length > 0 && currentIds.every((id) => selectedRows.includes(id));
@@ -151,7 +147,11 @@ export default function StudentListView({
       <div className="student-list-view">
         <AdminListView
           searchTerm={searchTerm}
-          onSearchChange={onSearchChange}
+          onSearchChange={(value) => {
+            setCurrentPage(1);
+            setSelectedRows([]);
+            onSearchChange(value);
+          }}
           searchPlaceholder={searchPlaceholder}
           searchIcon={<StudentListIcon type="search" />}
           configureIcon={<StudentListIcon type="columns" />}
@@ -186,7 +186,7 @@ export default function StudentListView({
           emptyMessage={emptyMessage}
           loadingMessage="Loading data..."
           paginationLabel={`Showing ${rows.length > 0 ? firstRecordIndex + 1 : 0} to ${Math.min(firstRecordIndex + recordsPerPage, rows.length)} of ${rows.length} ${itemLabel}`}
-          currentPage={currentPage}
+          currentPage={safeCurrentPage}
           totalPages={totalPages}
           onPageChange={(page) => {
             setCurrentPage(page);

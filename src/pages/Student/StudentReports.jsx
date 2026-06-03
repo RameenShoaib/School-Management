@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName, isStudentClassRecord } from './studentAccess';
 import { getStudentHeaderActions } from './studentHeaderActions';
+import { buildStudentFeeRows, getStudentFeeSummary } from './studentFeeSummary';
 import './StudentModule.css';
 
 const ReportIcon = ({ type }) => {
@@ -24,9 +25,10 @@ export default function StudentReports() {
   const [student, setStudent] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [fees, setFees] = useState([]);
+  const [vouchers, setVouchers] = useState([]);
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
-  const user = getStoredUser();
+  const user = useMemo(() => getStoredUser(), []);
   const studentName = getStudentName(student);
   const initials = getStudentInitials(student);
 
@@ -51,6 +53,12 @@ export default function StudentReports() {
         setAttendance(attendanceRows.filter((item) => Number(item.student_id) === Number(currentStudent?.student_id)));
         setFees(feeRows.filter((item) => Number(item.student_id) === Number(currentStudent?.student_id)));
         setExams(examRows.filter((item) => isStudentClassRecord(item, currentStudent)));
+        if (currentStudent?.student_id) {
+          const voucherRes = await fetch(`${API_BASE}/fee-vouchers?studentId=${currentStudent.student_id}`).then((r) => r.json());
+          setVouchers(voucherRes.success ? voucherRes.data : []);
+        } else {
+          setVouchers([]);
+        }
       } catch (error) {
         console.error('Student reports fetch failed:', error);
       } finally {
@@ -59,11 +67,12 @@ export default function StudentReports() {
     };
 
     fetchReports();
-  }, [user?.email, user?.id]);
+  }, [user]);
 
   const present = attendance.filter((item) => item.status === 'Present').length;
   const attendancePercent = attendance.length > 0 ? Math.round((present / attendance.length) * 100) : 0;
-  const totalPaid = fees.reduce((sum, item) => sum + Number(item.amount_received || 0), 0);
+  const feeRows = buildStudentFeeRows(fees, vouchers);
+  const { totalPaid, totalDue } = getStudentFeeSummary(feeRows);
   const reportStats = [
     { label: 'Attendance report', value: `${attendancePercent}%`, detail: `${attendance.length} marked days`, icon: 'calendar', tone: 'blue' },
     { label: 'Fee report', value: totalPaid, detail: 'PKR paid', icon: 'wallet', tone: 'green' },
@@ -82,8 +91,8 @@ export default function StudentReports() {
     },
     {
       title: 'Fee payment summary',
-      detail: `${fees.length} payment records connected to your profile`,
-      badge: `PKR ${totalPaid}`,
+      detail: `${feeRows.length} fee records connected to your profile`,
+      badge: totalDue > 0 ? `PKR ${totalDue} due` : `PKR ${totalPaid} paid`,
       icon: 'wallet',
       tone: 'green',
       badgeTone: 'green'
