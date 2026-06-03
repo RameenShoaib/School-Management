@@ -8,6 +8,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api')) {
+    req.url = `/api${req.url}`;
+  }
+  next();
+});
+
 // ==========================================
 // 🛠️ DATABASE TABLES INITIALIZATION (PERMANENT)
 // ==========================================

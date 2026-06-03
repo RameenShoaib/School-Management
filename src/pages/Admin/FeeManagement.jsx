@@ -91,11 +91,11 @@ export default function FeeManagement() {
   const fetchData = async () => {
     try {
       const [feeRes, stuRes, classRes] = await Promise.all([
-        fetch('http://localhost:5000/api/fees').then(r => r.json()),
-        fetch('http://localhost:5000/api/students').then(r => r.json()),
-        fetch('http://localhost:5000/api/classes').then(r => r.json())
+        fetch('/api/fees').then(r => r.json()),
+        fetch('/api/students').then(r => r.json()),
+        fetch('/api/classes').then(r => r.json())
       ]);
-      const voucherRes = await fetch('http://localhost:5000/api/fee-vouchers').then(r => r.json());
+      const voucherRes = await fetch('/api/fee-vouchers').then(r => r.json());
       if (feeRes.success) setFeeRecords(feeRes.data);
       if (voucherRes.success) setFeeVouchers(voucherRes.data);
       if (stuRes.success) setAllStudents(stuRes.data);
@@ -357,7 +357,7 @@ export default function FeeManagement() {
 
     const classInfo = getSelectedClassInfo();
     try {
-      const response = await fetch('http://localhost:5000/api/fee-vouchers', {
+      const response = await fetch('/api/fee-vouchers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -426,8 +426,8 @@ export default function FeeManagement() {
     const payload = { ...formData, studentId: selectedStudent.student_id };
     try {
       const url = modalMode === 'edit'
-        ? `http://localhost:5000/api/fees/${selectedPaymentId}`
-        : 'http://localhost:5000/api/fees';
+        ? `/api/fees/${selectedPaymentId}`
+        : '/api/fees';
       const response = await fetch(url, {
         method: modalMode === 'edit' ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -559,7 +559,7 @@ export default function FeeManagement() {
 
     try {
       if (markPaid) {
-        const response = await fetch(existingPayment ? `http://localhost:5000/api/fees/${existingPayment.payment_id}` : 'http://localhost:5000/api/fees', {
+        const response = await fetch(existingPayment ? `/api/fees/${existingPayment.payment_id}` : '/api/fees', {
           method: existingPayment ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -567,7 +567,7 @@ export default function FeeManagement() {
         const result = await response.json();
         if (!result.success) throw new Error(result.message || 'Could not mark fee as paid.');
       } else if (existingPayment?.payment_id) {
-        const response = await fetch('http://localhost:5000/api/fees/bulk-delete', {
+        const response = await fetch('/api/fees/bulk-delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: [existingPayment.payment_id] })
@@ -647,7 +647,7 @@ export default function FeeManagement() {
 
     try {
       if (uniquePaymentIds.length > 0) {
-        const response = await fetch('http://localhost:5000/api/fees/bulk-delete', {
+        const response = await fetch('/api/fees/bulk-delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: uniquePaymentIds })
@@ -656,7 +656,7 @@ export default function FeeManagement() {
       }
 
       if (uniqueVoucherIds.length > 0) {
-        const response = await fetch('http://localhost:5000/api/fee-vouchers/bulk-delete', {
+        const response = await fetch('/api/fee-vouchers/bulk-delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: uniqueVoucherIds })
