@@ -313,6 +313,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   border-radius: 999px;
   min-height: 42px;
@@ -328,6 +329,11 @@
   background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   transform: translateY(-1px);
   box-shadow: 0 16px 30px rgba(29, 78, 216, 0.28);
+}
+
+.fm-btn-primary svg {
+  width: 17px;
+  height: 17px;
 }
 
 .fm-avatar {
@@ -1256,4 +1262,356 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 1.35;
+}
+
+/* Fee voucher generator */
+.fm-voucher-modal {
+  width: min(1120px, calc(100vw - 16px));
+}
+
+.fm-voucher-config-card,
+.fm-voucher-students-card {
+  border-left: 1px solid #1d4ed8;
+}
+
+.fm-voucher-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 22px;
+}
+
+.fm-voucher-students-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.fm-voucher-students-head .fm-section-heading {
+  margin-bottom: 0;
+}
+
+.fm-voucher-select-all {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px;
+  border: 1px solid #d8e2f2;
+  border-radius: 8px;
+  color: #1e3a8a;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.fm-voucher-select-all input,
+.fm-voucher-student-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #1d4ed8;
+}
+
+.fm-voucher-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0 16px;
+}
+
+.fm-voucher-summary span {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #53668f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fm-voucher-summary strong {
+  color: #071337;
+  font-weight: 900;
+  text-align: right;
+}
+
+.fm-voucher-student-list {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #d8e2f2;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.fm-voucher-student-row {
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 22px 42px minmax(0, 1fr) 110px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #edf2f7;
+  cursor: pointer;
+}
+
+.fm-voucher-student-row:last-child {
+  border-bottom: 0;
+}
+
+.fm-voucher-student-row:hover {
+  background: #f8fbff;
+}
+
+.fm-voucher-student-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.fm-voucher-student-main {
+  min-width: 0;
+}
+
+.fm-voucher-student-main strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #071337;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.fm-voucher-student-main small {
+  display: block;
+  overflow: hidden;
+  color: #53668f;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-voucher-student-class {
+  justify-self: end;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: #dcfce7;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.fm-voucher-empty {
+  padding: 28px;
+  color: #64748b;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fm-month-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  color: #1d4ed8;
+  background: transparent;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.fm-month-link:hover {
+  text-decoration: underline;
+}
+
+.fm-class-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fm-class-cell strong {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.fm-class-cell small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fm-pill.inactive {
+  color: #64748b;
+  background: #e2e8f0;
+}
+
+.fm-fee-expanded {
+  padding: 16px 22px 20px;
+  background: #f8fbff;
+  border-top: 1px solid #dbe4f0;
+}
+
+.fm-fee-expanded-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.fm-fee-expanded-stats div {
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid #dbe4f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.fm-fee-expanded-stats span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.fm-fee-expanded-stats strong {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.fm-fee-expanded-table {
+  overflow: hidden;
+  border: 1px solid #dbe4f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.fm-fee-expanded-head,
+.fm-fee-expanded-row {
+  display: grid;
+  grid-template-columns: 58px 68px minmax(180px, 1.3fr) minmax(120px, 0.8fr) minmax(140px, 0.9fr) minmax(110px, 0.7fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.fm-fee-expanded-head {
+  min-height: 44px;
+  padding: 0 14px;
+  color: #475569;
+  background: #f8fafc;
+  border-bottom: 1px solid #dbe4f0;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.fm-fee-expanded-row {
+  min-height: 52px;
+  padding: 0 14px;
+  border-bottom: 1px solid #e5edf7;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fm-fee-expanded-row:last-child {
+  border-bottom: 0;
+}
+
+.fm-fee-expanded-row:hover {
+  background: #f8fbff;
+}
+
+.fm-fee-expanded-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #1d4ed8;
+  justify-self: start;
+}
+
+.fm-payment-state {
+  width: fit-content;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.fm-payment-state.paid {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.fm-payment-state.unpaid {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.fm-fee-expanded-empty {
+  padding: 22px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .fm-voucher-grid,
+  .fm-voucher-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .fm-voucher-students-head {
+    flex-direction: column;
+  }
+
+  .fm-voucher-student-row {
+    grid-template-columns: 22px 42px minmax(0, 1fr);
+  }
+
+  .fm-voucher-student-class {
+    grid-column: 3;
+    justify-self: start;
+  }
+
+  .fm-fee-expanded-stats,
+  .fm-fee-expanded-head,
+  .fm-fee-expanded-row {
+    grid-template-columns: 1fr;
+  }
+
+  .fm-fee-expanded-head {
+    display: none;
+  }
+
+  .fm-fee-expanded-row {
+    align-items: start;
+    gap: 8px;
+    padding: 12px;
+  }
 }

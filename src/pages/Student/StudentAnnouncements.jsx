@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import StudentListView from './StudentListView';
@@ -51,7 +51,7 @@ const announcements = [
 export default function StudentAnnouncements() {
   const [searchTerm, setSearchTerm] = useState('');
   const [student, setStudent] = useState(null);
-  const user = getStoredUser();
+  const user = useMemo(() => getStoredUser(), []);
   const studentName = getStudentName(student);
   const initials = getStudentInitials(student);
 
@@ -66,7 +66,7 @@ export default function StudentAnnouncements() {
     };
 
     fetchStudent();
-  }, [user?.email, user?.id]);
+  }, [user]);
 
   const filtered = announcements.filter((item) => {
     const query = searchTerm.toLowerCase();

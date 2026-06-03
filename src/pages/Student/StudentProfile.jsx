@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName } from './studentAccess';
 import { getStudentHeaderActions } from './studentHeaderActions';
+import { buildStudentFeeRows, getStudentFeeSummary } from './studentFeeSummary';
 import './StudentModule.css';
 
 const ProfileIcon = ({ type }) => {
@@ -29,8 +30,9 @@ const ProfileIcon = ({ type }) => {
 export default function StudentProfile() {
   const [student, setStudent] = useState(null);
   const [fees, setFees] = useState([]);
+  const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const user = getStoredUser();
+  const user = useMemo(() => getStoredUser(), []);
   const studentName = getStudentName(student);
   const initials = getStudentInitials(student);
 
@@ -46,6 +48,12 @@ export default function StudentProfile() {
         const feeRows = feesResult.success ? feesResult.data : [];
         setStudent(currentStudent);
         setFees(feeRows.filter((item) => Number(item.student_id) === Number(currentStudent?.student_id)));
+        if (currentStudent?.student_id) {
+          const voucherResult = await fetch(`${API_BASE}/fee-vouchers?studentId=${currentStudent.student_id}`).then((r) => r.json());
+          setVouchers(voucherResult.success ? voucherResult.data : []);
+        } else {
+          setVouchers([]);
+        }
       } catch (error) {
         console.error('Student profile fetch failed:', error);
       } finally {
@@ -54,12 +62,11 @@ export default function StudentProfile() {
     };
 
     fetchProfile();
-  }, [user?.email, user?.id]);
+  }, [user]);
 
   const classLabel = `${student?.grade || '-'} - Section ${student?.section || '-'}`;
-  const totalFees = fees.reduce((sum, item) => sum + Number(item.amount_due || 0), 0);
-  const paidAmount = fees.reduce((sum, item) => sum + Number(item.amount_received || 0), 0);
-  const dueAmount = Math.max(totalFees - paidAmount, 0);
+  const feeRows = buildStudentFeeRows(fees, vouchers);
+  const { totalBilled: totalFees, totalPaid: paidAmount, totalDue: dueAmount, accountStatus: feeStatus } = getStudentFeeSummary(feeRows);
 
   const studentInfo = [
     { label: 'Full name', value: studentName, icon: 'user', tone: 'blue' },
@@ -84,7 +91,7 @@ export default function StudentProfile() {
     exportRows: [
       ...studentInfo.map((item) => ({ field: item.label, value: item.value })),
       ...guardianInfo.map((item) => ({ field: item.label, value: item.value })),
-      { field: 'Fee status', value: student?.fee_status || 'Pending' },
+      { field: 'Fee status', value: feeStatus },
       { field: 'Status', value: student?.status || 'Active' },
       { field: 'Total fees', value: `PKR ${totalFees.toFixed(2)}` },
       { field: 'Paid amount', value: `PKR ${paidAmount.toFixed(2)}` },
@@ -167,7 +174,7 @@ export default function StudentProfile() {
                 <div className="sm-profile-rows">
                   <div className="sm-profile-row no-icon">
                     <span>Fee status</span>
-                    <strong><span className={`sm-pill ${student.fee_status === 'Paid' ? 'green' : 'yellow'}`}>{student.fee_status || 'Pending'}</span></strong>
+                    <strong><span className={`sm-pill ${feeStatus === 'Paid' ? 'green' : 'yellow'}`}>{feeStatus}</span></strong>
                   </div>
                   <div className="sm-profile-row no-icon">
                     <span>Status</span>

@@ -111,6 +111,25 @@ const initDatabase = async () => {
     `);
 
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS fee_vouchers (
+        voucher_id SERIAL PRIMARY KEY,
+        student_id INTEGER NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+        fee_month VARCHAR(100) NOT NULL,
+        amount_due NUMERIC DEFAULT 0,
+        issue_date DATE,
+        due_date DATE,
+        grade VARCHAR(50),
+        section VARCHAR(50),
+        status VARCHAR(50) DEFAULT 'Generated',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS fee_vouchers_student_month_idx
+      ON fee_vouchers (student_id, fee_month);
+    `);
+
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS announcements (
         announcement_id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -292,6 +311,7 @@ app.post('/api/students/bulk-delete', async (req, res) => {
 // 3. CREATE NEW STUDENT (With User Account)
 app.post('/api/students', async (req, res) => {
   const client = await pool.connect();
+  let inTransaction = false;
 
   try {
     const {
@@ -305,14 +325,41 @@ app.post('/api/students', async (req, res) => {
     const validDate = (dateStr) => (dateStr && dateStr.trim() !== '') ? dateStr : null;
     const validString = (str) => (str && String(str).trim() !== '') ? String(str) : null;
     const validNum = (num) => (num && !isNaN(num)) ? parseFloat(num) : 0;
+    const normalizedEmail = validString(email)?.toLowerCase() || null;
+    const requiredFields = [
+      ['First name', firstName],
+      ['Last name', lastName],
+      ['Grade', grade],
+      ['Section', section],
+      ['Guardian name', guardianName],
+      ['Guardian contact', guardianContact]
+    ];
+    const missingField = requiredFields.find(([, value]) => !validString(value));
 
-    const autoRollNo = `STU-${Math.floor(1000 + Math.random() * 9000)}`;
+    if (missingField) {
+      return res.status(400).json({ success: false, message: `${missingField[0]} is required.` });
+    }
 
     await client.query('BEGIN');
+    inTransaction = true;
 
     // STEP 1: CREATE USER ACCOUNT
     const defaultPassword = 'Student@123';
-    const userEmail = validString(email) || `${autoRollNo.toLowerCase()}@edusync.com`;
+    let autoRollNo = '';
+    let isUniqueRoll = false;
+    while (!isUniqueRoll) {
+      autoRollNo = `STU-${Math.floor(1000 + Math.random() * 9000)}`;
+      const rollCheck = await client.query('SELECT student_id FROM students WHERE roll_no = $1', [autoRollNo]);
+      isUniqueRoll = rollCheck.rows.length === 0;
+    }
+
+    const userEmail = normalizedEmail || `${autoRollNo.toLowerCase()}@edusync.com`;
+    const emailCheck = await client.query('SELECT user_id FROM users WHERE LOWER(email) = LOWER($1)', [userEmail]);
+    if (emailCheck.rows.length > 0) {
+      await client.query('ROLLBACK');
+      inTransaction = false;
+      return res.status(400).json({ success: false, message: "This student email is already registered. Use another email or leave it blank to auto-generate login credentials." });
+    }
 
     const userQuery = `
       INSERT INTO users (email, password_hash, role)
@@ -343,7 +390,7 @@ app.post('/api/students', async (req, res) => {
     const studentValues = [
       validString(firstName), validString(middleName), validString(lastName),
       validDate(dob), validString(gender), validString(bloodGroup),
-      validString(cnic), validString(religion), validString(email),
+      validString(cnic), validString(religion), normalizedEmail,
       validString(phone), validString(address), validString(city),
       validString(province), validString(postalCode), validString(grade),
       validString(section), validDate(admissionDate), validString(prevSchool),
@@ -356,6 +403,7 @@ app.post('/api/students', async (req, res) => {
 
     const result = await client.query(studentQuery, studentValues);
     await client.query('COMMIT');
+    inTransaction = false;
 
     res.status(201).json({
       success: true,
@@ -364,9 +412,18 @@ app.post('/api/students', async (req, res) => {
     });
 
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (inTransaction) await client.query('ROLLBACK');
     console.error("Insert Error:", error);
-    res.status(500).json({ success: false, message: "Server error during registration" });
+    if (error.code === '23505' && error.constraint === 'users_email_key') {
+      return res.status(400).json({ success: false, message: "This student email is already registered. Use another email or leave it blank to auto-generate login credentials." });
+    }
+    if (error.code === '23505' && error.constraint === 'students_roll_no_key') {
+      return res.status(400).json({ success: false, message: "Generated roll number already exists. Please submit again." });
+    }
+    if (error.code === '23502') {
+      return res.status(400).json({ success: false, message: "Please complete all required student fields before submitting." });
+    }
+    res.status(500).json({ success: false, message: "Server error during registration: " + error.message });
   } finally {
     client.release();
   }
@@ -930,11 +987,162 @@ app.post('/api/exams', async (req, res) => {
   }
 });
 
+const formatVoucherDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+};
+
+const drawSingleFeeVoucher = (doc, voucher) => {
+  const studentName = `${voucher.first_name || ''} ${voucher.last_name || ''}`.trim() || 'Student';
+  const amount = Number(voucher.amount_due || 0);
+
+  doc.setDrawColor(29, 78, 216);
+  doc.setLineWidth(0.8);
+  doc.roundedRect(12, 16, 186, 128, 3, 3);
+
+  doc.setFillColor(239, 246, 255);
+  doc.rect(12, 16, 186, 24, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(7, 19, 55);
+  doc.text('EduSync Fee Voucher', 18, 31);
+  doc.setFontSize(9);
+  doc.setTextColor(83, 102, 143);
+  doc.text(`Fee Month: ${voucher.fee_month || '-'}`, 190, 27, { align: 'right' });
+  doc.text(`Voucher No: FV-${voucher.voucher_id}`, 190, 34, { align: 'right' });
+
+  const rows = [
+    ['Student Name', studentName, 'Student ID', voucher.student_id || '-'],
+    ['Guardian Name', voucher.guardian_name || '-', 'Amount', `PKR ${amount.toLocaleString('en-US')}`],
+    ['Grade', voucher.grade || '-', 'Section', voucher.section || '-'],
+    ['Issue Date', formatVoucherDate(voucher.issue_date), 'Last Date', formatVoucherDate(voucher.due_date)]
+  ];
+
+  rows.forEach((row, index) => {
+    const y = 58 + (index * 13);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(83, 102, 143);
+    doc.text(`${row[0]}:`, 18, y);
+    doc.text(`${row[2]}:`, 112, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(15, 23, 42);
+    doc.text(String(row[1]), 50, y);
+    doc.text(String(row[3]), 142, y);
+  });
+
+  doc.setDrawColor(226, 232, 240);
+  doc.line(18, 110, 192, 110);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(7, 19, 55);
+  doc.text('Payment Instructions', 18, 123);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(83, 102, 143);
+  doc.text('Please submit this fee before the last date. Keep this voucher for your record.', 18, 133);
+};
+
+app.post('/api/fee-vouchers', async (req, res) => {
+  const { studentIds, feeMonth, amount, issueDate, lastDate, grade, section } = req.body;
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    return res.status(400).json({ success: false, message: 'Please select at least one student.' });
+  }
+  if (!feeMonth || !amount || Number(amount) <= 0) {
+    return res.status(400).json({ success: false, message: 'Fee month and amount are required.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const saved = [];
+    for (const studentId of studentIds) {
+      const result = await client.query(
+        `INSERT INTO fee_vouchers (student_id, fee_month, amount_due, issue_date, due_date, grade, section, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'Generated')
+         ON CONFLICT (student_id, fee_month)
+         DO UPDATE SET amount_due = EXCLUDED.amount_due,
+                       issue_date = EXCLUDED.issue_date,
+                       due_date = EXCLUDED.due_date,
+                       grade = EXCLUDED.grade,
+                       section = EXCLUDED.section,
+                       status = 'Generated',
+                       created_at = CURRENT_TIMESTAMP
+         RETURNING *`,
+        [parseInt(studentId, 10), feeMonth, parseFloat(amount) || 0, issueDate || null, lastDate || null, grade || null, section || null]
+      );
+      saved.push(result.rows[0]);
+    }
+    await client.query('COMMIT');
+    res.status(201).json({ success: true, data: saved, message: `${saved.length} voucher(s) generated.` });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ success: false, message: 'Voucher generation failed: ' + err.message });
+  } finally {
+    client.release();
+  }
+});
+
+app.get('/api/fee-vouchers', async (req, res) => {
+  try {
+    const { studentId } = req.query;
+    const whereClause = studentId ? 'WHERE fv.student_id = $1' : '';
+    const params = studentId ? [studentId] : [];
+    const result = await pool.query(
+      `SELECT fv.*, s.first_name, s.last_name, s.roll_no, s.guardian_name
+       FROM fee_vouchers fv
+       JOIN students s ON fv.student_id = s.student_id
+       ${whereClause}
+       ORDER BY fv.created_at DESC, fv.voucher_id DESC`,
+      params
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/fee-vouchers/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: 'No voucher IDs provided.' });
+  }
+
+  try {
+    const result = await pool.query('DELETE FROM fee_vouchers WHERE voucher_id = ANY($1)', [ids]);
+    res.json({ success: true, message: `${result.rowCount} voucher(s) deleted.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Voucher delete failed: ' + err.message });
+  }
+});
+
+app.get('/api/fee-vouchers/:id/pdf', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT fv.*, s.first_name, s.last_name, s.roll_no, s.guardian_name
+       FROM fee_vouchers fv
+       JOIN students s ON fv.student_id = s.student_id
+       WHERE fv.voucher_id = $1`,
+      [req.params.id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ success: false, message: 'Voucher not found.' });
+
+    const voucher = result.rows[0];
+    const doc = new jsPDF('p', 'mm', 'a4');
+    drawSingleFeeVoucher(doc, voucher);
+    const pdfBuffer = doc.output('arraybuffer');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=Fee_Voucher_${voucher.voucher_id}.pdf`);
+    res.send(Buffer.from(pdfBuffer));
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'PDF Error: ' + err.message });
+  }
+});
+
 // --- GET ALL FEE RECORDS ---
 app.get('/api/fees', async (req, res) => {
   try {
     const query = `
-      SELECT f.*, s.first_name, s.last_name, s.roll_no, s.grade
+      SELECT f.*, s.first_name, s.last_name, s.roll_no, s.grade, s.section
       FROM fee_payments f
       JOIN students s ON f.student_id = s.student_id
       ORDER BY f.payment_date DESC;

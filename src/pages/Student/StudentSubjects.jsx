@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName } from './studentAccess';
@@ -25,7 +25,7 @@ export default function StudentSubjects() {
   const [subjects, setSubjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const user = getStoredUser();
+  const user = useMemo(() => getStoredUser(), []);
   const studentName = getStudentName(student);
   const initials = getStudentInitials(student);
 
@@ -49,7 +49,7 @@ export default function StudentSubjects() {
     };
 
     fetchSubjects();
-  }, [user?.email, user?.id]);
+  }, [user]);
 
   const filteredSubjects = subjects.filter((subject) => {
     const query = searchTerm.toLowerCase();

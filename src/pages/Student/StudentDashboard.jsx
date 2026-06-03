@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import { API_BASE, findCurrentStudent, getStoredUser, getStudentInitials, getStudentName, isStudentClassRecord } from './studentAccess';
 import { getStudentHeaderActions } from './studentHeaderActions';
+import { buildStudentFeeRows, getStudentFeeSummary } from './studentFeeSummary';
 import './StudentModule.css';
 
 const StudentDashIcon = ({ type }) => {
@@ -31,9 +32,10 @@ export default function StudentDashboard() {
   const [attendance, setAttendance] = useState([]);
   const [exams, setExams] = useState([]);
   const [fees, setFees] = useState([]);
+  const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const user = getStoredUser();
+  const user = useMemo(() => getStoredUser(), []);
   const studentName = getStudentName(student);
   const initials = getStudentInitials(student);
 
@@ -54,6 +56,12 @@ export default function StudentDashboard() {
         setAttendance(attendanceRes.success ? attendanceRes.data : []);
         setExams(examsRes.success ? examsRes.data : []);
         setFees(feesRes.success ? feesRes.data : []);
+        if (currentStudent?.student_id) {
+          const voucherRes = await fetch(`${API_BASE}/fee-vouchers?studentId=${currentStudent.student_id}`).then((r) => r.json());
+          setVouchers(voucherRes.success ? voucherRes.data : []);
+        } else {
+          setVouchers([]);
+        }
       } catch (error) {
         console.error('Student dashboard fetch failed:', error);
       } finally {
@@ -62,7 +70,7 @@ export default function StudentDashboard() {
     };
 
     fetchDashboard();
-  }, [user?.email, user?.id]);
+  }, [user]);
 
   const myAttendance = attendance.filter((item) => Number(item.student_id) === Number(student?.student_id));
   const presentCount = myAttendance.filter((item) => item.status === 'Present').length;
@@ -71,7 +79,8 @@ export default function StudentDashboard() {
   const myExams = useMemo(() => exams.filter((exam) => isStudentClassRecord(exam, student)), [exams, student]);
 
   const myFees = fees.filter((item) => Number(item.student_id) === Number(student?.student_id));
-  const paidTotal = myFees.reduce((sum, item) => sum + Number(item.amount_received || 0), 0);
+  const feeRows = buildStudentFeeRows(myFees, vouchers);
+  const { totalPaid: paidTotal } = getStudentFeeSummary(feeRows);
   const upcomingExams = myExams
     .filter((exam) => !exam.exam_date || new Date(exam.exam_date) >= new Date(new Date().toDateString()))
     .slice(0, 3);

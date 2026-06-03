@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import AdminListView from '../../components/AdminListView';
@@ -8,6 +9,7 @@ import './FeeManagement.css';
 const IconSearch = ({ className }) => <svg className={className} width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>;
 const SvgSearch = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.471 6.471 0 0 0 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0A4.5 4.5 0 1 1 14 9.5 4.505 4.505 0 0 1 9.5 14Z"/></svg>;
 const SvgFeeDoc = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v5h4"/><path d="M10 12h5M10 16h4"/></svg>;
+const SvgVoucher = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>;
 const SvgDate = () => <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>;
 const SvgMore = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2Zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Z"/></svg>;
 const FeeLineIcon = ({ type }) => {
@@ -17,7 +19,8 @@ const FeeLineIcon = ({ type }) => {
     wallet: <path d="M20 7H5a2 2 0 0 0 0 4h15v8H5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h15v4ZM16 14h.01" />,
     calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>,
     card: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18" /></>,
-    save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" /><path d="M17 21v-8H7v8M7 3v5h8" /></>
+    save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" /><path d="M17 21v-8H7v8M7 3v5h8" /></>,
+    voucher: <><path d="M6 3h12a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V5a2 2 0 0 1 2-2Z" /><path d="M9 8h6M9 12h6M9 16h3" /></>
   };
 
   return (
@@ -31,8 +34,11 @@ export default function FeeManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [feeRecords, setFeeRecords] = useState([]);
+  const [feeVouchers, setFeeVouchers] = useState([]);
   const [allStudents, setAllStudents] = useState([]);
+  const [allClasses, setAllClasses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isVoucherOpen, setIsVoucherOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [modalMode, setModalMode] = useState('add');
@@ -62,13 +68,38 @@ export default function FeeManagement() {
     smsConfirm: false
   };
   const [formData, setFormData] = useState(initialFormState);
+  const buildMonthOptions = () => {
+    const base = new Date();
+    return [-1, 0, 1].map((offset) => {
+      const date = new Date(base.getFullYear(), base.getMonth() + offset, 1);
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    });
+  };
+  const voucherMonthOptions = buildMonthOptions();
+  const defaultVoucherDate = new Date().toISOString().split('T')[0];
+  const defaultLastDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const [voucherForm, setVoucherForm] = useState({
+    classKey: '',
+    feeMonth: voucherMonthOptions[1] || 'Current Month',
+    amount: 4500,
+    issueDate: defaultVoucherDate,
+    lastDate: defaultLastDate
+  });
+  const [selectedVoucherStudents, setSelectedVoucherStudents] = useState([]);
+  const [expandedFeeGroupKey, setExpandedFeeGroupKey] = useState(null);
 
   const fetchData = async () => {
     try {
-      const feeRes = await fetch('http://localhost:5000/api/fees').then(r => r.json());
-      const stuRes = await fetch('http://localhost:5000/api/students').then(r => r.json());
+      const [feeRes, stuRes, classRes] = await Promise.all([
+        fetch('http://localhost:5000/api/fees').then(r => r.json()),
+        fetch('http://localhost:5000/api/students').then(r => r.json()),
+        fetch('http://localhost:5000/api/classes').then(r => r.json())
+      ]);
+      const voucherRes = await fetch('http://localhost:5000/api/fee-vouchers').then(r => r.json());
       if (feeRes.success) setFeeRecords(feeRes.data);
+      if (voucherRes.success) setFeeVouchers(voucherRes.data);
       if (stuRes.success) setAllStudents(stuRes.data);
+      if (classRes.success) setAllClasses(classRes.data);
     } catch (err) { console.error("Fetch error:", err); }
   };
 
@@ -92,41 +123,13 @@ export default function FeeManagement() {
       Swal.fire({
         icon: 'info',
         title: 'No Selection',
-        text: 'Bhai, pehle delete karne ke liye record select toh karein!',
+        text: 'Please select a fee month row first.',
         confirmButtonColor: '#2563eb'
       });
       return;
     }
-
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: `Selected ${selectedRows.length} fee record(s) will be deleted permanently!`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Yes, delete selected'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const response = await fetch("http://localhost:5000/api/fees/bulk-delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids: selectedRows })
-        });
-        const data = await response.json();
-        if (data.success) {
-          Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Records removed successfully.', timer: 1500, showConfirmButton: false });
-          setSelectedRows([]);
-          fetchData();
-        } else {
-          Swal.fire('Error', data.message, 'error');
-        }
-      } catch (err) {
-        Swal.fire('Error', 'Server connection failed', 'error');
-      }
-    }
+    const selectedGroups = feeGroupRecords.filter((record) => selectedRows.includes(record.id));
+    handleDeleteFeeGroups(selectedGroups);
   };
 
   // 👉 NEW: Export Logic Added
@@ -141,18 +144,19 @@ export default function FeeManagement() {
       return;
     }
 
-    const selectedData = feeRecords.filter(record => selectedRows.includes(record.payment_id));
-    const headers = ["Payment ID", "Student Name", "Roll No", "Grade", "Amount Received", "Date", "Method", "Status"];
+    const selectedData = feeGroupRecords.filter(record => selectedRows.includes(record.id));
+    const headers = ["Month", "Grade", "Section", "Amount", "Due Date", "Method", "Paid", "Unpaid", "Status"];
 
     const csvRows = selectedData.map(r => [
-      r.payment_id,
-      `"${r.first_name} ${r.last_name}"`,
-      `"${r.roll_no}"`,
+      `"${r.month}"`,
       `"${r.grade}"`,
-      `"PKR ${r.amount_received}"`,
-      `"${new Date(r.payment_date).toLocaleDateString()}"`,
-      `"${r.payment_method}"`,
-      "Paid"
+      `"${r.section}"`,
+      `"PKR ${r.amount}"`,
+      `"${r.dueDate ? new Date(r.dueDate).toLocaleDateString() : '-'}"`,
+      `"${r.method}"`,
+      r.paidCount,
+      r.unpaidCount,
+      r.status
     ].join(','));
 
     const csvContent = [headers.join(','), ...csvRows].join('\n');
@@ -229,6 +233,163 @@ export default function FeeManagement() {
     setIsModalOpen(true);
   };
 
+  const getClassKey = (item) => `${item?.grade || ''}-${item?.section || ''}`;
+
+  const classOptions = allClasses.length > 0
+    ? allClasses.map((item) => ({
+        key: getClassKey(item),
+        label: `${item.grade || '-'} - Section ${item.section || '-'}`,
+        grade: item.grade || '-',
+        section: item.section || '-'
+      }))
+    : [...new Set(allStudents.map(getClassKey).filter((item) => item && item !== '-'))].map((key) => {
+        const [grade, section] = key.split('-');
+        return { key, label: `${grade || '-'} - Section ${section || '-'}`, grade, section };
+      });
+
+  const voucherStudents = allStudents.filter((student) => voucherForm.classKey && getClassKey(student) === voucherForm.classKey);
+  const selectedVoucherStudentRecords = voucherStudents.filter((student) => selectedVoucherStudents.includes(student.student_id));
+
+  const openVoucherModal = () => {
+    const firstClass = classOptions[0]?.key || '';
+    setVoucherForm((current) => ({ ...current, classKey: firstClass }));
+    const studentsForClass = allStudents.filter((student) => firstClass && getClassKey(student) === firstClass);
+    setSelectedVoucherStudents(studentsForClass.map((student) => student.student_id));
+    setIsVoucherOpen(true);
+  };
+
+  const handleVoucherClassChange = (classKey) => {
+    setVoucherForm((current) => ({ ...current, classKey }));
+    const studentsForClass = allStudents.filter((student) => classKey && getClassKey(student) === classKey);
+    setSelectedVoucherStudents(studentsForClass.map((student) => student.student_id));
+  };
+
+  const handleVoucherInput = (event) => {
+    const { name, value } = event.target;
+    setVoucherForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const toggleVoucherStudent = (studentId) => {
+    setSelectedVoucherStudents((current) => current.includes(studentId)
+      ? current.filter((id) => id !== studentId)
+      : [...current, studentId]);
+  };
+
+  const setAllVoucherStudents = (checked) => {
+    setSelectedVoucherStudents(checked ? voucherStudents.map((student) => student.student_id) : []);
+  };
+
+  const getSelectedClassInfo = () => classOptions.find((item) => item.key === voucherForm.classKey) || { grade: '-', section: '-', label: 'Selected class' };
+
+  const drawVoucher = (doc, student, indexOnPage) => {
+    const classInfo = getSelectedClassInfo();
+    const y = indexOnPage === 0 ? 14 : 153;
+    const voucherHeight = 125;
+    const studentName = `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student';
+    const amount = Number(voucherForm.amount || 0);
+
+    doc.setDrawColor(29, 78, 216);
+    doc.setLineWidth(0.7);
+    doc.roundedRect(12, y, 186, voucherHeight, 3, 3);
+
+    doc.setFillColor(239, 246, 255);
+    doc.rect(12, y, 186, 22, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(7, 19, 55);
+    doc.text('EduSync Fee Voucher', 18, y + 14);
+    doc.setFontSize(9);
+    doc.setTextColor(83, 102, 143);
+    doc.text(`Fee Month: ${voucherForm.feeMonth}`, 144, y + 10, { align: 'right' });
+    doc.text(`Voucher No: FV-${student.student_id}-${Date.now().toString().slice(-5)}`, 144, y + 16, { align: 'right' });
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    const leftX = 18;
+    const rightX = 112;
+    const rowGap = 11;
+    const startY = y + 38;
+    const rows = [
+      ['Student Name', studentName, 'Student ID', student.student_id || '-'],
+      ['Guardian Name', student.guardian_name || student.guardian || '-', 'Amount', `PKR ${amount.toLocaleString('en-US')}`],
+      ['Grade', student.grade || classInfo.grade || '-', 'Section', student.section || classInfo.section || '-'],
+      ['Issue Date', voucherForm.issueDate, 'Last Date', voucherForm.lastDate],
+    ];
+
+    rows.forEach((row, rowIndex) => {
+      const rowY = startY + (rowIndex * rowGap);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(83, 102, 143);
+      doc.text(`${row[0]}:`, leftX, rowY);
+      doc.text(`${row[2]}:`, rightX, rowY);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(15, 23, 42);
+      doc.text(String(row[1]), leftX + 31, rowY);
+      doc.text(String(row[3]), rightX + 29, rowY);
+    });
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(18, y + 86, 192, y + 86);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(7, 19, 55);
+    doc.text('Payment Instructions', 18, y + 98);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(83, 102, 143);
+    doc.text('Please submit this fee before the last date. Keep this voucher for your record.', 18, y + 108);
+    doc.text('Authorized Signature: ____________________', 112, y + 121);
+  };
+
+  const generateFeeVoucherPdf = async () => {
+    if (!voucherForm.classKey) {
+      Swal.fire({ icon: 'info', title: 'Select class', text: 'Please select a class before generating vouchers.', confirmButtonColor: '#1d4ed8' });
+      return;
+    }
+    if (!voucherForm.amount || Number(voucherForm.amount) <= 0) {
+      Swal.fire({ icon: 'info', title: 'Enter amount', text: 'Please enter a valid fee amount.', confirmButtonColor: '#1d4ed8' });
+      return;
+    }
+    if (!selectedVoucherStudentRecords.length) {
+      Swal.fire({ icon: 'info', title: 'Select students', text: 'Please select at least one student for voucher generation.', confirmButtonColor: '#1d4ed8' });
+      return;
+    }
+
+    const classInfo = getSelectedClassInfo();
+    try {
+      const response = await fetch('http://localhost:5000/api/fee-vouchers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentIds: selectedVoucherStudentRecords.map((student) => student.student_id),
+          feeMonth: voucherForm.feeMonth,
+          amount: voucherForm.amount,
+          issueDate: voucherForm.issueDate,
+          lastDate: voucherForm.lastDate,
+          grade: classInfo.grade,
+          section: classInfo.section
+        })
+      });
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message || 'Could not save vouchers.');
+    } catch (error) {
+      Swal.fire({ icon: 'error', title: 'Could not save vouchers', text: error.message, confirmButtonColor: '#1d4ed8' });
+      return;
+    }
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    selectedVoucherStudentRecords.forEach((student, index) => {
+      if (index > 0 && index % 2 === 0) doc.addPage();
+      drawVoucher(doc, student, index % 2);
+    });
+    const safeClass = String(classInfo.label || 'class').replace(/[^a-z0-9]+/gi, '_');
+    const safeMonth = String(voucherForm.feeMonth || 'month').replace(/[^a-z0-9]+/gi, '_');
+    doc.save(`Fee_Vouchers_${safeClass}_${safeMonth}.pdf`);
+    setIsVoucherOpen(false);
+    fetchData();
+    Swal.fire({ icon: 'success', title: 'Fee vouchers generated', text: 'Students can now download their voucher from the student fee page.', confirmButtonColor: '#1d4ed8' });
+  };
+
   const focusFeeForm = () => {
     setTimeout(() => {
       const modalBody = document.querySelector('.fm-modal-body');
@@ -299,13 +460,73 @@ export default function FeeManagement() {
     }
   };
 
-  const filteredRecords = feeRecords.filter(record => {
-    const fullName = `${record.first_name} ${record.last_name}`.toLowerCase();
+  const getPaymentForStudentMonth = (studentId, feeMonth) => feeRecords.find((record) =>
+    Number(record.student_id) === Number(studentId) &&
+    String(record.fee_month || '').toLowerCase() === String(feeMonth || '').toLowerCase()
+  );
+
+  const feeGroupMap = new Map();
+  feeVouchers.forEach((voucher) => {
+    const key = `${voucher.fee_month || 'Current Month'}|${voucher.grade || '-'}|${voucher.section || '-'}`;
+    if (!feeGroupMap.has(key)) {
+      feeGroupMap.set(key, {
+        id: key,
+        month: voucher.fee_month || 'Current Month',
+        grade: voucher.grade || '-',
+        section: voucher.section || '-',
+        amount: Number(voucher.amount_due || 0),
+        dueDate: voucher.due_date,
+        method: 'Cash',
+        vouchers: []
+      });
+    }
+    feeGroupMap.get(key).vouchers.push(voucher);
+  });
+
+  feeRecords.forEach((payment) => {
+    const key = `${payment.fee_month || 'Current Month'}|${payment.grade || '-'}|${payment.section || '-'}`;
+    if (!feeGroupMap.has(key)) {
+      feeGroupMap.set(key, {
+        id: key,
+        month: payment.fee_month || 'Current Month',
+        grade: payment.grade || '-',
+        section: payment.section || '-',
+        amount: Number(payment.amount_due || payment.amount_received || 0),
+        dueDate: payment.payment_date,
+        method: payment.payment_method || 'Cash',
+        vouchers: []
+      });
+    }
+  });
+
+  const feeGroupRecords = Array.from(feeGroupMap.values()).map((group) => {
+    const students = allStudents.filter((student) => student.grade === group.grade && student.section === group.section);
+    const amount = group.amount || Number(students[0]?.monthly_fee || 0);
+    const paidStudents = students.filter((student) => {
+      const payment = getPaymentForStudentMonth(student.student_id, group.month);
+      return payment && Number(payment.amount_received || 0) >= Number(payment.amount_due || amount || 0);
+    });
+    const paidCount = paidStudents.length;
+    const totalCount = students.length;
+    return {
+      ...group,
+      amount,
+      students,
+      paidCount,
+      unpaidCount: Math.max(totalCount - paidCount, 0),
+      totalCount,
+      status: totalCount > 0 && paidCount === totalCount ? 'Unactive' : 'Active'
+    };
+  });
+
+  const filteredRecords = feeGroupRecords.filter(record => {
     const search = searchTerm.toLowerCase();
-    const matchesSearch = fullName.includes(search) ||
-      (record.roll_no || '').toLowerCase().includes(search) ||
-      (record.grade || '').toLowerCase().includes(search);
-    return matchesSearch;
+    return (
+      record.month.toLowerCase().includes(search) ||
+      record.grade.toLowerCase().includes(search) ||
+      record.section.toLowerCase().includes(search) ||
+      record.status.toLowerCase().includes(search)
+    );
   });
 
   const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
@@ -318,12 +539,151 @@ export default function FeeManagement() {
     return `PKR ${numeric.toLocaleString('en-US')}`;
   };
 
-  const getFeeName = (record) => record.payment_type || record.fee_type || 'Tuition Fee';
-  const getFeeSub = (record) => record.fee_month || record.academic_year || '2025-2026';
+  const handleStudentFeeStatus = async (group, student, markPaid) => {
+    const existingPayment = getPaymentForStudentMonth(student.student_id, group.month);
+    const payload = {
+      studentId: student.student_id,
+      paymentType: 'Monthly fee',
+      feeMonth: group.month,
+      paymentDate: new Date().toISOString().split('T')[0],
+      amountDue: group.amount,
+      discountAmount: 0,
+      amountReceived: markPaid ? group.amount : 0,
+      paymentMethod: group.method || 'Cash',
+      transactionId: '',
+      remarks: markPaid ? 'Marked paid by admin' : 'Marked unpaid by admin',
+      printReceipt: true,
+      emailGuardian: true,
+      smsConfirm: false
+    };
+
+    try {
+      if (markPaid) {
+        const response = await fetch(existingPayment ? `http://localhost:5000/api/fees/${existingPayment.payment_id}` : 'http://localhost:5000/api/fees', {
+          method: existingPayment ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Could not mark fee as paid.');
+      } else if (existingPayment?.payment_id) {
+        const response = await fetch('http://localhost:5000/api/fees/bulk-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [existingPayment.payment_id] })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Could not mark fee as unpaid.');
+      }
+      await fetchData();
+      Swal.fire({
+        icon: 'success',
+        title: markPaid ? 'Marked paid' : 'Marked unpaid',
+        text: `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student fee status updated.',
+        showConfirmButton: false,
+        timer: 900
+      });
+    } catch (error) {
+      Swal.fire({ icon: 'error', title: 'Fee status failed', text: error.message, confirmButtonColor: '#1d4ed8' });
+    }
+  };
+
+  const readApiResponse = async (response, fallbackMessage) => {
+    const text = await response.text();
+    let data = {};
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`${fallbackMessage} Please restart the backend server and try again.`);
+      }
+    }
+    if (!response.ok || data.success === false) {
+      throw new Error(data.message || fallbackMessage);
+    }
+    return data;
+  };
+
+  const handleDeleteFeeGroups = async (records) => {
+    if (!records.length) return;
+    const relatedPaymentIds = records.flatMap((record) =>
+      feeRecords
+        .filter((payment) =>
+          String(payment.fee_month || '').toLowerCase() === String(record.month || '').toLowerCase() &&
+          String(payment.grade || '') === String(record.grade || '') &&
+          String(payment.section || '') === String(record.section || '')
+        )
+        .map((payment) => payment.payment_id)
+        .filter(Boolean)
+    );
+    const relatedVoucherIds = records.flatMap((record) => (record.vouchers || []).map((voucher) => voucher.voucher_id).filter(Boolean));
+    const uniquePaymentIds = [...new Set(relatedPaymentIds)];
+    const uniqueVoucherIds = [...new Set(relatedVoucherIds)];
+
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Delete fee record?',
+      text: records.length === 1
+        ? `This will delete fee data for ${records[0].month} - ${records[0].grade} Section ${records[0].section}.`
+        : `This will delete fee data for ${records.length} selected fee records.`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b'
+    });
+
+    if (!result.isConfirmed) return;
+
+    if (uniquePaymentIds.length === 0 && uniqueVoucherIds.length === 0) {
+      Swal.fire({
+        icon: 'info',
+        title: 'No fee data',
+        text: 'There are no fee payment or voucher records available to delete.',
+        confirmButtonColor: '#1d4ed8'
+      });
+      return;
+    }
+
+    try {
+      if (uniquePaymentIds.length > 0) {
+        const response = await fetch('http://localhost:5000/api/fees/bulk-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: uniquePaymentIds })
+        });
+        await readApiResponse(response, 'Could not delete fee payment records.');
+      }
+
+      if (uniqueVoucherIds.length > 0) {
+        const response = await fetch('http://localhost:5000/api/fee-vouchers/bulk-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: uniqueVoucherIds })
+        });
+        await readApiResponse(response, 'Could not delete fee voucher records.');
+      }
+
+      setSelectedRows([]);
+      setExpandedFeeGroupKey(null);
+      await fetchData();
+      Swal.fire({
+        icon: 'success',
+        title: 'Deleted',
+        text: 'Fee payment records deleted successfully.',
+        showConfirmButton: false,
+        timer: 1200
+      });
+    } catch (error) {
+      Swal.fire({ icon: 'error', title: 'Delete failed', text: error.message, confirmButtonColor: '#1d4ed8' });
+    }
+  };
+
+  const handleDeleteFeeGroup = (record) => handleDeleteFeeGroups([record]);
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const allIds = currentRecords.map(r => r.payment_id);
+      const allIds = currentRecords.map(r => r.id);
       setSelectedRows(allIds);
     } else {
       setSelectedRows([]);
@@ -336,11 +696,11 @@ export default function FeeManagement() {
     );
   };
 
-  const isAllSelected = currentRecords.length > 0 && currentRecords.every(r => selectedRows.includes(r.payment_id));
+  const isAllSelected = currentRecords.length > 0 && currentRecords.every(r => selectedRows.includes(r.id));
 
   const feeColumns = [
-    { key: 'fee', label: 'Fee Name', width: 260 },
-    { key: 'grade', label: 'Grade', width: 120 },
+    { key: 'month', label: 'Month', width: 240 },
+    { key: 'class', label: 'Grade / Section', width: 180 },
     { key: 'amount', label: 'Amount (PKR)', width: 150 },
     { key: 'date', label: 'Due Date', width: 210 },
     { key: 'method', label: 'Method', width: 140 },
@@ -348,31 +708,93 @@ export default function FeeManagement() {
   ];
 
   const renderFeeCell = (record, column) => {
-    if (column.key === 'fee') {
+    if (column.key === 'month') {
       return (
         <div className="fm-fee-cell">
-          <span className={`fm-fee-icon color-${record.payment_id % 4}`}><SvgFeeDoc /></span>
+          <span className={`fm-fee-icon color-${Math.max(record.month.length, 1) % 4}`}><SvgFeeDoc /></span>
           <div>
-            <span className="fm-fee-name">{getFeeName(record)}</span>
-            <span className="fm-fee-sub">{getFeeSub(record)}</span>
+            <button className="fm-month-link" type="button" onClick={() => setExpandedFeeGroupKey(expandedFeeGroupKey === record.id ? null : record.id)}>
+              {record.month}
+            </button>
+            <span className="fm-fee-sub">{record.paidCount}/{record.totalCount} paid</span>
           </div>
         </div>
       );
     }
-    if (column.key === 'grade') return <span className={`fm-grade-pill color-${record.payment_id % 4}`}>{record.grade || '-'}</span>;
-    if (column.key === 'amount') return formatAmount(record.amount_received);
+    if (column.key === 'class') {
+      return (
+        <span className="fm-class-cell">
+          <strong>{record.grade || '-'}</strong>
+          <small>Section {record.section || '-'}</small>
+        </span>
+      );
+    }
+    if (column.key === 'amount') return formatAmount(record.amount);
     if (column.key === 'date') {
       return (
         <span className="fm-date-cell">
           <SvgDate />
-          {record.payment_date ? new Date(record.payment_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '-'}
+          {record.dueDate ? new Date(record.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '-'}
         </span>
       );
     }
-    if (column.key === 'method') return record.payment_method || '-';
-    if (column.key === 'status') return <span className="fm-pill paid">Active</span>;
+    if (column.key === 'method') return record.method || '-';
+    if (column.key === 'status') return <span className={`fm-pill ${record.status === 'Unactive' ? 'inactive' : 'paid'}`}>{record.status}</span>;
     return '-';
   };
+
+  const renderFeeGroupDetails = (record) => (
+    <div className="fm-fee-expanded">
+      <div className="fm-fee-expanded-stats">
+        <div><span>Class</span><strong>{record.grade} - Section {record.section}</strong></div>
+        <div><span>Total students</span><strong>{record.totalCount}</strong></div>
+        <div><span>Paid</span><strong>{record.paidCount}</strong></div>
+        <div><span>Unpaid</span><strong>{record.unpaidCount}</strong></div>
+      </div>
+
+      <div className="fm-fee-expanded-table">
+        <div className="fm-fee-expanded-head">
+          <span>Paid</span>
+          <span>Unpaid</span>
+          <span>Student name</span>
+          <span>Student ID</span>
+          <span>Class</span>
+          <span>Status</span>
+        </div>
+        {record.students.length > 0 ? record.students.map((student) => {
+          const payment = getPaymentForStudentMonth(student.student_id, record.month);
+          const isPaid = payment && Number(payment.amount_received || 0) >= Number(payment.amount_due || record.amount || 0);
+          const studentName = `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student';
+          return (
+            <label className="fm-fee-expanded-row" key={student.student_id}>
+              <input
+                type="checkbox"
+                aria-label={`Mark ${studentName} paid`}
+                checked={Boolean(isPaid)}
+                onChange={(event) => {
+                  if (event.target.checked) handleStudentFeeStatus(record, student, true);
+                }}
+              />
+              <input
+                type="checkbox"
+                aria-label={`Mark ${studentName} unpaid`}
+                checked={!isPaid}
+                onChange={(event) => {
+                  if (event.target.checked) handleStudentFeeStatus(record, student, false);
+                }}
+              />
+              <span>{studentName}</span>
+              <span>{student.student_id || '-'}</span>
+              <span>{student.grade || record.grade} - Sec {student.section || record.section}</span>
+              <span className={`fm-payment-state ${isPaid ? 'paid' : 'unpaid'}`}>{isPaid ? 'Paid' : 'Unpaid'}</span>
+            </label>
+          );
+        }) : (
+          <div className="fm-fee-expanded-empty">No students found for this class and section.</div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <DashboardLayout userRole="admin" currentPath="/fees" userName="System Admin" userInitials="SA">
@@ -382,7 +804,7 @@ export default function FeeManagement() {
           <p>Track and manage all fee structures</p>
         </div>
         <div className="fm-header-right">
-          <button className="fm-btn-primary" onClick={openAddModal}>+ Record payment</button>
+          <button className="fm-btn-primary" type="button" onClick={openVoucherModal}><SvgVoucher /> Fee voucher</button>
           <div className="fm-avatar">SA</div>
         </div>
       </div>
@@ -393,10 +815,10 @@ export default function FeeManagement() {
         onRefresh={handleRefresh}
         onDelete={handleDelete}
         onEdit={() => {
-          const record = feeRecords.find((item) => item.payment_id === selectedRows[0]);
+          const record = feeGroupRecords.find((item) => item.id === selectedRows[0]);
           selectedRows.length === 1 && record
-            ? openEditModal(record)
-            : Swal.fire('Select one fee record', 'Choose exactly one fee checkbox, then click Edit.', 'info');
+            ? setExpandedFeeGroupKey(record.id)
+            : Swal.fire('Select one fee month', 'Choose exactly one fee month row, then click Edit to open paid/unpaid details.', 'info');
         }}
       />
 
@@ -412,17 +834,19 @@ export default function FeeManagement() {
         showConfigure={false}
         columns={feeColumns}
         rows={currentRecords}
-        getRowId={(record) => record.payment_id}
+        getRowId={(record) => record.id}
         renderCell={renderFeeCell}
         selectedRows={selectedRows}
         isAllSelected={isAllSelected}
         onSelectAll={handleSelectAll}
         onSelectRow={handleSelectRow}
         renderActions={(record) => (
-          <button className="fm-more-btn" type="button" aria-label="More fee actions" onClick={() => Swal.fire(getFeeName(record), `Student: ${record.first_name || ''} ${record.last_name || ''}\nAmount: ${formatAmount(record.amount_received)}\nMethod: ${record.payment_method || '-'}`, 'info')}>
+          <button className="fm-more-btn" type="button" aria-label="Delete fee record" onClick={() => handleDeleteFeeGroup(record)}>
             <SvgMore />
           </button>
         )}
+        renderExpandedRow={renderFeeGroupDetails}
+        isRowExpanded={(record) => expandedFeeGroupKey === record.id}
         actionsHeader=""
         actionsWidth={70}
         emptyMessage="No fee records found."
@@ -520,6 +944,135 @@ export default function FeeManagement() {
           </div>
         </div>
       </div>}
+
+      {isVoucherOpen && (
+        <div className="fm-modal-overlay">
+          <div className="fm-modal fm-voucher-modal" role="dialog" aria-modal="true" aria-labelledby="fee-voucher-title">
+            <div className="fm-modal-header">
+              <div className="fm-modal-title-group">
+                <div className="fm-modal-icon"><FeeLineIcon type="voucher" /></div>
+                <div className="fm-modal-title">
+                  <h2 id="fee-voucher-title">Generate Fee Voucher</h2>
+                  <p>Select class, month, amount, dates, and students before generating PDF vouchers</p>
+                </div>
+              </div>
+              <button className="fm-modal-close" type="button" onClick={() => setIsVoucherOpen(false)} aria-label="Close fee voucher form">
+                <FeeLineIcon type="close" />
+              </button>
+            </div>
+
+            <div className="fm-modal-body">
+              <div className="fm-modal-card fm-voucher-config-card">
+                <div className="fm-section-heading">
+                  <span className="fm-step-badge">1</span>
+                  <div>
+                    <div className="fm-section-title">VOUCHER DETAILS</div>
+                    <p className="fm-section-subtitle">Choose class, month, fee amount, issue date, and last date</p>
+                  </div>
+                </div>
+
+                <div className="fm-voucher-grid">
+                  <div className="fm-form-group">
+                    <label>Class <span>*</span></label>
+                    <div className="fm-input-shell">
+                      <select name="classKey" value={voucherForm.classKey} onChange={(event) => handleVoucherClassChange(event.target.value)} className="fm-input">
+                        <option value="">Select class</option>
+                        {classOptions.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="fm-form-group">
+                    <label>Fee Month <span>*</span></label>
+                    <div className="fm-input-shell">
+                      <FeeLineIcon type="calendar" />
+                      <select name="feeMonth" value={voucherForm.feeMonth} onChange={handleVoucherInput} className="fm-input">
+                        {voucherMonthOptions.map((month) => <option key={month}>{month}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="fm-form-group">
+                    <label>Fee Amount (PKR) <span>*</span></label>
+                    <div className="fm-input-shell">
+                      <span className="fm-currency-chip">Rs</span>
+                      <input type="number" min="1" name="amount" value={voucherForm.amount} onChange={handleVoucherInput} className="fm-input" />
+                    </div>
+                  </div>
+                  <div className="fm-form-group">
+                    <label>Issue Date <span>*</span></label>
+                    <div className="fm-input-shell">
+                      <FeeLineIcon type="calendar" />
+                      <input type="date" name="issueDate" value={voucherForm.issueDate} onChange={handleVoucherInput} className="fm-input" />
+                    </div>
+                  </div>
+                  <div className="fm-form-group">
+                    <label>Last Date <span>*</span></label>
+                    <div className="fm-input-shell">
+                      <FeeLineIcon type="calendar" />
+                      <input type="date" name="lastDate" value={voucherForm.lastDate} onChange={handleVoucherInput} className="fm-input" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="fm-modal-card fm-voucher-students-card">
+                <div className="fm-voucher-students-head">
+                  <div className="fm-section-heading">
+                    <span className="fm-step-badge">2</span>
+                    <div>
+                      <div className="fm-section-title">SELECT STUDENTS</div>
+                      <p className="fm-section-subtitle">Students from the selected class appear below before PDF generation</p>
+                    </div>
+                  </div>
+                  <label className="fm-voucher-select-all">
+                    <input
+                      type="checkbox"
+                      checked={voucherStudents.length > 0 && voucherStudents.every((student) => selectedVoucherStudents.includes(student.student_id))}
+                      onChange={(event) => setAllVoucherStudents(event.target.checked)}
+                    />
+                    Select all
+                  </label>
+                </div>
+
+                <div className="fm-voucher-summary">
+                  <span>Class: <strong>{getSelectedClassInfo().label}</strong></span>
+                  <span>Students selected: <strong>{selectedVoucherStudentRecords.length}</strong></span>
+                  <span>Amount: <strong>{formatAmount(voucherForm.amount)}</strong></span>
+                </div>
+
+                <div className="fm-voucher-student-list">
+                  {voucherStudents.length > 0 ? voucherStudents.map((student) => {
+                    const fullName = `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student';
+                    return (
+                      <label className="fm-voucher-student-row" key={student.student_id}>
+                        <input
+                          type="checkbox"
+                          checked={selectedVoucherStudents.includes(student.student_id)}
+                          onChange={() => toggleVoucherStudent(student.student_id)}
+                        />
+                        <span className="fm-voucher-student-avatar">{`${student.first_name?.[0] || ''}${student.last_name?.[0] || ''}`.toUpperCase() || 'ST'}</span>
+                        <span className="fm-voucher-student-main">
+                          <strong>{fullName}</strong>
+                          <small>ID: {student.student_id || '-'} | Guardian: {student.guardian_name || '-'}</small>
+                        </span>
+                        <span className="fm-voucher-student-class">{student.grade || '-'} - {student.section || '-'}</span>
+                      </label>
+                    );
+                  }) : (
+                    <div className="fm-voucher-empty">Select a class to preview students before generating vouchers.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="fm-modal-footer">
+              <button className="fm-btn-discard" type="button" onClick={() => setIsVoucherOpen(false)}>Cancel</button>
+              <button className="fm-btn-publish" type="button" onClick={generateFeeVoucherPdf}>
+                <FeeLineIcon type="voucher" /> Generate PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fm-modal-overlay">
