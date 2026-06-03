@@ -89,9 +89,9 @@ export default function Attendance() {
   const fetchData = async () => {
     try {
       const [stuRes, teaRes, attRes] = await Promise.all([
-        fetch("http://localhost:5000/api/students"),
-        fetch("http://localhost:5000/api/teachers"),
-        fetch("http://localhost:5000/api/attendance")
+        fetch("/api/students"),
+        fetch("/api/teachers"),
+        fetch("/api/attendance")
       ]);
 
       const stuResult = await stuRes.json();
@@ -149,7 +149,7 @@ export default function Attendance() {
     if (result.isConfirmed) {
       try {
         const dateRange = displayDates.map(d => d.fullDateStr);
-        const response = await fetch("http://localhost:5000/api/attendance/bulk-delete", {
+        const response = await fetch("/api/attendance/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: selectedRows, dates: dateRange })
@@ -563,7 +563,7 @@ export default function Attendance() {
     }
     
     try {
-      const res = await fetch("http://localhost:5000/api/attendance/bulk", {
+      const res = await fetch("/api/attendance/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -144,7 +144,7 @@ export default function Students() {
   // Fetching Dynamic Classes from Backend
   const fetchClasses = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/classes");
+      const response = await fetch("/api/classes");
       const result = await response.json();
       if (result.success) {
         setAvailableClasses(result.data);
@@ -157,7 +157,7 @@ export default function Students() {
   const fetchStudents = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/students");
+      const response = await fetch("/api/students");
       const result = await response.json();
       if (result.success) {
         const formattedData = result.data.map(student => ({
@@ -221,7 +221,7 @@ export default function Students() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch("http://localhost:5000/api/students/bulk-delete", {
+        const response = await fetch("/api/students/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: selectedRows })
@@ -363,7 +363,7 @@ export default function Students() {
     }
 
     setIsSubmitting(true);
-    const url = modalMode === 'add' ? "http://localhost:5000/api/students" : `http://localhost:5000/api/students/${selectedStudentId}`;
+    const url = modalMode === 'add' ? "/api/students" : `/api/students/${selectedStudentId}`;
     const method = modalMode === 'add' ? "POST" : "PUT";
 
     try {

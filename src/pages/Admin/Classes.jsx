@@ -115,7 +115,7 @@ export default function Classes() {
   const fetchClasses = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/classes");
+      const response = await fetch("/api/classes");
       const result = await response.json();
       
       if (result.success) {
@@ -151,7 +151,7 @@ export default function Classes() {
 
   const fetchAvailableSubjects = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/subjects");
+      const response = await fetch("/api/subjects");
       const result = await response.json();
       if (result.success) {
         const subjectNames = result.data.map(s => s.subject_name).filter(Boolean);
@@ -162,7 +162,7 @@ export default function Classes() {
 
   const fetchAvailableTeachers = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/teachers");
+      const response = await fetch("/api/teachers");
       const result = await response.json();
       if (result.success) {
         const teacherNames = result.data.map(t => `${t.first_name} ${t.last_name}`.trim()).filter(Boolean);
@@ -201,7 +201,7 @@ export default function Classes() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch("http://localhost:5000/api/classes/bulk-delete", {
+        const response = await fetch("/api/classes/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: selectedRows })
@@ -296,7 +296,7 @@ export default function Classes() {
 
     setIsSubmitting(true);
     const payload = { ...formData, subjects: selectedSubjects, settings: { attTracking, gradebook, portalAccess } };
-    const url = modalMode === 'add' ? "http://localhost:5000/api/classes" : `http://localhost:5000/api/classes/${selectedClassId}`;
+    const url = modalMode === 'add' ? "/api/classes" : `/api/classes/${selectedClassId}`;
     const method = modalMode === 'add' ? "POST" : "PUT";
 
     try {

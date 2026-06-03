@@ -72,10 +72,10 @@ export default function Exams() {
   const fetchAllData = async () => {
     try {
       const [examsRes, teachersRes, subjectsRes, classesRes] = await Promise.all([
-        fetch('http://localhost:5000/api/exams').then(r => r.json()),
-        fetch('http://localhost:5000/api/teachers').then(r => r.json()),
-        fetch('http://localhost:5000/api/subjects').then(r => r.json()),
-        fetch('http://localhost:5000/api/classes').then(r => r.json())
+        fetch('/api/exams').then(r => r.json()),
+        fetch('/api/teachers').then(r => r.json()),
+        fetch('/api/subjects').then(r => r.json()),
+        fetch('/api/classes').then(r => r.json())
       ]);
 
       if (examsRes.success) setExamsList(examsRes.data);
@@ -122,7 +122,7 @@ export default function Exams() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch("http://localhost:5000/api/exams/bulk-delete", {
+        const response = await fetch("/api/exams/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: selectedRows })
@@ -282,8 +282,8 @@ export default function Exams() {
 
     try {
       const url = modalMode === 'edit'
-        ? `http://localhost:5000/api/exams/${selectedExamId}`
-        : 'http://localhost:5000/api/exams';
+        ? `/api/exams/${selectedExamId}`
+        : '/api/exams';
       const response = await fetch(url, {
         method: modalMode === 'edit' ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },

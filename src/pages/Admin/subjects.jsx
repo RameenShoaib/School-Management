@@ -114,7 +114,7 @@ export default function Subjects() {
   const fetchSubjects = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/subjects");
+      const response = await fetch("/api/subjects");
       const result = await response.json();
       if (result.success) setSubjectsData(result.data);
     } catch (err) {
@@ -126,7 +126,7 @@ export default function Subjects() {
 
   const fetchClasses = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/classes");
+      const response = await fetch("/api/classes");
       const result = await response.json();
       if (result.success) {
         const uniqueGrades = [...new Set(result.data.map(c => c.grade).filter(Boolean))];
@@ -169,7 +169,7 @@ export default function Subjects() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch("http://localhost:5000/api/subjects/bulk-delete", {
+        const response = await fetch("/api/subjects/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: selectedRows })
@@ -250,8 +250,8 @@ export default function Subjects() {
 
     try {
       const url = modalMode === 'edit'
-        ? `http://localhost:5000/api/subjects/${selectedSubjectId}`
-        : "http://localhost:5000/api/subjects";
+        ? `/api/subjects/${selectedSubjectId}`
+        : "/api/subjects";
       const response = await fetch(url, {
         method: modalMode === 'edit' ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },

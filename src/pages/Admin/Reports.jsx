@@ -53,8 +53,8 @@ export default function Reports() {
 
   const fetchData = async () => {
     try {
-      const snapRes = await fetch('http://localhost:5000/api/reports/snapshot').then((r) => r.json());
-      const recentRes = await fetch('http://localhost:5000/api/reports/recent').then((r) => r.json());
+      const snapRes = await fetch('/api/reports/snapshot').then((r) => r.json());
+      const recentRes = await fetch('/api/reports/recent').then((r) => r.json());
       if (snapRes.success) setSnapshot(snapRes.data);
       if (recentRes.success) setRecentReports(recentRes.data);
     } catch (err) {
@@ -80,7 +80,7 @@ export default function Reports() {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/reports/generate', {
+      const response = await fetch('/api/reports/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,7 +174,7 @@ export default function Reports() {
     if (!result.isConfirmed) return;
 
     try {
-      const response = await fetch('http://localhost:5000/api/reports/bulk-delete', {
+      const response = await fetch('/api/reports/bulk-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedReports })

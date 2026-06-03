@@ -127,7 +127,7 @@ export default function Teacher() {
   const fetchTeachers = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/teachers");
+      const response = await fetch("/api/teachers");
       const result = await response.json();
 
       if (result.success) {
@@ -189,7 +189,7 @@ export default function Teacher() {
     });
     if (result.isConfirmed) {
       try {
-        const response = await fetch("http://localhost:5000/api/teachers/bulk-delete", {
+        const response = await fetch("/api/teachers/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: selectedRows })
@@ -273,7 +273,7 @@ export default function Teacher() {
     }
 
     setIsSubmitting(true);
-    const url = modalMode === 'add' ? "http://localhost:5000/api/teachers" : `http://localhost:5000/api/teachers/${selectedTeacherId}`;
+    const url = modalMode === 'add' ? "/api/teachers" : `/api/teachers/${selectedTeacherId}`;
     const method = modalMode === 'add' ? "POST" : "PUT";
 
     try {

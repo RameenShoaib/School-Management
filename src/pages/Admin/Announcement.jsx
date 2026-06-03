@@ -91,7 +91,7 @@ export default function Announcements() {
 
   const fetchAnnouncements = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/announcements');
+      const response = await fetch('/api/announcements');
       const result = await response.json();
       if (result.success) {
         setAnnouncements(result.data.map(formatAnnouncement));
@@ -183,8 +183,8 @@ export default function Announcements() {
 
     try {
       const url = modalMode === 'edit'
-        ? `http://localhost:5000/api/announcements/${selectedAnnouncementId}`
-        : 'http://localhost:5000/api/announcements';
+        ? `/api/announcements/${selectedAnnouncementId}`
+        : '/api/announcements';
       const method = modalMode === 'edit' ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
@@ -222,7 +222,7 @@ export default function Announcements() {
     if (!result.isConfirmed) return;
 
     try {
-      const response = await fetch('http://localhost:5000/api/announcements/bulk-delete', {
+      const response = await fetch('/api/announcements/bulk-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedAnnouncements })
