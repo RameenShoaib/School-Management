@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "serve -s dist -l tcp://0.0.0.0:$PORT"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -17,6 +18,7 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2",
+    "serve": "^14.2.6",
     "sweetalert2": "^11.26.24"
   },
   "devDependencies": {
