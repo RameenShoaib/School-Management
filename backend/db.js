@@ -1,18 +1,19 @@
-// db.js
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Neon database ke liye connection pool banayen
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    require: true, // Neon ke liye SSL zaroori hai
+    require: true,
   },
 });
 
-// Connection test karne ke liye
-pool.connect()
-  .then(() => console.log("✅ Neon Database connected successfully!"))
-  .catch((err) => console.error("❌ Database connection error:", err));
+pool.on('error', (err) => {
+  console.error('Unexpected database idle client error:', err.message);
+});
+
+pool.query('SELECT 1')
+  .then(() => console.log('Neon Database connected successfully!'))
+  .catch((err) => console.error('Database connection error:', err.message));
 
 module.exports = pool;
