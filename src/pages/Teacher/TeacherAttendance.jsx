@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import TeacherListView from './TeacherListView';
 import './TeacherModule.css';
-import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getPakistanDateKey, getStoredUser, getTeacherName } from './teacherModuleData';
 import { getTeacherHeaderActions, showTeacherPopup } from './teacherHeaderActions';
 
 const AttendancePageIcon = ({ type }) => {
@@ -35,6 +35,66 @@ const normalizeAttendanceStatus = (status) => {
   return map[status] || status || 'Unmarked';
 };
 
+const attendanceMarkOptions = [
+  { value: '', label: 'No change', tone: 'none' },
+  { value: 'P', label: 'Present', tone: 'present' },
+  { value: 'A', label: 'Absent', tone: 'absent' },
+  { value: 'L', label: 'Late', tone: 'late' },
+  { value: 'H', label: 'Holiday', tone: 'holiday' }
+];
+
+const AttendanceMarkDropdown = ({ value, isOpen, onToggle, onChange }) => {
+  const selected = attendanceMarkOptions.find((option) => option.value === value) || attendanceMarkOptions[0];
+
+  return (
+    <div
+      className={`tm-att-mark-dropdown ${isOpen ? 'open' : ''}`}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          onToggle(false);
+        }
+      }}
+    >
+      <button
+        className={`tm-att-mark-trigger ${selected.tone}`}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => onToggle(!isOpen)}
+      >
+        <span className={`tm-att-mark-dot ${selected.tone}`} />
+        <span>{selected.label}</span>
+        <AttendancePageIcon type="chevron" />
+      </button>
+
+      {isOpen && (
+        <div className="tm-att-mark-menu" role="listbox" tabIndex={-1}>
+          {attendanceMarkOptions.map((option) => {
+            const selectedOption = option.value === value;
+            return (
+              <button
+                className={`tm-att-mark-option ${option.tone} ${selectedOption ? 'selected' : ''}`}
+                key={option.label}
+                type="button"
+                role="option"
+                aria-selected={selectedOption}
+                onClick={() => {
+                  onChange(option.value);
+                  onToggle(false);
+                }}
+              >
+                <span className={`tm-att-mark-dot ${option.tone}`} />
+                <span>{option.label}</span>
+                {selectedOption && <span className="tm-att-mark-check"><AttendancePageIcon type="check" /></span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const attendanceColumns = [
   { key: 'student', label: 'Student', defaultWidth: 280, visible: true },
   { key: 'class', label: 'Class', defaultWidth: 220, visible: true },
@@ -53,11 +113,12 @@ export default function TeacherAttendance() {
   const [currentTeacher, setCurrentTeacher] = useState(null);
   const [classFilter, setClassFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getPakistanDateKey());
   const [draftStatus, setDraftStatus] = useState({});
+  const [openMarkStudentId, setOpenMarkStudentId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const user = getStoredUser();
@@ -79,11 +140,15 @@ export default function TeacherAttendance() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const attendanceLoadTimer = window.setTimeout(() => {
+      fetchData();
+    }, 0);
+
+    return () => window.clearTimeout(attendanceLoadTimer);
+  }, [fetchData]);
 
   const teacherName = getTeacherName(currentTeacher);
   const teacherInitials = getInitials(teacherName);
@@ -108,8 +173,10 @@ export default function TeacherAttendance() {
   });
 
   const statusForStudent = (studentId) => {
-    if (draftStatus[studentId]) return draftStatus[studentId];
-    const record = attendance.find((item) => Number(item.student_id) === Number(studentId) && item.attendance_date?.startsWith(date));
+    const record = attendance.find((item) => (
+      Number(item.student_id) === Number(studentId) &&
+      getPakistanDateKey(item.attendance_date) === date
+    ));
     return record?.status || 'Unmarked';
   };
 
@@ -164,7 +231,7 @@ export default function TeacherAttendance() {
           icon: 'error'
         });
       }
-    } catch (error) {
+    } catch {
       showTeacherPopup({
         title: 'Error',
         text: 'Server connection failed.',
@@ -178,16 +245,12 @@ export default function TeacherAttendance() {
       class: `${student.grade || '-'} - Section ${student.section || '-'}`,
       currentStatus: <span className={`tm-att-status ${String(statusForStudent(student.student_id)).toLowerCase()}`}>{normalizeAttendanceStatus(statusForStudent(student.student_id))}</span>,
       mark: (
-        <label className="tm-att-mark-select">
-          <select value={draftStatus[student.student_id] || ''} onChange={(e) => setDraftStatus({ ...draftStatus, [student.student_id]: e.target.value })}>
-            <option value="">No change</option>
-            <option value="P">Present</option>
-            <option value="A">Absent</option>
-            <option value="L">Late</option>
-            <option value="H">Holiday</option>
-          </select>
-          <AttendancePageIcon type="chevron" />
-        </label>
+        <AttendanceMarkDropdown
+          value={draftStatus[student.student_id] || ''}
+          isOpen={openMarkStudentId === student.student_id}
+          onToggle={(nextOpen) => setOpenMarkStudentId(nextOpen ? student.student_id : null)}
+          onChange={(nextStatus) => setDraftStatus({ ...draftStatus, [student.student_id]: nextStatus })}
+        />
       ),
       rollNo: student.roll_no || '-',
       grade: student.grade || '-',

@@ -59,16 +59,9 @@ const downloadCsv = (fileName, columns, rows) => {
 };
 
 export const getStudentHeaderActions = ({ pageName, exportFileName, exportColumns = [], exportRows = [] }) => ({
-  onEdit: () => showStudentPopup({
-    title: 'Read-only page',
-    text: `${pageName} is read-only in the student portal.`
-  }),
+  showEdit: false,
+  showDelete: false,
   onRefresh: () => window.location.reload(),
-  onDelete: () => showStudentPopup({
-    title: 'Action unavailable',
-    text: 'Students cannot delete records from the portal.',
-    icon: 'warning'
-  }),
   onExport: () => {
     if (!exportRows.length) {
       showStudentPopup({

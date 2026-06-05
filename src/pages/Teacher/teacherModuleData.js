@@ -18,6 +18,27 @@ export const getInitials = (name) => {
   return (parts[0]?.[0] || 'T') + (parts[1]?.[0] || 'R');
 };
 
+export const getPakistanDateKey = (value = new Date()) => {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Karachi',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+};
+
 export const findCurrentTeacher = (teachers = [], user = getStoredUser()) => (
   teachers.find((item) => Number(item.user_id) === Number(user?.id)) ||
   teachers.find((item) => item.email?.toLowerCase() === user?.email?.toLowerCase()) ||
