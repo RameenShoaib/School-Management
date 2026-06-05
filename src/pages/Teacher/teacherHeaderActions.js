@@ -65,16 +65,9 @@ export const getTeacherHeaderActions = ({
   exportRows = [],
   onRefresh
 }) => ({
-  onEdit: () => showTeacherPopup({
-    title: 'Select a record',
-    text: `Choose a ${pageName.toLowerCase()} record or use the page controls before editing.`
-  }),
+  showEdit: false,
+  showDelete: false,
   onRefresh: onRefresh || (() => window.location.reload()),
-  onDelete: () => showTeacherPopup({
-    title: 'Select a record',
-    text: `Choose a ${pageName.toLowerCase()} record before deleting.`,
-    icon: 'warning'
-  }),
   onExport: () => {
     if (!exportRows.length || !exportColumns.length) {
       showTeacherPopup({

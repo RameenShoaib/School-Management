@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import './TeacherModule.css';
-import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getStoredUser, getTeacherName } from './teacherModuleData';
+import { API_BASE, filterAssignedClasses, filterByClassKeys, findCurrentTeacher, getClassKey, getInitials, getPakistanDateKey, getStoredUser, getTeacherName } from './teacherModuleData';
 import { getTeacherHeaderActions, showTeacherPopup } from './teacherHeaderActions';
 
 const DashboardIcon = ({ type }) => {
@@ -63,7 +63,9 @@ export default function TeacherDashboard() {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const user = getStoredUser();
+  const user = useMemo(() => getStoredUser(), []);
+  const userEmail = user?.email;
+  const userId = user?.id;
   const teacherName = getTeacherName(teacher);
   const teacherInitials = getInitials(teacherName);
 
@@ -95,7 +97,7 @@ export default function TeacherDashboard() {
     };
 
     fetchDashboard();
-  }, [user?.email, user?.id]);
+  }, [user, userEmail, userId]);
 
   const assignedClasses = useMemo(() => {
     return filterAssignedClasses(classes, teacherName);
@@ -108,15 +110,13 @@ export default function TeacherDashboard() {
 
   const assignedStudents = filterByClassKeys(students, classKeys);
   const assignedStudentIds = new Set(assignedStudents.map((student) => Number(student.student_id)));
-  const today = new Date().toISOString().split('T')[0];
+  const today = getPakistanDateKey();
   const scopedAttendance = attendance.filter((item) => assignedStudentIds.size === 0 || assignedStudentIds.has(Number(item.student_id)));
-  const todayAttendance = scopedAttendance.filter((item) => item.attendance_date?.startsWith(today));
+  const todayAttendance = scopedAttendance.filter((item) => getPakistanDateKey(item.attendance_date) === today);
   const attendanceSummary = todayAttendance.reduce((summary, item) => {
     const key = normalizeStatus(item.status);
     return { ...summary, [key]: summary[key] + 1 };
   }, { present: 0, absent: 0, late: 0, notMarked: Math.max(assignedStudents.length - todayAttendance.length, 0) });
-  const attendanceTotal = attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late + attendanceSummary.notMarked;
-  const attendancePercent = (count) => attendanceTotal ? Math.round((count / attendanceTotal) * 100) : 0;
   const presentToday = attendanceSummary.present;
   const upcomingExams = exams
     .filter((exam) => !exam.exam_date || new Date(exam.exam_date) >= new Date(today))

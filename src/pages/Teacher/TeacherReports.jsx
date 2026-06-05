@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
 import './TeacherModule.css';
@@ -50,7 +50,7 @@ export default function TeacherReports() {
   const [teacherInitials, setTeacherInitials] = useState('TR');
   const [loading, setLoading] = useState(true);
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
       const user = getStoredUser();
@@ -67,11 +67,15 @@ export default function TeacherReports() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchReports();
-  }, []);
+    const reportLoadTimer = window.setTimeout(() => {
+      fetchReports();
+    }, 0);
+
+    return () => window.clearTimeout(reportLoadTimer);
+  }, [fetchReports]);
 
   const reportRows = recentReports.length > 0 ? recentReports : reportFallbacks;
   const reportAccentClasses = ['blue', 'green', 'blue', 'blue', 'blue', 'green', 'blue', 'blue', 'blue', 'green'];
@@ -141,7 +145,7 @@ export default function TeacherReports() {
           icon: 'error'
         });
       }
-    } catch (error) {
+    } catch {
       showTeacherPopup({
         title: 'Error',
         text: 'Server connection failed.',
@@ -168,20 +172,10 @@ export default function TeacherReports() {
         </div>
 
         <Header
-          onEdit={() => showTeacherPopup({
-            title: 'Select a report',
-            text: 'Choose a report card before editing report details.'
-          })}
+          showEdit={false}
+          showDelete={false}
           onRefresh={fetchReports}
           onExport={handleExportSelected}
-          onDelete={() => {
-            setSelectedReports([]);
-            showTeacherPopup({
-              title: 'Selection cleared',
-              text: 'Selected report cards have been cleared.',
-              icon: 'success'
-            });
-          }}
         />
 
         <section className="tm-rep-board">

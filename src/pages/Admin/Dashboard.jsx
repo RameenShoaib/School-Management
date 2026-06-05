@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
-import Header from '../../components/Header/header';
 import './Dashboard.css';
 
 const adminData = {
@@ -12,33 +11,35 @@ const adminData = {
 };
 
 const summaryCards = [
-  { name: 'Total Students', status: '1,248', sub: '+12 this month', color: 'mint', icon: 'Users', visual: 'none' },
-  { name: 'Teachers', status: '86', sub: '3 on leave', color: 'violet', icon: 'Briefcase', visual: 'none' },
-  { name: 'Attendance Today', status: '94%', sub: '-2% vs yesterday', color: 'amber', icon: 'ClipboardCheck', visual: 'line' },
-  { name: 'Fee collection', status: '87%', sub: 'PKR 2.4M collected', color: 'sky', icon: 'CreditCard', visual: 'bars' },
+  { name: 'Total Students', status: '1,248', sub: '12% this month', color: 'blue', icon: 'Users', visual: 'line' },
+  { name: 'Teachers', status: '86', sub: '3 on leave', color: 'purple', icon: 'Briefcase', visual: 'line' },
+  { name: 'Attendance Today', status: '94%', sub: 'Excellent', color: 'orange', icon: 'ClipboardCheck', visual: 'line' },
+  { name: 'Fee Collection', status: '87%', sub: 'PKR 2.4M collected', color: 'green', icon: 'CreditCard', visual: 'bars' },
 ];
 
 const attendanceChart = [
   { grade: 'Grade 1', percent: 97, color: 'blue' },
   { grade: 'Grade 4', percent: 93, color: 'orange' },
-  { grade: 'Grade 7', percent: 97, color: 'peach' },
-  { grade: 'Grade 9', percent: 89, color: 'teal' },
+  { grade: 'Grade 7', percent: 97, color: 'green' },
+  { grade: 'Grade 9', percent: 89, color: 'purple' },
   { grade: 'Grade 10', percent: 91, color: 'cyan' },
 ];
 
 const upcomingEvents = [
   { title: 'Mid-term exams begin', sub: 'Apr 25 - All grades', color: 'blue', icon: 'exam' },
   { title: 'Parent-teacher meeting', sub: 'Apr 28 - 9 AM - 1 PM', color: 'green', icon: 'meeting' },
-  { title: 'Fee deadline', sub: 'Apr 30 - Grades 6-10', color: 'yellow', icon: 'fee' },
+  { title: 'Fee deadline', sub: 'Apr 30 - Grades 1-9', color: 'yellow', icon: 'fee' },
   { title: 'Sports day', sub: 'May 5 - Full school', color: 'pink', icon: 'sports' },
 ];
 
 const recentEnrollments = [
-  { name: 'Ayesha Khan', grade: 'Grade 7', sec: 'A', date: 'Apr 18', status: 'Paid', statusClass: 'paid' },
-  { name: 'Bilal Raza', grade: 'Grade 5', sec: 'B', date: 'Apr 17', status: 'Pending', statusClass: 'pending' },
-  { name: 'Sana Mirza', grade: 'Grade 9', sec: 'A', date: 'Apr 15', status: 'Paid', statusClass: 'paid' },
-  { name: 'Omar Farooq', grade: 'Grade 3', sec: 'C', date: 'Apr 14', status: 'Overdue', statusClass: 'overdue' },
+  { name: 'Ayesha Khan', grade: 'Grade 7', sec: 'A', date: 'Apr 18, 2026', status: 'Paid', statusClass: 'paid', avatar: 'AK', tone: 'rose' },
+  { name: 'Bilal Raza', grade: 'Grade 5', sec: 'B', date: 'Apr 17, 2026', status: 'Pending', statusClass: 'pending', avatar: 'BR', tone: 'blue' },
+  { name: 'Sana Mirza', grade: 'Grade 9', sec: 'A', date: 'Apr 15, 2026', status: 'Paid', statusClass: 'paid', avatar: 'SM', tone: 'pink' },
+  { name: 'Omar Farooq', grade: 'Grade 3', sec: 'C', date: 'Apr 14, 2026', status: 'Overdue', statusClass: 'overdue', avatar: 'OF', tone: 'slate' },
 ];
+
+const attendancePeriodOptions = ['This Month', 'Last Month', 'This Week', 'Today'];
 
 const SvgSearch = () => (
   <svg fill="currentColor" viewBox="0 0 24 24">
@@ -97,6 +98,22 @@ const MiniBars = () => (
   </div>
 );
 
+const ActionIcon = ({ type }) => {
+  const paths = {
+    plus: <path d="M12 5v14M5 12h14" />,
+    report: <><path d="M5 20V10" /><path d="M12 20V4" /><path d="M19 20v-7" /></>,
+    calendar: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></>,
+    more: <><circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" /></>,
+    arrow: <path d="m9 18 6-6-6-6" />
+  };
+
+  return (
+    <svg className="ad-action-icon" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      {paths[type]}
+    </svg>
+  );
+};
+
 const EventIcon = ({ type }) => {
   const paths = {
     exam: (
@@ -134,6 +151,8 @@ const EventIcon = ({ type }) => {
 
 export default function AdminDashboard() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isAttendancePeriodOpen, setIsAttendancePeriodOpen] = useState(false);
+  const [attendancePeriod, setAttendancePeriod] = useState('This Month');
   const [selectedEnrollments, setSelectedEnrollments] = useState([]);
   const navigate = useNavigate();
 
@@ -150,27 +169,6 @@ export default function AdminDashboard() {
     setSelectedEnrollments((prev) => (
       prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]
     ));
-  };
-
-  const handleEnrollmentExport = () => {
-    if (selectedEnrollments.length === 0) {
-      Swal.fire('No selection', 'Select at least one enrollment first.', 'info');
-      return;
-    }
-    const selectedRows = recentEnrollments.filter((row) => selectedEnrollments.includes(row.name));
-    const csv = [
-      'Student,Grade,Section,Enrolled,Fee Status',
-      ...selectedRows.map((row) => `"${row.name}","${row.grade}","${row.sec}","${row.date}","${row.status}"`)
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Recent_Enrollments_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const isAllEnrollmentsSelected = selectedEnrollments.length === recentEnrollments.length;
@@ -190,10 +188,8 @@ export default function AdminDashboard() {
               type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
-              <h2>Admin dashboard</h2>
-              <span className={`ad-chevron ${isDropdownOpen ? 'open' : ''}`}>
-                <SvgChevronDown />
-              </span>
+              <span className="ad-wave" aria-hidden="true">👋</span>
+              <h2>Good Morning, {adminData.name}</h2>
             </button>
 
             {isDropdownOpen && (
@@ -211,7 +207,7 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          <p>{adminData.dateText}</p>
+          <p>School Overview <span>•</span> {adminData.dateText}</p>
         </div>
 
         <div className="ad-header-right">
@@ -227,12 +223,20 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <Header
-        onEdit={() => Swal.fire('Recent enrollments', selectedEnrollments.length === 1 ? `Selected: ${selectedEnrollments[0]}` : 'Select exactly one enrollment to inspect.', 'info')}
-        onRefresh={() => Swal.fire('Dashboard', 'Dashboard data is already up to date.', 'success')}
-        onDelete={() => Swal.fire('Recent enrollments', 'Dashboard enrollment rows are read-only summary records.', 'info')}
-        onExport={handleEnrollmentExport}
-      />
+      <div className="ad-top-actions">
+        <button type="button" className="ad-quick-btn add-student" onClick={() => navigate('/students')}>
+          <ActionIcon type="plus" />
+          Add Student
+        </button>
+        <button type="button" className="ad-quick-btn add-teacher" onClick={() => navigate('/teachers')}>
+          <ActionIcon type="plus" />
+          Add Teacher
+        </button>
+        <button type="button" className="ad-quick-btn generate-report" onClick={() => navigate('/reports')}>
+          <ActionIcon type="report" />
+          Generate Report
+        </button>
+      </div>
 
       <div className="ad-summary-row">
         {summaryCards.map((card) => (
@@ -258,37 +262,74 @@ export default function AdminDashboard() {
 
       <div className="ad-middle-grid">
         <section className="ad-card ad-chart-card">
-          <h3>Attendance by grade</h3>
-          <div className="ad-column-chart">
-            <div className="ad-axis-labels">
-              <span>100%</span>
-              <span>50%</span>
-              <span>0%</span>
-            </div>
-            <div className="ad-column-plot">
-              {attendanceChart.map((item) => (
-                <div className="ad-column" key={item.grade}>
-                  <span className="ad-column-value">{item.percent}%</span>
-                  <div className="ad-column-track">
-                    <div className={`ad-column-fill ${item.color}`} style={{ height: `${item.percent}%` }} />
-                  </div>
-                  <span className="ad-column-label">{item.grade}</span>
+          <div className="ad-section-header">
+            <h3>Attendance by Grade</h3>
+            <div
+              className="ad-period-dropdown"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  setIsAttendancePeriodOpen(false);
+                }
+              }}
+            >
+              <button
+                className="ad-period-trigger"
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={isAttendancePeriodOpen}
+                onClick={() => setIsAttendancePeriodOpen((open) => !open)}
+              >
+                {attendancePeriod} <SvgChevronDown />
+              </button>
+              {isAttendancePeriodOpen && (
+                <div className="ad-period-menu" role="listbox" tabIndex={-1}>
+                  {attendancePeriodOptions.map((option) => (
+                    <button
+                      className={option === attendancePeriod ? 'active' : ''}
+                      key={option}
+                      type="button"
+                      role="option"
+                      aria-selected={option === attendancePeriod}
+                      onClick={() => {
+                        setAttendancePeriod(option);
+                        setIsAttendancePeriodOpen(false);
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
-          <div className="ad-chart-legend">
+          <div className="ad-attendance-bars">
             {attendanceChart.map((item) => (
-              <span key={item.grade}><i className={item.color}></i>{item.grade}</span>
+              <div className="ad-attendance-row" key={item.grade}>
+                <span>{item.grade}</span>
+                <div className="ad-attendance-track">
+                  <i className={item.color} style={{ width: `${item.percent}%` }} />
+                </div>
+                <strong>{item.percent}%</strong>
+              </div>
             ))}
+            <div className="ad-attendance-scale">
+              <span>0%</span>
+              <span>25%</span>
+              <span>50%</span>
+              <span>75%</span>
+              <span>100%</span>
+            </div>
           </div>
         </section>
 
         <section className="ad-card ad-events-card">
-          <h3>Upcoming events</h3>
+          <div className="ad-section-header">
+            <h3>Upcoming Events</h3>
+            <button className="ad-view-link" type="button" onClick={() => navigate('/admin/announcement')}>View all</button>
+          </div>
           <div className="ad-events-list">
             {upcomingEvents.map((event) => (
-              <div key={event.title} className="ad-event-item">
+              <button key={event.title} type="button" className="ad-event-item" onClick={() => Swal.fire(event.title, event.sub, 'info')}>
                 <div className={`ad-event-icon ${event.color}`}>
                   <EventIcon type={event.icon} />
                 </div>
@@ -296,14 +337,18 @@ export default function AdminDashboard() {
                   <h4>{event.title}</h4>
                   <p>{event.sub}</p>
                 </div>
-              </div>
+                <ActionIcon type="arrow" />
+              </button>
             ))}
           </div>
         </section>
       </div>
 
       <section className="ad-card full">
-        <h3>Recent enrollments</h3>
+        <div className="ad-section-header">
+          <h3>Recent Enrollments</h3>
+          <button className="ad-view-link" type="button" onClick={() => navigate('/students')}>View all</button>
+        </div>
         <div className="ad-table-responsive">
           <table className="ad-data-table">
             <thead>
@@ -316,6 +361,7 @@ export default function AdminDashboard() {
                 <th>Section</th>
                 <th>Enrolled</th>
                 <th>Fee status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -324,19 +370,37 @@ export default function AdminDashboard() {
                   <td>
                     <input type="checkbox" checked={selectedEnrollments.includes(row.name)} onChange={() => handleEnrollmentSelect(row.name)} />
                   </td>
-                  <td>{row.name}</td>
+                  <td>
+                    <div className="ad-student-cell">
+                      <span className={`ad-student-avatar ${row.tone}`}>{row.avatar}</span>
+                      <strong>{row.name}</strong>
+                    </div>
+                  </td>
                   <td>{row.grade}</td>
                   <td>{row.sec}</td>
-                  <td>{row.date}</td>
+                  <td><span className="ad-date-cell"><ActionIcon type="calendar" />{row.date}</span></td>
                   <td>
                     <span className={`ad-status-pill ${row.statusClass}`}>
                       {row.status}
                     </span>
                   </td>
+                  <td>
+                    <button className="ad-more-btn" type="button" onClick={() => Swal.fire(row.name, `${row.grade} - Section ${row.sec}`, 'info')}>
+                      <ActionIcon type="more" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="ad-table-footer">
+          <span>Showing 1 to 4 of 4 enrollments</span>
+          <div className="ad-pagination">
+            <button type="button"><ActionIcon type="arrow" /></button>
+            <button type="button" className="active">1</button>
+            <button type="button"><ActionIcon type="arrow" /></button>
+          </div>
         </div>
       </section>
     </DashboardLayout>

@@ -28,7 +28,7 @@ const SvgExport = () => (
   </svg>
 );
 
-export default function Header({ onEdit, onRefresh, onDelete, onExport }) {
+export default function Header({ onEdit, onRefresh, onDelete, onExport, showEdit = true, showDelete = true }) {
   const fallbackAction = (label) => () => {
     Swal.fire({
       icon: 'info',
@@ -40,21 +40,27 @@ export default function Header({ onEdit, onRefresh, onDelete, onExport }) {
 
   return (
     <div className="action-header-bar">
-      <button className="action-btn" onClick={onEdit || fallbackAction('Edit')}>
-        <SvgEdit /> Edit
-      </button>
+      {showEdit && (
+        <>
+          <button className="action-btn" onClick={onEdit || fallbackAction('Edit')}>
+            <SvgEdit /> Edit
+          </button>
 
-      <div className="action-divider"></div>
+          <div className="action-divider"></div>
+        </>
+      )}
       
       <button className="action-btn" onClick={onRefresh || fallbackAction('Refresh')}>
         <SvgRefresh /> Refresh
       </button>
 
-      <div className="action-divider"></div>
+      {showDelete && <div className="action-divider"></div>}
       
-      <button className="action-btn delete-btn" onClick={onDelete || fallbackAction('Delete')}>
-        <SvgDelete /> Delete
-      </button>
+      {showDelete && (
+        <button className="action-btn delete-btn" onClick={onDelete || fallbackAction('Delete')}>
+          <SvgDelete /> Delete
+        </button>
+      )}
 
       {/* 👇 Yahan marginLeft: 'auto' lagaya hai taake ye right side pe chala jaye 👇 */}
       <button 
