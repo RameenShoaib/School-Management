@@ -10,29 +10,22 @@ const adminData = {
   initials: 'SA',
 };
 
-const attendanceChart = [
-  { grade: 'Grade 1', percent: 97, color: 'blue' },
-  { grade: 'Grade 4', percent: 93, color: 'orange' },
-  { grade: 'Grade 7', percent: 97, color: 'green' },
-  { grade: 'Grade 9', percent: 89, color: 'purple' },
-  { grade: 'Grade 10', percent: 91, color: 'cyan' },
-];
-
-const upcomingEvents = [
-  { title: 'Mid-term exams begin', sub: 'Apr 25 - All grades', color: 'blue', icon: 'exam' },
-  { title: 'Parent-teacher meeting', sub: 'Apr 28 - 9 AM - 1 PM', color: 'green', icon: 'meeting' },
-  { title: 'Fee deadline', sub: 'Apr 30 - Grades 1-9', color: 'yellow', icon: 'fee' },
-  { title: 'Sports day', sub: 'May 5 - Full school', color: 'pink', icon: 'sports' },
-];
-
 const attendancePeriodOptions = ['This Month', 'Last Month', 'This Week', 'Today'];
 const avatarTones = ['rose', 'blue', 'pink', 'slate'];
+const attendanceChartColors = ['blue', 'orange', 'green', 'purple', 'cyan'];
 
 const formatEnrollmentDate = (value) => {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const formatEventDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 const getStudentName = (student) => (
@@ -76,6 +69,51 @@ const formatPkrCompact = (amount) => {
   if (amount >= 1000000) return `PKR ${(amount / 1000000).toFixed(1)}M collected`;
   if (amount >= 1000) return `PKR ${(amount / 1000).toFixed(1)}K collected`;
   return `PKR ${amount.toLocaleString()} collected`;
+};
+
+const sortGrades = (a, b) => {
+  const aNumber = Number(String(a).match(/\d+/)?.[0] || 0);
+  const bNumber = Number(String(b).match(/\d+/)?.[0] || 0);
+  if (aNumber !== bNumber) return aNumber - bNumber;
+  return String(a).localeCompare(String(b));
+};
+
+const getDateFromKey = (key) => new Date(`${key}T00:00:00`);
+
+const isAttendanceInPeriod = (dateValue, period) => {
+  const recordKey = getPakistanDateKey(dateValue);
+  const todayKey = getPakistanDateKey();
+  if (!recordKey) return false;
+  if (period === 'Today') return recordKey === todayKey;
+
+  const recordDate = getDateFromKey(recordKey);
+  const todayDate = getDateFromKey(todayKey);
+
+  if (period === 'This Week') {
+    const day = todayDate.getDay() || 7;
+    const weekStart = new Date(todayDate);
+    weekStart.setDate(todayDate.getDate() - day + 1);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    return recordDate >= weekStart && recordDate <= weekEnd;
+  }
+
+  const targetDate = new Date(todayDate);
+  if (period === 'Last Month') {
+    targetDate.setMonth(targetDate.getMonth() - 1);
+  }
+
+  return recordDate.getFullYear() === targetDate.getFullYear()
+    && recordDate.getMonth() === targetDate.getMonth();
+};
+
+const getAnnouncementEventMeta = (announcement) => {
+  const category = String(announcement.category || '').toLowerCase();
+  const title = String(announcement.title || '').toLowerCase();
+  if (category.includes('fee') || title.includes('fee')) return { color: 'yellow', icon: 'fee' };
+  if (category.includes('event') || title.includes('sport')) return { color: 'pink', icon: 'sports' };
+  if (title.includes('parent') || title.includes('meeting')) return { color: 'green', icon: 'meeting' };
+  return { color: 'blue', icon: 'exam' };
 };
 
 const SvgSearch = () => (
@@ -196,6 +234,7 @@ export default function AdminDashboard() {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [feeVouchers, setFeeVouchers] = useState([]);
   const [feePayments, setFeePayments] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -203,7 +242,7 @@ export default function AdminDashboard() {
     const loadDashboardData = async () => {
       setDashboardLoading(true);
       try {
-        const endpoints = ['/api/students', '/api/teachers', '/api/attendance', '/api/fee-vouchers', '/api/fees'];
+        const endpoints = ['/api/students', '/api/teachers', '/api/attendance', '/api/fee-vouchers', '/api/fees', '/api/announcements'];
         const results = await Promise.all(endpoints.map(async (endpoint) => {
           try {
             const response = await fetch(endpoint);
@@ -220,6 +259,7 @@ export default function AdminDashboard() {
         setAttendanceRecords(results[2]);
         setFeeVouchers(results[3]);
         setFeePayments(results[4]);
+        setAnnouncements(results[5]);
       } catch (error) {
         console.error('Admin dashboard data fetch failed:', error);
         setStudents([]);
@@ -227,6 +267,7 @@ export default function AdminDashboard() {
         setAttendanceRecords([]);
         setFeeVouchers([]);
         setFeePayments([]);
+        setAnnouncements([]);
       } finally {
         setDashboardLoading(false);
       }
@@ -295,6 +336,39 @@ export default function AdminDashboard() {
       },
     ];
   }, [attendanceRecords, dashboardLoading, feePayments, feeVouchers, students.length, teachers]);
+
+  const attendanceChart = useMemo(() => {
+    const studentsById = new Map(students.map((student) => [Number(student.student_id), student]));
+    const grades = [...new Set(students.map((student) => student.grade).filter(Boolean))].sort(sortGrades);
+    const filteredAttendance = attendanceRecords.filter((record) => isAttendanceInPeriod(record.attendance_date, attendancePeriod));
+
+    return grades.map((grade, index) => {
+      const gradeRecords = filteredAttendance.filter((record) => {
+        const student = studentsById.get(Number(record.student_id));
+        return student?.grade === grade;
+      });
+      const presentCount = gradeRecords.filter((record) => String(record.status || '').toLowerCase() === 'present').length;
+      const percent = gradeRecords.length ? Math.round((presentCount / gradeRecords.length) * 100) : 0;
+
+      return {
+        grade,
+        percent,
+        color: attendanceChartColors[index % attendanceChartColors.length],
+      };
+    });
+  }, [attendancePeriod, attendanceRecords, students]);
+
+  const upcomingEvents = useMemo(() => announcements.slice(0, 4).map((announcement) => {
+    const meta = getAnnouncementEventMeta(announcement);
+    return {
+      id: announcement.announcement_id,
+      title: announcement.title || 'Untitled announcement',
+      sub: `${formatEventDate(announcement.created_at)} - ${announcement.audience || announcement.category || 'All'}`,
+      message: announcement.message || 'No details available.',
+      color: meta.color,
+      icon: meta.icon,
+    };
+  }), [announcements]);
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -443,7 +517,13 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="ad-attendance-bars">
-            {attendanceChart.map((item) => (
+            {dashboardLoading && (
+              <div className="ad-attendance-empty">Loading attendance data...</div>
+            )}
+            {!dashboardLoading && attendanceChart.length === 0 && (
+              <div className="ad-attendance-empty">No grade attendance data found.</div>
+            )}
+            {!dashboardLoading && attendanceChart.map((item) => (
               <div className="ad-attendance-row" key={item.grade}>
                 <span>{item.grade}</span>
                 <div className="ad-attendance-track">
@@ -468,8 +548,14 @@ export default function AdminDashboard() {
             <button className="ad-view-link" type="button" onClick={() => navigate('/admin/announcement')}>View all</button>
           </div>
           <div className="ad-events-list">
-            {upcomingEvents.map((event) => (
-              <button key={event.title} type="button" className="ad-event-item" onClick={() => Swal.fire(event.title, event.sub, 'info')}>
+            {dashboardLoading && (
+              <div className="ad-events-empty">Loading announcements...</div>
+            )}
+            {!dashboardLoading && upcomingEvents.length === 0 && (
+              <div className="ad-events-empty">No upcoming events found.</div>
+            )}
+            {!dashboardLoading && upcomingEvents.map((event) => (
+              <button key={event.id} type="button" className="ad-event-item" onClick={() => Swal.fire(event.title, event.message, 'info')}>
                 <div className={`ad-event-icon ${event.color}`}>
                   <EventIcon type={event.icon} />
                 </div>
