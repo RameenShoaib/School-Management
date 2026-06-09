@@ -611,6 +611,14 @@
   font-weight: 600;
 }
 
+.ad-data-table .ad-empty-row {
+  height: 96px;
+  color: #64748b;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .ad-data-table tr:last-child td {
   border-bottom: 0;
 }
