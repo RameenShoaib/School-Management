@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -9,13 +9,6 @@ const adminData = {
   dateText: 'Monday, 20 April 2026',
   initials: 'SA',
 };
-
-const summaryCards = [
-  { name: 'Total Students', status: '1,248', sub: '12% this month', color: 'blue', icon: 'Users', visual: 'line' },
-  { name: 'Teachers', status: '86', sub: '3 on leave', color: 'purple', icon: 'Briefcase', visual: 'line' },
-  { name: 'Attendance Today', status: '94%', sub: 'Excellent', color: 'orange', icon: 'ClipboardCheck', visual: 'line' },
-  { name: 'Fee Collection', status: '87%', sub: 'PKR 2.4M collected', color: 'green', icon: 'CreditCard', visual: 'bars' },
-];
 
 const attendanceChart = [
   { grade: 'Grade 1', percent: 97, color: 'blue' },
@@ -32,14 +25,58 @@ const upcomingEvents = [
   { title: 'Sports day', sub: 'May 5 - Full school', color: 'pink', icon: 'sports' },
 ];
 
-const recentEnrollments = [
-  { name: 'Ayesha Khan', grade: 'Grade 7', sec: 'A', date: 'Apr 18, 2026', status: 'Paid', statusClass: 'paid', avatar: 'AK', tone: 'rose' },
-  { name: 'Bilal Raza', grade: 'Grade 5', sec: 'B', date: 'Apr 17, 2026', status: 'Pending', statusClass: 'pending', avatar: 'BR', tone: 'blue' },
-  { name: 'Sana Mirza', grade: 'Grade 9', sec: 'A', date: 'Apr 15, 2026', status: 'Paid', statusClass: 'paid', avatar: 'SM', tone: 'pink' },
-  { name: 'Omar Farooq', grade: 'Grade 3', sec: 'C', date: 'Apr 14, 2026', status: 'Overdue', statusClass: 'overdue', avatar: 'OF', tone: 'slate' },
-];
-
 const attendancePeriodOptions = ['This Month', 'Last Month', 'This Week', 'Today'];
+const avatarTones = ['rose', 'blue', 'pink', 'slate'];
+
+const formatEnrollmentDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const getStudentName = (student) => (
+  `${student.first_name || ''} ${student.last_name || ''}`.trim() ||
+  student.student_name ||
+  'Student'
+);
+
+const getStudentInitials = (student) => {
+  const name = getStudentName(student);
+  const parts = name.split(/\s+/).filter(Boolean);
+  return `${parts[0]?.[0] || 'S'}${parts[1]?.[0] || ''}`.toUpperCase();
+};
+
+const normalizeFeeStatus = (value) => {
+  const status = String(value || 'Pending').trim();
+  const key = status.toLowerCase();
+  if (key === 'paid') return { label: 'Paid', className: 'paid' };
+  if (key === 'overdue') return { label: 'Overdue', className: 'overdue' };
+  return { label: 'Pending', className: 'pending' };
+};
+
+const getPakistanDateKey = (value = new Date()) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Karachi',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+};
+
+const parseMoney = (value) => {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
+const formatPkrCompact = (amount) => {
+  if (!amount) return 'PKR 0 collected';
+  if (amount >= 1000000) return `PKR ${(amount / 1000000).toFixed(1)}M collected`;
+  if (amount >= 1000) return `PKR ${(amount / 1000).toFixed(1)}K collected`;
+  return `PKR ${amount.toLocaleString()} collected`;
+};
 
 const SvgSearch = () => (
   <svg fill="currentColor" viewBox="0 0 24 24">
@@ -154,7 +191,110 @@ export default function AdminDashboard() {
   const [isAttendancePeriodOpen, setIsAttendancePeriodOpen] = useState(false);
   const [attendancePeriod, setAttendancePeriod] = useState('This Month');
   const [selectedEnrollments, setSelectedEnrollments] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [feeVouchers, setFeeVouchers] = useState([]);
+  const [feePayments, setFeePayments] = useState([]);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      setDashboardLoading(true);
+      try {
+        const endpoints = ['/api/students', '/api/teachers', '/api/attendance', '/api/fee-vouchers', '/api/fees'];
+        const results = await Promise.all(endpoints.map(async (endpoint) => {
+          try {
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            return data.success ? data.data : [];
+          } catch (error) {
+            console.error(`Admin dashboard fetch failed for ${endpoint}:`, error);
+            return [];
+          }
+        }));
+
+        setStudents(results[0]);
+        setTeachers(results[1]);
+        setAttendanceRecords(results[2]);
+        setFeeVouchers(results[3]);
+        setFeePayments(results[4]);
+      } catch (error) {
+        console.error('Admin dashboard data fetch failed:', error);
+        setStudents([]);
+        setTeachers([]);
+        setAttendanceRecords([]);
+        setFeeVouchers([]);
+        setFeePayments([]);
+      } finally {
+        setDashboardLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  const recentEnrollments = useMemo(() => students.slice(0, 4).map((student, index) => {
+    const fee = normalizeFeeStatus(student.fee_status);
+    return {
+      id: student.student_id,
+      name: getStudentName(student),
+      grade: student.grade || '-',
+      sec: student.section || '-',
+      date: formatEnrollmentDate(student.admission_date || student.created_at),
+      status: fee.label,
+      statusClass: fee.className,
+      avatar: getStudentInitials(student),
+      tone: avatarTones[index % avatarTones.length],
+    };
+  }), [students]);
+
+  const summaryCards = useMemo(() => {
+    const todayKey = getPakistanDateKey();
+    const todayAttendance = attendanceRecords.filter((record) => getPakistanDateKey(record.attendance_date) === todayKey);
+    const presentToday = todayAttendance.filter((record) => String(record.status || '').toLowerCase() === 'present').length;
+    const attendancePercent = todayAttendance.length ? Math.round((presentToday / todayAttendance.length) * 100) : 0;
+    const activeTeachers = teachers.filter((teacher) => String(teacher.status || 'Active').toLowerCase() === 'active').length;
+    const totalBilled = feeVouchers.reduce((sum, voucher) => sum + parseMoney(voucher.amount_due), 0);
+    const totalCollected = feePayments.reduce((sum, payment) => sum + parseMoney(payment.amount_received), 0);
+    const feePercent = totalBilled ? Math.min(100, Math.round((totalCollected / totalBilled) * 100)) : 0;
+
+    return [
+      {
+        name: 'Total Students',
+        status: dashboardLoading ? '...' : students.length.toLocaleString(),
+        sub: students.length === 1 ? '1 active record' : `${students.length} active records`,
+        color: 'blue',
+        icon: 'Users',
+        visual: 'line'
+      },
+      {
+        name: 'Teachers',
+        status: dashboardLoading ? '...' : teachers.length.toLocaleString(),
+        sub: activeTeachers === 1 ? '1 active record' : `${activeTeachers} active records`,
+        color: 'purple',
+        icon: 'Briefcase',
+        visual: 'line'
+      },
+      {
+        name: 'Attendance Today',
+        status: dashboardLoading ? '...' : `${attendancePercent}%`,
+        sub: todayAttendance.length ? `${presentToday}/${todayAttendance.length} present today` : 'No records today',
+        color: 'orange',
+        icon: 'ClipboardCheck',
+        visual: 'line'
+      },
+      {
+        name: 'Fee Collection',
+        status: dashboardLoading ? '...' : `${feePercent}%`,
+        sub: formatPkrCompact(totalCollected),
+        color: 'green',
+        icon: 'CreditCard',
+        visual: 'bars'
+      },
+    ];
+  }, [attendanceRecords, dashboardLoading, feePayments, feeVouchers, students.length, teachers]);
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -162,16 +302,16 @@ export default function AdminDashboard() {
   };
 
   const handleEnrollmentSelectAll = (e) => {
-    setSelectedEnrollments(e.target.checked ? recentEnrollments.map((row) => row.name) : []);
+    setSelectedEnrollments(e.target.checked ? recentEnrollments.map((row) => row.id) : []);
   };
 
-  const handleEnrollmentSelect = (name) => {
+  const handleEnrollmentSelect = (id) => {
     setSelectedEnrollments((prev) => (
-      prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     ));
   };
 
-  const isAllEnrollmentsSelected = selectedEnrollments.length === recentEnrollments.length;
+  const isAllEnrollmentsSelected = recentEnrollments.length > 0 && selectedEnrollments.length === recentEnrollments.length;
 
   return (
     <DashboardLayout
@@ -365,10 +505,20 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentEnrollments.map((row) => (
-                <tr key={`${row.name}-${row.date}`}>
+              {dashboardLoading && (
+                <tr>
+                  <td className="ad-empty-row" colSpan="7">Loading recent enrollments...</td>
+                </tr>
+              )}
+              {!dashboardLoading && recentEnrollments.length === 0 && (
+                <tr>
+                  <td className="ad-empty-row" colSpan="7">No recent enrollments found.</td>
+                </tr>
+              )}
+              {!dashboardLoading && recentEnrollments.map((row) => (
+                <tr key={row.id}>
                   <td>
-                    <input type="checkbox" checked={selectedEnrollments.includes(row.name)} onChange={() => handleEnrollmentSelect(row.name)} />
+                    <input type="checkbox" checked={selectedEnrollments.includes(row.id)} onChange={() => handleEnrollmentSelect(row.id)} />
                   </td>
                   <td>
                     <div className="ad-student-cell">
@@ -395,7 +545,7 @@ export default function AdminDashboard() {
           </table>
         </div>
         <div className="ad-table-footer">
-          <span>Showing 1 to 4 of 4 enrollments</span>
+          <span>Showing {recentEnrollments.length ? 1 : 0} to {recentEnrollments.length} of {students.length} enrollments</span>
           <div className="ad-pagination">
             <button type="button"><ActionIcon type="arrow" /></button>
             <button type="button" className="active">1</button>

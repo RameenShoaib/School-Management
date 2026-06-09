@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 import DashboardLayout from '../../components/DashboardLayout';
 import Header from '../../components/Header/header';
@@ -42,6 +42,48 @@ const SvgCalendar = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="
 const SvgPeople = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>;
 const SvgTrend = () => <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4L19.7 9.71 22 12V6h-6z" /></svg>;
 
+const getPakistanMonthKey = (value = new Date()) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Karachi',
+    year: 'numeric',
+    month: '2-digit',
+  }).format(date);
+};
+
+const getBadgeType = (item) => {
+  if ((item.priority || '').toLowerCase() === 'urgent') return 'urgent';
+  const category = (item.category || '').toLowerCase();
+  if (category.includes('event')) return 'event';
+  if (category.includes('fee')) return 'fee';
+  return 'general';
+};
+
+const formatAnnouncement = (row) => {
+  const createdAt = row.created_at ? new Date(row.created_at) : new Date();
+  const badgeType = getBadgeType(row);
+  return {
+    id: row.announcement_id,
+    title: row.title,
+    meta: `Posted ${createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${row.created_by || 'Admin'} - ${row.audience || 'All'}`,
+    desc: row.message,
+    month: createdAt.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+    day: createdAt.toLocaleDateString('en-US', { day: '2-digit' }),
+    category: row.category || 'General',
+    priority: row.priority || 'Normal',
+    audience: row.audience || 'All students',
+    status: row.status || 'Published',
+    readRate: row.read_rate || 0,
+    createdAt: row.created_at,
+    tags: [
+      { text: row.audience || 'All students', color: (row.audience || '').toLowerCase().includes('teacher') ? 'green' : 'blue' },
+      { text: `Read by ${row.read_rate || 0}%`, color: 'gray' }
+    ],
+    badge: { text: badgeType === 'urgent' ? 'Urgent' : row.category || 'General', type: badgeType },
+  };
+};
+
 export default function Announcements() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,38 +100,7 @@ export default function Announcements() {
     audience: 'All students'
   });
 
-  const getBadgeType = (item) => {
-    if ((item.priority || '').toLowerCase() === 'urgent') return 'urgent';
-    const category = (item.category || '').toLowerCase();
-    if (category.includes('event')) return 'event';
-    if (category.includes('fee')) return 'fee';
-    return 'general';
-  };
-
-  const formatAnnouncement = (row) => {
-    const createdAt = row.created_at ? new Date(row.created_at) : new Date();
-    const badgeType = getBadgeType(row);
-    return {
-      id: row.announcement_id,
-      title: row.title,
-      meta: `Posted ${createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${row.created_by || 'Admin'} - ${row.audience || 'All'}`,
-      desc: row.message,
-      month: createdAt.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-      day: createdAt.toLocaleDateString('en-US', { day: '2-digit' }),
-      category: row.category || 'General',
-      priority: row.priority || 'Normal',
-      audience: row.audience || 'All students',
-      status: row.status || 'Published',
-      readRate: row.read_rate || 0,
-      tags: [
-        { text: row.audience || 'All students', color: (row.audience || '').toLowerCase().includes('teacher') ? 'green' : 'blue' },
-        { text: `Read by ${row.read_rate || 0}%`, color: 'gray' }
-      ],
-      badge: { text: badgeType === 'urgent' ? 'Urgent' : row.category || 'General', type: badgeType },
-    };
-  };
-
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
     try {
       const response = await fetch('/api/announcements');
       const result = await response.json();
@@ -102,11 +113,12 @@ export default function Announcements() {
       console.error('Announcement fetch error:', err);
       setAnnouncements(announcementList.map((item, index) => ({ ...item, id: `fallback-${index}` })));
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAnnouncements();
-  }, []);
+  }, [fetchAnnouncements]);
 
   const filteredAnnouncements = announcements.filter((item) => {
     const query = searchTerm.toLowerCase();
@@ -123,6 +135,29 @@ export default function Announcements() {
 
     return matchesSearch && matchesCategory;
   });
+
+  const announcementStats = useMemo(() => {
+    const currentMonthKey = getPakistanMonthKey();
+    const thisMonth = announcements.filter((item) => getPakistanMonthKey(item.createdAt) === currentMonthKey);
+    const urgentCount = announcements.filter((item) => item.badge.type === 'urgent' || String(item.priority).toLowerCase() === 'urgent').length;
+    const studentsAudience = announcements.some((item) => String(item.audience).toLowerCase().includes('student'));
+    const teachersAudience = announcements.some((item) => String(item.audience).toLowerCase().includes('teacher'));
+    const audienceLabels = [];
+    if (studentsAudience) audienceLabels.push('Students');
+    if (teachersAudience) audienceLabels.push('Teachers');
+    if (!audienceLabels.length && announcements.length) audienceLabels.push('All users');
+    const averageReadRate = announcements.length
+      ? Math.round(announcements.reduce((sum, item) => sum + Number(item.readRate || 0), 0) / announcements.length)
+      : 0;
+
+    return {
+      totalSent: announcements.length,
+      thisMonth: thisMonth.length,
+      urgentCount,
+      audienceReach: audienceLabels.length ? audienceLabels.join(' + ') : 'No audience yet',
+      averageReadRate,
+    };
+  }, [announcements]);
 
   const handleSelectAll = (e) => {
     setSelectedAnnouncements(e.target.checked ? filteredAnnouncements.map((item) => item.id) : []);
@@ -270,19 +305,19 @@ export default function Announcements() {
       <div className="ann-stats-row">
         <div className="ann-stat-card">
           <div className="ann-stat-icon blue"><SvgPaperPlane /></div>
-          <div className="ann-stat-copy"><span>Total sent</span><strong>142</strong><small>This academic year</small></div>
+          <div className="ann-stat-copy"><span>Total sent</span><strong>{announcementStats.totalSent}</strong><small>Current records</small></div>
         </div>
         <div className="ann-stat-card">
           <div className="ann-stat-icon purple"><SvgCalendar /></div>
-          <div className="ann-stat-copy"><span>This month</span><strong>8</strong><small className="purple">4 urgent</small></div>
+          <div className="ann-stat-copy"><span>This month</span><strong>{announcementStats.thisMonth}</strong><small className="purple">{announcementStats.urgentCount} urgent</small></div>
         </div>
         <div className="ann-stat-card">
           <div className="ann-stat-icon green"><SvgPeople /></div>
-          <div className="ann-stat-copy"><span>Audience reach</span><strong>1,334</strong><small>Students + Teachers</small></div>
+          <div className="ann-stat-copy"><span>Audience reach</span><strong>{announcementStats.totalSent}</strong><small>{announcementStats.audienceReach}</small></div>
         </div>
         <div className="ann-stat-card">
           <div className="ann-stat-icon orange"><SvgTrend /></div>
-          <div className="ann-stat-copy"><span>Avg read rate</span><strong>78%</strong><small className="green">14% vs. last month</small></div>
+          <div className="ann-stat-copy"><span>Avg read rate</span><strong>{announcementStats.averageReadRate}%</strong><small className="green">Based on saved records</small></div>
         </div>
       </div>
 
