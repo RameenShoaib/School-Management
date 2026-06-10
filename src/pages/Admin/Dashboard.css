@@ -456,6 +456,15 @@
   gap: 18px;
 }
 
+.ad-attendance-empty {
+  min-height: 144px;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .ad-attendance-row {
   display: grid;
   grid-template-columns: 86px minmax(0, 1fr) 42px;
@@ -565,6 +574,15 @@
 
 .ad-event-item > .ad-action-icon {
   color: #071337;
+}
+
+.ad-events-empty {
+  min-height: 184px;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .ad-card.full {
